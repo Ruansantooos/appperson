@@ -21,11 +21,13 @@ import { useAuth } from '../contexts/AuthContext';
 
 // Configurações da simulação de física
 const PHYSICS = {
-  repulsion: 4000,     // Força de repulsão entre nós
-  centerGravity: 0.05, // Força que puxa para o centro
+  repulsion: 2000,     // Força de repulsão entre nós
+  centerGravity: 0.03, // Força que puxa para o centro
   linkDistance: 120,   // Distância ideal entre links
   linkStrength: 0.04,  // Força da mola dos links
-  friction: 0.85,      // Perda de energia (0-1)
+  friction: 0.7,       // Perda de energia (0-1) - mais fricção = converge mais rápido
+  maxFrames: 300,      // Máximo de frames da simulação (~5 segundos)
+  maxVelocity: 15,     // Velocidade máxima por frame
 };
 
 // Extract keywords from text using [bracket] syntax
@@ -53,7 +55,29 @@ const findLinkedProjects = (currentProject: Project, allProjects: Project[]): st
     .map(p => p.id);
 };
 
-const ProjectsPage: React.FC = () => {
+// Error Boundary para capturar erros de render
+class ProjectsErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: string }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: '' };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error: error.message };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-8 text-red-400 bg-red-500/10 rounded-xl border border-red-500/20">
+          <h3 className="text-lg font-bold mb-2">Erro na página Projects</h3>
+          <p className="text-sm font-mono">{this.state.error}</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const ProjectsPageInner: React.FC = () => {
   const { user } = useAuth();
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [nodes, setNodes] = useState<GraphNode[]>([]);
@@ -70,6 +94,10 @@ const ProjectsPage: React.FC = () => {
     tagInput: ''
   });
   const linksRef = useRef<GraphLink[]>([]); // Ref for physics engine to access latest links
+  const draggedNodeRef = useRef<string | null>(null);
+  const isSimulatingRef = useRef(false);
+  const nodesRef = useRef<GraphNode[]>([]);
+  const frameCountRef = useRef(0);
 
   const svgRef = useRef<SVGSVGElement>(null);
   const requestRef = useRef<number>(null);
@@ -97,6 +125,8 @@ const ProjectsPage: React.FC = () => {
       if (data) {
         const mappedProjects = data.map((p: any) => ({
           ...p,
+          tags: Array.isArray(p.tags) ? p.tags : [],
+          links: Array.isArray(p.links) ? p.links : [],
           lastEdited: p.last_edited,
           createdAt: p.created_at
         }));
@@ -258,14 +288,16 @@ const ProjectsPage: React.FC = () => {
       newLinks.push({ source: 'root', target: p.id });
 
       // Inter-project links
-      if (p.links) {
+      if (p.links && Array.isArray(p.links)) {
         p.links.forEach((targetId: string) => {
-          // Verify target exists in fetched projects logic or just add link
-          newLinks.push({ source: p.id, target: targetId });
+          if (targetId && projectsData.some(other => other.id === targetId)) {
+            newLinks.push({ source: p.id, target: targetId });
+          }
         });
       }
     });
 
+    nodesRef.current = newNodes;
     setNodes(newNodes);
     setLinks(newLinks);
     linksRef.current = newLinks;
@@ -274,37 +306,57 @@ const ProjectsPage: React.FC = () => {
     newNodes.forEach(node => {
       velocities.current.set(node.id, { vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2 });
     });
+
+    // Reiniciar simulação com os novos nós
+    startSimulation();
   };
 
 
+  // Inicia ou reinicia a simulação de física
+  const startSimulation = () => {
+    if (isSimulatingRef.current) return;
+    isSimulatingRef.current = true;
+    frameCountRef.current = 0;
+    requestRef.current = requestAnimationFrame(updatePhysics);
+  };
 
-  // Loop de Simulação de Física
+  // Loop de Simulação de Física (usa refs para evitar problemas de closure/batching)
   const updatePhysics = () => {
-    setNodes(currentNodes => {
-      const nextNodes = currentNodes.map(node => ({ ...node }));
-      const nodeMap = new Map(nextNodes.map(n => [n.id, n]));
+    const currentNodes = nodesRef.current;
+    frameCountRef.current++;
 
-      nextNodes.forEach((node, i) => {
-        if (node.id === draggedNode) return;
+    // Parar se não há nós ou se excedeu o limite de frames
+    if (currentNodes.length === 0 || frameCountRef.current > PHYSICS.maxFrames) {
+      isSimulatingRef.current = false;
+      return;
+    }
 
-        let { vx, vy } = velocities.current.get(node.id) || { vx: 0, vy: 0 };
+    const nextNodes = currentNodes.map(node => ({ ...node }));
+    const nodeMap = new Map(nextNodes.map(n => [n.id, n]));
+    let totalMovement = 0;
 
-        // 1. Gravidade Central
-        vx += (400 - node.x) * PHYSICS.centerGravity;
-        vy += (300 - node.y) * PHYSICS.centerGravity;
+    nextNodes.forEach((node, i) => {
+      if (node.id === draggedNodeRef.current) return;
 
-        // 2. Repulsão entre nós (Lei de Coulomb simplificada)
-        nextNodes.forEach((other, j) => {
-          if (i === j) return;
-          const dx = node.x - other.x;
-          const dy = node.y - other.y;
-          const distSq = dx * dx + dy * dy + 0.1;
-          const force = PHYSICS.repulsion / distSq;
-          vx += (dx / Math.sqrt(distSq)) * force;
-          vy += (dy / Math.sqrt(distSq)) * force;
-        });
+      let { vx, vy } = velocities.current.get(node.id) || { vx: 0, vy: 0 };
 
-        // 3. Força de Link (Molas)
+      // 1. Gravidade Central
+      vx += (400 - node.x) * PHYSICS.centerGravity;
+      vy += (300 - node.y) * PHYSICS.centerGravity;
+
+      // 2. Repulsão entre nós (Lei de Coulomb simplificada)
+      nextNodes.forEach((other, j) => {
+        if (i === j) return;
+        const dx = node.x - other.x;
+        const dy = node.y - other.y;
+        const distSq = dx * dx + dy * dy + 1; // +1 para evitar divisão por valores muito pequenos
+        const force = PHYSICS.repulsion / distSq;
+        vx += (dx / Math.sqrt(distSq)) * force;
+        vy += (dy / Math.sqrt(distSq)) * force;
+      });
+
+      // 3. Força de Link (Molas)
+      if (linksRef.current) {
         linksRef.current.forEach(link => {
           if (link.source === node.id || link.target === node.id) {
             const targetId = link.source === node.id ? link.target : link.source;
@@ -319,34 +371,53 @@ const ProjectsPage: React.FC = () => {
             }
           }
         });
+      }
 
-        // Aplicar fricção e atualizar posição
-        vx *= PHYSICS.friction;
-        vy *= PHYSICS.friction;
+      // Aplicar fricção
+      vx *= PHYSICS.friction;
+      vy *= PHYSICS.friction;
 
-        node.x += vx;
-        node.y += vy;
+      // Clampar velocidade para evitar explosão
+      const speed = Math.sqrt(vx * vx + vy * vy);
+      if (speed > PHYSICS.maxVelocity) {
+        const scale = PHYSICS.maxVelocity / speed;
+        vx *= scale;
+        vy *= scale;
+      }
 
-        velocities.current.set(node.id, { vx, vy });
-      });
+      node.x += vx;
+      node.y += vy;
+      totalMovement += Math.abs(vx) + Math.abs(vy);
 
-      return nextNodes;
+      velocities.current.set(node.id, { vx, vy });
     });
+
+    nodesRef.current = nextNodes;
+    setNodes(nextNodes);
+
+    // Se a simulação estabilizou, parar o loop
+    if (totalMovement < 0.5 && !draggedNodeRef.current) {
+      isSimulatingRef.current = false;
+      return;
+    }
 
     requestRef.current = requestAnimationFrame(updatePhysics);
   };
 
   useEffect(() => {
-    requestRef.current = requestAnimationFrame(updatePhysics);
+    startSimulation();
     return () => {
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
+      isSimulatingRef.current = false;
     };
-  }, [draggedNode]);
+  }, []);
 
   // Handlers de Arraste
   const handleMouseDown = (nodeId: string) => {
     setDraggedNode(nodeId);
+    draggedNodeRef.current = nodeId;
     setSelectedNode(nodeId);
+    startSimulation();
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -355,13 +426,18 @@ const ProjectsPage: React.FC = () => {
       if (CTM) {
         const x = (e.clientX - CTM.e) / CTM.a;
         const y = (e.clientY - CTM.f) / CTM.d;
-        setNodes(prev => prev.map(n => n.id === draggedNode ? { ...n, x, y } : n));
+        const updated = nodesRef.current.map(n => n.id === draggedNode ? { ...n, x, y } : n);
+        nodesRef.current = updated;
+        setNodes(updated);
         velocities.current.set(draggedNode, { vx: 0, vy: 0 });
       }
     }
   };
 
-  const handleMouseUp = () => setDraggedNode(null);
+  const handleMouseUp = () => {
+    setDraggedNode(null);
+    draggedNodeRef.current = null;
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -482,7 +558,6 @@ const ProjectsPage: React.FC = () => {
                     stroke={isActive ? '#c1ff72' : 'white'}
                     strokeWidth={isActive ? 1.5 : 0.2}
                     strokeOpacity={isActive ? 0.6 : 0.1}
-                    className="transition-colors duration-300"
                   />
                 );
               })}
@@ -514,7 +589,6 @@ const ProjectsPage: React.FC = () => {
                       r={nodeSize}
                       fill={isActive ? '#c1ff72' : isConnected ? '#c1ff72' : 'white'}
                       fillOpacity={isActive || isConnected ? 1 : node.type === 'task' ? 0.2 : 0.5}
-                      className="transition-all duration-300"
                     />
 
                     {/* Label */}
@@ -522,7 +596,7 @@ const ProjectsPage: React.FC = () => {
                       <text
                         x={node.x} y={node.y + (nodeSize + 12)}
                         textAnchor="middle"
-                        className={`text-[9px] font-bold pointer-events-none uppercase tracking-widest transition-all ${isActive ? 'fill-[#c1ff72]' : isConnected ? 'fill-white/60' : 'fill-white/20'}`}
+                        className={`text-[9px] font-bold pointer-events-none uppercase tracking-widest ${isActive ? 'fill-[#c1ff72]' : isConnected ? 'fill-white/60' : 'fill-white/20'}`}
                       >
                         {node.label}
                       </text>
@@ -648,5 +722,11 @@ const ProjectsPage: React.FC = () => {
     </div>
   );
 };
+
+const ProjectsPage: React.FC = () => (
+  <ProjectsErrorBoundary>
+    <ProjectsPageInner />
+  </ProjectsErrorBoundary>
+);
 
 export default ProjectsPage;
