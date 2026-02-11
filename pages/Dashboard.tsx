@@ -135,9 +135,9 @@ const Dashboard: React.FC = () => {
           })));
         }
 
-        // Find today's workout
+        // Find today's workout (day names in Portuguese)
         if (workoutRes.data && workoutRes.data.length > 0) {
-          const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+          const days: Record<number, string> = { 0: 'Domingo', 1: 'Segunda', 2: 'Terça', 3: 'Quarta', 4: 'Quinta', 5: 'Sexta', 6: 'Sábado' };
           const todayDay = days[new Date().getDay()];
           const todayW = workoutRes.data.find((w: any) => w.day_of_week === todayDay);
           if (todayW) {

@@ -32,12 +32,27 @@ const DEFAULT_GYM_STATS: GymStats = {
   fat: 0
 };
 
+const DAYS_OF_WEEK = [
+  { short: 'Seg', full: 'Segunda' },
+  { short: 'Ter', full: 'Terça' },
+  { short: 'Qua', full: 'Quarta' },
+  { short: 'Qui', full: 'Quinta' },
+  { short: 'Sex', full: 'Sexta' },
+  { short: 'Sáb', full: 'Sábado' },
+  { short: 'Dom', full: 'Domingo' },
+];
+
+const getTodayDayName = () => {
+  const map: Record<number, string> = { 0: 'Domingo', 1: 'Segunda', 2: 'Terça', 3: 'Quarta', 4: 'Quinta', 5: 'Sexta', 6: 'Sábado' };
+  return map[new Date().getDay()];
+};
+
 const GymPage: React.FC = () => {
   const { user } = useAuth();
   const [gymStats, setGymStats] = useState<GymStats>(DEFAULT_GYM_STATS);
   const [supplements, setSupplements] = useState<Supplement[]>([]);
   const [workouts, setWorkouts] = useState<Workout[]>([]);
-  const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
+  const [selectedDay, setSelectedDay] = useState(getTodayDayName());
   const [loading, setLoading] = useState(true);
 
   // Modals State
@@ -116,7 +131,6 @@ const GymPage: React.FC = () => {
         })).sort((a: any, b: any) => a.orderIndex - b.orderIndex)
       }));
       setWorkouts(mappedWorkouts);
-      if (mappedWorkouts.length > 0) setSelectedWorkout(mappedWorkouts[0]);
     }
   };
 
@@ -189,6 +203,23 @@ const GymPage: React.FC = () => {
       setSubmitting(false);
     }
   };
+
+  const handleDeleteWorkout = async (workoutId: string) => {
+    if (!confirm('Deletar este treino e todos os exercícios?')) return;
+    await supabase.from('workout_exercises').delete().eq('workout_id', workoutId);
+    await supabase.from('workouts').delete().eq('id', workoutId);
+    fetchWorkouts();
+  };
+
+  const handleDeleteSupplement = async (suppId: string) => {
+    if (!confirm('Deletar este suplemento?')) return;
+    await supabase.from('supplements').delete().eq('id', suppId);
+    fetchSupplements();
+  };
+
+  // Get workout for selected day
+  const selectedWorkout = workouts.find(w => w.dayOfWeek === selectedDay) || null;
+  const todayName = getTodayDayName();
 
   const calProgress = gymStats.targetCalories > 0 ? (gymStats.caloriesConsumed / gymStats.targetCalories) * 100 : 0;
   const caloriesRemaining = gymStats.targetCalories - gymStats.caloriesConsumed;
@@ -327,60 +358,104 @@ const GymPage: React.FC = () => {
         {/* Training Section */}
         <div className="lg:col-span-7">
           <Card className="p-8 h-full">
-            <div className="flex justify-between items-center mb-10">
+            <div className="flex justify-between items-center mb-6">
               <div>
-                <h3 className="text-xl font-bold">Treinos</h3>
-                {selectedWorkout && (
-                  <p className="text-[10px] text-[#c1ff72] font-bold uppercase tracking-[0.2em] mt-1">{selectedWorkout.muscleGroup}</p>
-                )}
+                <h3 className="text-xl font-bold">Plano Semanal</h3>
+                <p className="text-[10px] text-white/30 uppercase tracking-[0.2em] mt-1">Monte seu treino por dia da semana</p>
               </div>
-              <div className="flex gap-2">
-                {workouts.map(w => (
-                  <button
-                    key={w.id}
-                    onClick={() => setSelectedWorkout(w)}
-                    className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all ${selectedWorkout?.id === w.id ? 'bg-[#c1ff72] text-black' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
-                  >
-                    {w.name.substring(0, 3)}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setIsWorkoutModalOpen(true)}
-                  className="w-8 h-8 rounded-full border border-dashed border-white/20 flex items-center justify-center text-white/40 hover:text-[#c1ff72] hover:border-[#c1ff72] transition-all ml-2"
-                >
-                  <Plus size={14} />
-                </button>
-              </div>
+              <button
+                onClick={() => setIsWorkoutModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#c1ff72] text-black text-xs font-bold hover:bg-[#b0e666] transition-colors"
+              >
+                <Plus size={14} /> Novo Treino
+              </button>
             </div>
 
+            {/* Day tabs */}
+            <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+              {DAYS_OF_WEEK.map(day => {
+                const hasWorkout = workouts.some(w => w.dayOfWeek === day.full);
+                const isToday = day.full === todayName;
+                const isSelected = day.full === selectedDay;
+                return (
+                  <button
+                    key={day.full}
+                    onClick={() => setSelectedDay(day.full)}
+                    className={`flex flex-col items-center px-4 py-3 rounded-2xl text-xs font-bold uppercase transition-all shrink-0 ${
+                      isSelected
+                        ? 'bg-[#c1ff72] text-black shadow-[0_0_15px_rgba(193,255,114,0.2)]'
+                        : hasWorkout
+                          ? 'bg-white/10 text-white hover:bg-white/15'
+                          : 'bg-white/[0.02] text-white/30 hover:bg-white/5'
+                    }`}
+                  >
+                    <span className="tracking-widest">{day.short}</span>
+                    {isToday && (
+                      <div className={`w-1.5 h-1.5 rounded-full mt-1 ${isSelected ? 'bg-black' : 'bg-[#c1ff72]'}`} />
+                    )}
+                    {!isToday && hasWorkout && (
+                      <div className={`w-1.5 h-1.5 rounded-full mt-1 ${isSelected ? 'bg-black/30' : 'bg-white/20'}`} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Workout for selected day */}
             {selectedWorkout ? (
-              <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
-                {selectedWorkout.exercises?.map((ex, idx) => (
-                  <div key={ex.id || idx} className="flex items-center justify-between p-4 rounded-[20px] bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all group">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white/30 group-hover:text-[#c1ff72] transition-colors">
-                        <Dumbbell size={18} />
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h4 className="text-lg font-bold">{selectedWorkout.name}</h4>
+                    {selectedWorkout.muscleGroup && (
+                      <p className="text-[10px] text-[#c1ff72] font-bold uppercase tracking-[0.2em]">{selectedWorkout.muscleGroup}</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handleDeleteWorkout(selectedWorkout.id)}
+                    className="text-white/20 hover:text-red-500 transition-colors p-2"
+                    title="Deletar treino"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+                <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2">
+                  {selectedWorkout.exercises?.map((ex, idx) => (
+                    <div key={ex.id || idx} className="flex items-center justify-between p-4 rounded-[20px] bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all group">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white/30 group-hover:text-[#c1ff72] transition-colors">
+                          <Dumbbell size={18} />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-sm text-white">{ex.name}</h4>
+                          <p className="text-[9px] text-white/20 font-bold uppercase tracking-widest">{ex.sets} séries {ex.weight ? `• ${ex.weight}kg` : ''}</p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-bold text-sm text-white">{ex.name}</h4>
-                        <p className="text-[9px] text-white/20 font-bold uppercase tracking-widest">{ex.sets} séries {ex.weight ? `• ${ex.weight}kg` : ''}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-8">
                       <div className="text-right">
                         <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest">Reps</p>
                         <p className="text-base font-bold text-[#c1ff72]">{ex.reps}</p>
                       </div>
-                      <ChevronRight size={16} className="text-white/10" />
                     </div>
-                  </div>
-                ))}
+                  ))}
+                  {(!selectedWorkout.exercises || selectedWorkout.exercises.length === 0) && (
+                    <p className="text-sm text-white/20 text-center py-4">Nenhum exercício neste treino.</p>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="h-[300px] flex flex-col items-center justify-center text-white/20">
-                <Dumbbell size={48} className="mb-4 opacity-50" />
-                <p>Nenhum treino selecionado ou criado.</p>
-                <Button onClick={() => setIsWorkoutModalOpen(true)} className="mt-4" variant="outline">Criar Primeiro Treino</Button>
+                <Dumbbell size={48} className="mb-4 opacity-30" />
+                <p className="text-sm font-bold mb-1">Nenhum treino para {selectedDay}</p>
+                <p className="text-xs text-white/15 mb-4">Clique em "Novo Treino" para criar</p>
+                <button
+                  onClick={() => {
+                    setNewWorkout(prev => ({ ...prev, dayOfWeek: selectedDay }));
+                    setIsWorkoutModalOpen(true);
+                  }}
+                  className="px-6 py-2 rounded-xl border border-dashed border-white/20 text-xs font-bold text-white/40 hover:text-[#c1ff72] hover:border-[#c1ff72] transition-all"
+                >
+                  + Criar treino para {selectedDay}
+                </button>
               </div>
             )}
           </Card>
@@ -406,9 +481,15 @@ const GymPage: React.FC = () => {
                   <div>
                     <p className="text-sm font-bold">{item.name}</p>
                     <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest">{item.dosage} {item.frequency ? `• ${item.frequency}` : ''}</p>
+                    {item.currentStock > 0 && (
+                      <p className="text-[10px] text-white/20 mt-1">{item.currentStock} doses restantes</p>
+                    )}
                   </div>
-                  <button className="w-8 h-8 rounded-full flex items-center justify-center transition-all bg-[#c1ff72] text-black">
-                    ✓
+                  <button
+                    onClick={() => handleDeleteSupplement(item.id)}
+                    className="w-8 h-8 rounded-full flex items-center justify-center transition-all text-white/20 hover:text-red-500 hover:bg-red-500/10"
+                  >
+                    <Trash2 size={14} />
                   </button>
                 </div>
               ))}
@@ -479,6 +560,35 @@ const GymPage: React.FC = () => {
             </button>
             <h3 className="text-xl font-bold mb-6">Criar Novo Treino</h3>
             <form onSubmit={handleCreateWorkout} className="space-y-6">
+              {/* Day of Week Selector */}
+              <div>
+                <label className="text-xs font-bold text-white/40 uppercase tracking-widest block mb-2">Dia da Semana</label>
+                <div className="flex gap-2 flex-wrap">
+                  {DAYS_OF_WEEK.map(day => {
+                    const taken = workouts.some(w => w.dayOfWeek === day.full);
+                    const isSelected = newWorkout.dayOfWeek === day.full;
+                    return (
+                      <button
+                        key={day.full}
+                        type="button"
+                        onClick={() => setNewWorkout({ ...newWorkout, dayOfWeek: day.full })}
+                        disabled={taken && !isSelected}
+                        className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                          isSelected
+                            ? 'bg-[#c1ff72] text-black'
+                            : taken
+                              ? 'bg-white/5 text-white/15 cursor-not-allowed'
+                              : 'bg-white/5 text-white/50 hover:bg-white/10'
+                        }`}
+                      >
+                        {day.short}
+                        {taken && !isSelected && <span className="block text-[8px] mt-0.5 opacity-50">Ocupado</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold text-white/40 uppercase tracking-widest block mb-1">Nome do Treino</label>
