@@ -11,6 +11,7 @@ const SettingsPage: React.FC = () => {
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState('Perfil');
+  const [weight, setWeight] = React.useState<number>(0);
   const [profile, setProfile] = React.useState<Partial<Profile>>({
     fullName: '',
     email: '',
@@ -21,7 +22,6 @@ const SettingsPage: React.FC = () => {
     goal: ''
   });
 
-  // Notification preferences (local state - could be persisted to Supabase later)
   const [notifications, setNotifications] = React.useState({
     habits: true,
     tasks: true,
@@ -59,6 +59,17 @@ const SettingsPage: React.FC = () => {
       } else {
         setProfile(prev => ({ ...prev, email: user?.email || '' }));
       }
+
+      // Fetch weight from gym_stats
+      const { data: gymData } = await supabase
+        .from('gym_stats')
+        .select('weight')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (gymData?.weight) {
+        setWeight(gymData.weight);
+      }
     } catch (error) {
       // silently fail - profile might not exist yet
     } finally {
@@ -88,6 +99,27 @@ const SettingsPage: React.FC = () => {
         .select();
 
       if (error) throw error;
+
+      // Save weight to gym_stats
+      if (weight > 0) {
+        const { data: existingStats } = await supabase
+          .from('gym_stats')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (existingStats) {
+          await supabase
+            .from('gym_stats')
+            .update({ weight, updated_at: new Date().toISOString() })
+            .eq('user_id', user.id);
+        } else {
+          await supabase
+            .from('gym_stats')
+            .insert({ user_id: user.id, weight, updated_at: new Date().toISOString() });
+        }
+      }
+
       alert('Configurações salvas com sucesso!');
       await fetchProfile();
     } catch (error: any) {
@@ -240,6 +272,16 @@ const SettingsPage: React.FC = () => {
                       value={profile.height}
                       onChange={e => setProfile({ ...profile, height: parseFloat(e.target.value) })}
                       className="h-14 bg-[#161616] border-white/5"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Peso Atual (kg)</label>
+                    <Input
+                      type="number"
+                      value={weight}
+                      onChange={e => setWeight(parseFloat(e.target.value) || 0)}
+                      className="h-14 bg-[#161616] border-white/5"
+                      placeholder="Ex: 70.5"
                     />
                   </div>
                   <div className="space-y-3">
