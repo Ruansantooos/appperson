@@ -25,7 +25,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, AreaChart, Area
 } from 'recharts';
-import { MOCK_GYM_STATS, MOCK_NUTRITION, MOCK_TRANSACTIONS, MOCK_HABITS, WEIGHT_HISTORY } from '../lib/mock-data';
+import { MOCK_NUTRITION, WEIGHT_HISTORY } from '../lib/mock-data';
 
 // Fallback defaults if data is missing
 const DEFAULT_GYM_STATS: GymStats = {
@@ -78,13 +78,12 @@ const Dashboard: React.FC = () => {
 
         if (habitsData) setHabits(habitsData);
 
-        // Fetch Transactions
+        // Fetch ALL Transactions (para calcular saldo real)
         const { data: transactionsData, error: transactionsError } = await supabase
           .from('transactions')
           .select('*')
           .eq('user_id', user.id)
-          .order('date', { ascending: false })
-          .limit(5);
+          .order('date', { ascending: false });
 
         if (transactionsData) setTransactions(transactionsData);
 
@@ -97,6 +96,13 @@ const Dashboard: React.FC = () => {
 
     fetchData();
   }, [user]);
+
+  // Cálculos financeiros reais (sincronizado com Finance page)
+  const totalBalance = transactions.reduce((acc, curr) => {
+    return curr.type === 'income' ? acc + Number(curr.amount) : acc - Number(curr.amount);
+  }, 0);
+
+  const recentTransactions = transactions.slice(0, 5);
 
   const calProgress = gymStats.targetCalories > 0 ? (gymStats.caloriesConsumed / gymStats.targetCalories) * 100 : 0;
   const caloriesRemaining = gymStats.targetCalories - gymStats.caloriesConsumed;
@@ -116,7 +122,7 @@ const Dashboard: React.FC = () => {
             <DollarSign size={14} />
           </div>
           <p className="text-[10px] font-bold opacity-40 uppercase tracking-[0.2em]">Saldo Financeiro</p>
-          <h4 className="text-2xl font-bold mt-2">R$ 12.450</h4>
+          <h4 className="text-2xl font-bold mt-2">R$ {totalBalance.toFixed(2)}</h4>
         </Card>
         <Card variant="peach" className="p-6 relative">
           <div className="absolute top-4 right-4 bg-black/10 p-1.5 rounded-full">
@@ -276,9 +282,9 @@ const Dashboard: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="text-sm">
-                  {transactions.length === 0 ? (
+                  {recentTransactions.length === 0 ? (
                     <tr><td colSpan={4} className="py-6 text-center text-white/40">Nenhuma transação recente.</td></tr>
-                  ) : transactions.map((tx) => (
+                  ) : recentTransactions.map((tx) => (
                     <tr key={tx.id} className="group border-b border-white/5 last:border-0 hover:bg-white/[0.01] transition-colors">
                       <td className="py-6 text-white/40 font-medium">{tx.date}</td>
                       <td className="py-6">
