@@ -21,6 +21,11 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, AreaChart, Area
+} from 'recharts';
+import { WeightEntry } from '../types';
 
 const getToday = () => new Date().toISOString().split('T')[0];
 
@@ -55,6 +60,7 @@ const Dashboard: React.FC = () => {
   const [supplementChecks, setSupplementChecks] = useState<Record<string, boolean>>({});
   const [todayWorkout, setTodayWorkout] = useState<TodayWorkout | null>(null);
   const [todayTasks, setTodayTasks] = useState<Task[]>([]);
+  const [weightHistory, setWeightHistory] = useState<WeightEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadSupplementChecks = useCallback(() => {
@@ -81,7 +87,7 @@ const Dashboard: React.FC = () => {
         await checkDayReset();
         loadSupplementChecks();
 
-        const [profileRes, gymRes, habitsRes, txRes, suppRes, workoutRes, tasksRes] = await Promise.all([
+        const [profileRes, gymRes, habitsRes, txRes, suppRes, workoutRes, tasksRes, weightRes] = await Promise.all([
           supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
           supabase.from('gym_stats').select('*').eq('user_id', user.id).maybeSingle(),
           supabase.from('habits').select('*').eq('user_id', user.id),
@@ -89,6 +95,7 @@ const Dashboard: React.FC = () => {
           supabase.from('supplements').select('*').eq('user_id', user.id),
           supabase.from('workouts').select('*, workout_exercises(*)').eq('user_id', user.id),
           supabase.from('tasks').select('*').eq('user_id', user.id).in('status', ['Pending', 'pending']),
+          supabase.from('weight_history').select('*').eq('user_id', user.id).order('date', { ascending: true }),
         ]);
 
         if (profileRes.data?.full_name) setUserName(profileRes.data.full_name.split(' ')[0]);
@@ -107,6 +114,7 @@ const Dashboard: React.FC = () => {
           })));
         }
         if (txRes.data) setTransactions(txRes.data);
+        if (weightRes.data) setWeightHistory(weightRes.data);
         if (suppRes.data) {
           setSupplements(suppRes.data.map((s: any) => ({
             id: s.id, name: s.name, dosage: s.dosage || '', frequency: s.frequency || '',
@@ -181,6 +189,32 @@ const Dashboard: React.FC = () => {
   }).reduce((acc, curr) => acc + Number(curr.amount), 0);
 
   const recentExpenses = transactions.filter(t => t.type === 'expense').slice(0, 4);
+
+  // Weekly spending chart data
+  const weeklySpending = (() => {
+    const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const now = new Date();
+    const result: { day: string; gasto: number }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const dayTotal = transactions
+        .filter(t => t.type === 'expense' && t.date === dateStr)
+        .reduce((acc, t) => acc + Number(t.amount), 0);
+      result.push({ day: days[d.getDay()], gasto: dayTotal });
+    }
+    return result;
+  })();
+
+  // Macro data for pie chart
+  const macroData = [
+    { name: 'Proteína', value: gymStats.protein, color: '#c1ff72' },
+    { name: 'Carbo', value: gymStats.carbs, color: '#8fb0bc' },
+    { name: 'Gordura', value: gymStats.fat, color: '#d8b4a6' },
+  ];
+  const hasMacros = macroData.some(m => m.value > 0);
+  const calProgress = gymStats.targetCalories > 0 ? Math.round((gymStats.caloriesConsumed / gymStats.targetCalories) * 100) : 0;
 
   const totalDailyItems = habits.length + supplements.length;
   const completedDailyItems = habits.filter(h => h.completedToday).length + supplements.filter(s => supplementChecks[s.id]).length;
@@ -435,6 +469,118 @@ const Dashboard: React.FC = () => {
                 <p className="text-xs text-red-400">Atenção: seu saldo está negativo!</p>
               </div>
             )}
+          </Card>
+        </div>
+      </div>
+
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Weekly Spending Chart */}
+        <div className="lg:col-span-5">
+          <Card className="p-6 h-full">
+            <h3 className="text-sm font-bold mb-1">Gastos da Semana</h3>
+            <p className="text-[9px] text-white/20 uppercase tracking-[0.2em] mb-4">Últimos 7 dias</p>
+            <div className="h-[180px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={weeklySpending} barSize={20}>
+                  <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 10 }} />
+                  <YAxis hide />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#0c0c0c', border: '1px solid #333', borderRadius: '12px', fontSize: 12 }}
+                    formatter={(value: number) => [`R$ ${value.toFixed(2)}`, 'Gasto']}
+                    cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                  />
+                  <Bar dataKey="gasto" fill="#c1ff72" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </div>
+
+        {/* Nutrition / Calories */}
+        <div className="lg:col-span-4">
+          <Card className="p-6 h-full">
+            <h3 className="text-sm font-bold mb-1">Nutrição Hoje</h3>
+            <p className="text-[9px] text-white/20 uppercase tracking-[0.2em] mb-4">{gymStats.caloriesConsumed} / {gymStats.targetCalories} kcal ({calProgress}%)</p>
+            <div className="flex items-center gap-6">
+              <div className="h-[140px] w-[140px] relative shrink-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={hasMacros ? macroData : [{ name: 'Vazio', value: 1, color: '#222' }]}
+                      cx="50%" cy="50%" innerRadius={45} outerRadius={62}
+                      paddingAngle={4} dataKey="value" stroke="none"
+                    >
+                      {(hasMacros ? macroData : [{ color: '#222' }]).map((entry, i) => (
+                        <Cell key={i} fill={entry.color} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-lg font-bold">{calProgress}%</span>
+                </div>
+              </div>
+              <div className="space-y-3 flex-1">
+                {macroData.map(item => (
+                  <div key={item.name} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                      <span className="text-xs text-white/40">{item.name}</span>
+                    </div>
+                    <span className="text-sm font-bold">{item.value}g</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Weight Evolution */}
+        <div className="lg:col-span-3">
+          <Card className="p-6 h-full bg-[#161616]">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-sm font-bold">Peso</h3>
+              <Scale size={14} className="text-white/15" />
+            </div>
+            <p className="text-[9px] text-white/20 uppercase tracking-[0.2em] mb-4">Evolução</p>
+            <div className="h-[120px]">
+              {weightHistory.length > 1 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={weightHistory.map(e => ({
+                    d: new Date(e.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
+                    peso: e.weight
+                  }))}>
+                    <defs>
+                      <linearGradient id="wGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#c1ff72" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#c1ff72" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <YAxis domain={['dataMin - 1', 'dataMax + 1']} hide />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#0c0c0c', border: '1px solid #333', borderRadius: '12px', fontSize: 12 }}
+                      formatter={(value: number) => [`${value} kg`, 'Peso']}
+                    />
+                    <Area type="monotone" dataKey="peso" stroke="#c1ff72" strokeWidth={2} fillOpacity={1} fill="url(#wGrad)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-white/10 text-xs">
+                  Sem histórico
+                </div>
+              )}
+            </div>
+            <div className="flex justify-between items-center mt-3 pt-3 border-t border-white/5">
+              <div>
+                <p className="text-[9px] text-white/20">Atual</p>
+                <p className="text-lg font-bold">{gymStats.weight} kg</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[9px] text-white/20">Meta</p>
+                <p className="text-lg font-bold text-[#c1ff72]">{gymStats.targetWeight || '—'} kg</p>
+              </div>
+            </div>
           </Card>
         </div>
       </div>
