@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { Card, Button, Input, Badge, ButtonCircle } from '../components/ui/LayoutComponents';
-import { User, Bell, Shield, Smartphone, Globe, CreditCard, ChevronRight, Camera, LogOut, Save, Loader2 } from 'lucide-react';
+import { Card, Button, Input, Badge } from '../components/ui/LayoutComponents';
+import { User, Bell, CreditCard, ChevronRight, Camera, LogOut, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Profile } from '../types';
@@ -19,6 +19,14 @@ const SettingsPage: React.FC = () => {
     height: 0,
     activityLevel: '',
     goal: ''
+  });
+
+  // Notification preferences (local state - could be persisted to Supabase later)
+  const [notifications, setNotifications] = React.useState({
+    habits: true,
+    tasks: true,
+    finance: false,
+    gym: true,
   });
 
   React.useEffect(() => {
@@ -52,7 +60,7 @@ const SettingsPage: React.FC = () => {
         setProfile(prev => ({ ...prev, email: user?.email || '' }));
       }
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      // silently fail - profile might not exist yet
     } finally {
       setLoading(false);
     }
@@ -62,7 +70,6 @@ const SettingsPage: React.FC = () => {
     if (!user) return;
     setSaving(true);
     try {
-      // Prepare data with proper null handling
       const updateData = {
         id: user.id,
         full_name: profile.fullName || null,
@@ -75,30 +82,35 @@ const SettingsPage: React.FC = () => {
         updated_at: new Date().toISOString()
       };
 
-
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('profiles')
-        .upsert(updateData, {
-          onConflict: 'id'
-        })
+        .upsert(updateData, { onConflict: 'id' })
         .select();
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
       alert('Configurações salvas com sucesso!');
-      await fetchProfile(); // Refresh data
+      await fetchProfile();
     } catch (error: any) {
-      console.error('Error saving profile:', error);
-      alert(`Erro ao salvar configurações: ${error.message || 'Erro desconhecido'}`);
+      alert(`Erro ao salvar: ${error.message || 'Erro desconhecido'}`);
     } finally {
       setSaving(false);
     }
   };
 
+  const handleChangePassword = async () => {
+    if (!user?.email) return;
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(user.email);
+      if (error) throw error;
+      alert('Link para redefinir senha enviado para seu email!');
+    } catch (error: any) {
+      alert(`Erro: ${error.message}`);
+    }
+  };
+
   const handleDeleteAccount = async () => {
     if (confirm('Tem certeza que deseja deletar sua conta? Esta ação é irreversível.')) {
-      alert('Para deletar sua conta, entre em contato com o suporte ou use o console do Supabase (Ação Crítica).');
+      alert('Para deletar sua conta, entre em contato com o suporte.');
     }
   };
 
@@ -109,20 +121,20 @@ const SettingsPage: React.FC = () => {
       </div>
     );
   }
+
+  const tabs = [
+    { label: 'Perfil', icon: User },
+    { label: 'Notificações', icon: Bell },
+    { label: 'Faturamento', icon: CreditCard },
+  ];
+
   return (
     <div className="space-y-8 pb-10">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Navigation Sidebar */}
         <div className="lg:col-span-3">
           <Card className="p-4 bg-white/[0.02] border-white/5 space-y-2">
-            {[
-              { label: 'Perfil', icon: User, active: true },
-              { label: 'Notificações', icon: Bell },
-              { label: 'Segurança', icon: Shield },
-              { label: 'Integrações', icon: Smartphone },
-              { label: 'Preferências', icon: Globe },
-              { label: 'Faturamento', icon: CreditCard },
-            ].map(item => (
+            {tabs.map(item => (
               <button
                 key={item.label}
                 className={`w-full flex items-center justify-between px-6 py-4 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === item.label
@@ -135,7 +147,7 @@ const SettingsPage: React.FC = () => {
                   <item.icon size={18} />
                   {item.label}
                 </div>
-                {item.active && <ChevronRight size={14} />}
+                {activeTab === item.label && <ChevronRight size={14} />}
               </button>
             ))}
             <div className="pt-4 border-t border-white/5 mt-4">
@@ -151,104 +163,260 @@ const SettingsPage: React.FC = () => {
 
         {/* Content Area */}
         <div className="lg:col-span-9 space-y-6">
-          <Card className="p-10">
-            <h3 className="text-2xl font-bold mb-10">Configurações de Perfil</h3>
 
-            <div className="flex flex-col sm:flex-row items-center gap-10 mb-12">
-              <div className="relative group">
-                <div className="w-32 h-32 rounded-[40px] bg-[#c1ff72] text-black flex items-center justify-center text-4xl font-bold shadow-2xl border-4 border-white/5">
-                  {profile.fullName?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}
+          {/* ===== PERFIL TAB ===== */}
+          {activeTab === 'Perfil' && (
+            <>
+              <Card className="p-10">
+                <h3 className="text-2xl font-bold mb-10">Configurações de Perfil</h3>
+
+                <div className="flex flex-col sm:flex-row items-center gap-10 mb-12">
+                  <div className="relative group">
+                    <div className="w-32 h-32 rounded-[40px] bg-[#c1ff72] text-black flex items-center justify-center text-4xl font-bold shadow-2xl border-4 border-white/5">
+                      {profile.fullName?.charAt(0) || user?.email?.charAt(0)?.toUpperCase()}
+                    </div>
+                  </div>
+                  <div className="text-center sm:text-left">
+                    <h4 className="text-2xl font-bold">{profile.fullName || 'Usuário'}</h4>
+                    <p className="text-sm text-white/30 mt-1">{profile.email}</p>
+                    <div className="flex gap-2 mt-4 justify-center sm:justify-start">
+                      <Badge variant="success">Ativo</Badge>
+                    </div>
+                  </div>
                 </div>
-                <button className="absolute -bottom-2 -right-2 bg-[#c1ff72] p-3 rounded-full text-black shadow-xl hover:scale-110 transition-transform">
-                  <Camera size={20} />
-                </button>
-              </div>
-              <div className="text-center sm:text-left">
-                <h4 className="text-2xl font-bold">{profile.fullName || 'Usuário'}</h4>
-                <p className="text-sm text-white/30 mt-1 uppercase tracking-widest font-bold">Central Saúde</p>
-                <div className="flex gap-2 mt-4 justify-center sm:justify-start">
-                  <Badge variant="success">Pro</Badge>
-                  <Badge variant="status">Sincronizado</Badge>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Nome Completo</label>
+                    <Input
+                      value={profile.fullName}
+                      onChange={e => setProfile({ ...profile, fullName: e.target.value })}
+                      className="h-14 bg-[#161616] border-white/5"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Email Principal</label>
+                    <Input
+                      value={profile.email}
+                      disabled
+                      className="h-14 bg-[#161616] border-white/5 opacity-50 cursor-not-allowed"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Gênero</label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { label: 'Masculino', value: 'Male' },
+                        { label: 'Feminino', value: 'Female' },
+                        { label: 'Outro', value: 'Other' },
+                      ].map(g => (
+                        <button
+                          key={g.value}
+                          onClick={() => setProfile({ ...profile, gender: g.value as any })}
+                          className={`h-14 rounded-xl border flex items-center justify-center text-sm font-bold transition-all ${
+                            profile.gender === g.value
+                              ? 'bg-[#c1ff72] text-black border-[#c1ff72]'
+                              : 'border-white/10 hover:border-white/30 text-white/60'
+                          }`}
+                        >
+                          {g.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Data de Nascimento</label>
+                    <Input
+                      type="date"
+                      value={profile.birthDate}
+                      onChange={e => setProfile({ ...profile, birthDate: e.target.value })}
+                      className="h-14 bg-[#161616] border-white/5"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Altura (cm)</label>
+                    <Input
+                      type="number"
+                      value={profile.height}
+                      onChange={e => setProfile({ ...profile, height: parseFloat(e.target.value) })}
+                      className="h-14 bg-[#161616] border-white/5"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Nível de Atividade</label>
+                    <select
+                      value={profile.activityLevel}
+                      onChange={e => setProfile({ ...profile, activityLevel: e.target.value })}
+                      className="w-full h-14 bg-[#161616] border border-white/5 rounded-xl px-4 text-white focus:outline-none focus:border-[#c1ff72]/50 transition-all appearance-none"
+                    >
+                      <option value="">Selecione...</option>
+                      <option value="Sedentário">Sedentário</option>
+                      <option value="Levemente Ativo">Levemente Ativo</option>
+                      <option value="Moderadamente Ativo">Moderadamente Ativo</option>
+                      <option value="Muito Ativo">Muito Ativo</option>
+                    </select>
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Objetivo</label>
+                    <select
+                      value={profile.goal}
+                      onChange={e => setProfile({ ...profile, goal: e.target.value })}
+                      className="w-full h-14 bg-[#161616] border border-white/5 rounded-xl px-4 text-white focus:outline-none focus:border-[#c1ff72]/50 transition-all appearance-none"
+                    >
+                      <option value="">Selecione...</option>
+                      <option value="Perder Peso">Perder Peso</option>
+                      <option value="Ganhar Massa Muscular">Ganhar Massa Muscular</option>
+                      <option value="Manter Peso">Manter Peso</option>
+                      <option value="Saúde Geral">Saúde Geral</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-3">
-                <label className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Nome Completo</label>
-                <Input
-                  value={profile.fullName}
-                  onChange={e => setProfile({ ...profile, fullName: e.target.value })}
-                  className="h-14 bg-[#161616] border-white/5"
-                />
-              </div>
-              <div className="space-y-3">
-                <label className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Email Principal</label>
-                <Input
-                  value={profile.email}
-                  onChange={e => setProfile({ ...profile, email: e.target.value })}
-                  className="h-14 bg-[#161616] border-white/5"
-                />
-              </div>
-              <div className="space-y-3">
-                <label className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Data de Nascimento</label>
-                <Input
-                  type="date"
-                  value={profile.birthDate}
-                  onChange={e => setProfile({ ...profile, birthDate: e.target.value })}
-                  className="h-14 bg-[#161616] border-white/5"
-                />
-              </div>
-              <div className="space-y-3">
-                <label className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Altura (cm)</label>
-                <Input
-                  type="number"
-                  value={profile.height}
-                  onChange={e => setProfile({ ...profile, height: parseFloat(e.target.value) })}
-                  className="h-14 bg-[#161616] border-white/5"
-                />
-              </div>
-            </div>
+                <div className="mt-12 flex flex-col sm:flex-row justify-between gap-4">
+                  <Button
+                    variant="outline"
+                    className="h-12 border-white/10 hover:bg-white/5"
+                    onClick={handleChangePassword}
+                  >
+                    Alterar Senha
+                  </Button>
+                  <div className="flex gap-4">
+                    <Button
+                      variant="outline"
+                      className="h-12 border-white/10 hover:bg-white/5"
+                      onClick={fetchProfile}
+                    >
+                      Descartar
+                    </Button>
+                    <Button
+                      className="h-12 px-10"
+                      onClick={handleSave}
+                      disabled={saving}
+                    >
+                      {saving ? <Loader2 className="animate-spin" size={20} /> : 'Salvar Alterações'}
+                    </Button>
+                  </div>
+                </div>
+              </Card>
 
-            <div className="mt-12 flex justify-end gap-4">
-              <Button
-                variant="outline"
-                className="h-12 border-white/10 hover:bg-white/5"
-                onClick={fetchProfile}
-              >
-                Descartar
-              </Button>
-              <Button
-                className="h-12 px-10"
-                onClick={handleSave}
-                disabled={saving}
-              >
-                {saving ? <Loader2 className="animate-spin" size={20} /> : 'Salvar Alterações'}
-              </Button>
-            </div>
-          </Card>
+              <Card className="p-8 border-red-500/10 bg-red-500/[0.02]">
+                <h3 className="text-lg font-bold text-red-400 mb-2">Zona Crítica</h3>
+                <p className="text-xs text-white/30 mb-6 leading-relaxed">Remover sua conta irá deletar permanentemente todos os seus dados e históricos.</p>
+                <Button
+                  variant="danger"
+                  className="w-full sm:w-auto h-12 bg-red-600/20 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white"
+                  onClick={handleDeleteAccount}
+                >
+                  Deletar Minha Conta
+                </Button>
+              </Card>
+            </>
+          )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="p-8 border-red-500/10 bg-red-500/[0.02]">
-              <h3 className="text-lg font-bold text-red-400 mb-2">Zona Crítica</h3>
-              <p className="text-xs text-white/30 mb-8 leading-relaxed font-bold uppercase tracking-widest">Remover sua conta irá deletar permanentemente todos os seus dados e históricos do Central Saúde.</p>
-              <Button
-                variant="danger"
-                className="w-full h-12 bg-red-600/20 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white"
-                onClick={handleDeleteAccount}
-              >
-                Deletar Minha Conta
-              </Button>
+          {/* ===== NOTIFICAÇÕES TAB ===== */}
+          {activeTab === 'Notificações' && (
+            <Card className="p-10">
+              <h3 className="text-2xl font-bold mb-2">Notificações</h3>
+              <p className="text-white/40 text-sm mb-10">Escolha quais notificações você deseja receber.</p>
+
+              <div className="space-y-4">
+                {[
+                  { key: 'habits', label: 'Hábitos', desc: 'Lembrete diário para completar seus hábitos' },
+                  { key: 'tasks', label: 'Tarefas', desc: 'Avisos de tarefas com prazo próximo' },
+                  { key: 'finance', label: 'Finanças', desc: 'Resumo semanal dos seus gastos' },
+                  { key: 'gym', label: 'Academia', desc: 'Lembrete dos seus dias de treino' },
+                ].map(item => (
+                  <div key={item.key} className="flex items-center justify-between p-6 bg-white/[0.02] border border-white/5 rounded-2xl">
+                    <div>
+                      <h4 className="font-bold text-sm">{item.label}</h4>
+                      <p className="text-xs text-white/30 mt-1">{item.desc}</p>
+                    </div>
+                    <button
+                      onClick={() => setNotifications(prev => ({ ...prev, [item.key]: !prev[item.key as keyof typeof prev] }))}
+                      className={`w-14 h-8 rounded-full transition-all relative ${
+                        notifications[item.key as keyof typeof notifications]
+                          ? 'bg-[#c1ff72]'
+                          : 'bg-white/10'
+                      }`}
+                    >
+                      <div className={`w-6 h-6 bg-white rounded-full absolute top-1 transition-all shadow-md ${
+                        notifications[item.key as keyof typeof notifications]
+                          ? 'left-7'
+                          : 'left-1'
+                      }`} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <p className="text-xs text-white/20 mt-8">As notificações serão enviadas por email para {profile.email || user?.email}.</p>
             </Card>
-            <Card variant="blue" className="p-8">
-              <h3 className="text-lg font-bold mb-4">Central Saúde Cloud</h3>
-              <p className="text-xs font-bold opacity-60 uppercase tracking-widest leading-relaxed mb-6">Backup automático ativado. Seus dados estão sincronizados com segurança.</p>
-              <div className="flex items-center justify-between bg-black/10 px-6 py-4 rounded-2xl">
-                <span className="text-xs font-bold uppercase tracking-widest">Último backup</span>
-                <span className="text-xs font-bold">Há 2 horas</span>
-              </div>
-            </Card>
-          </div>
+          )}
+
+          {/* ===== FATURAMENTO TAB ===== */}
+          {activeTab === 'Faturamento' && (
+            <div className="space-y-6">
+              <Card className="p-10">
+                <h3 className="text-2xl font-bold mb-2">Seu Plano</h3>
+                <p className="text-white/40 text-sm mb-10">Gerencie sua assinatura do Central Saúde.</p>
+
+                <div className="p-8 bg-gradient-to-br from-[#c1ff72]/10 to-[#c1ff72]/5 border border-[#c1ff72]/20 rounded-2xl">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <div className="flex items-center gap-3 mb-2">
+                        <h4 className="text-xl font-bold">Plano Gratuito</h4>
+                        <Badge variant="success">Ativo</Badge>
+                      </div>
+                      <p className="text-white/40 text-sm">Acesso a todas as funcionalidades básicas</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-3xl font-bold text-[#c1ff72]">R$ 0</p>
+                      <p className="text-xs text-white/30">/mês</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
+                    {[
+                      'Dashboard completo',
+                      'Controle de hábitos',
+                      'Gestão de tarefas',
+                      'Controle financeiro',
+                      'Treinos de academia',
+                      'Calendário',
+                    ].map(feature => (
+                      <div key={feature} className="flex items-center gap-3 text-sm">
+                        <div className="w-5 h-5 rounded-full bg-[#c1ff72]/20 flex items-center justify-center">
+                          <div className="w-2 h-2 rounded-full bg-[#c1ff72]" />
+                        </div>
+                        <span className="text-white/60">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="p-10">
+                <h3 className="text-lg font-bold mb-2">Informações da Conta</h3>
+                <div className="space-y-4 mt-6">
+                  <div className="flex items-center justify-between py-4 border-b border-white/5">
+                    <span className="text-sm text-white/40">Email</span>
+                    <span className="text-sm font-bold">{profile.email || user?.email}</span>
+                  </div>
+                  <div className="flex items-center justify-between py-4 border-b border-white/5">
+                    <span className="text-sm text-white/40">Status da conta</span>
+                    <Badge variant="success">Ativa</Badge>
+                  </div>
+                  <div className="flex items-center justify-between py-4">
+                    <span className="text-sm text-white/40">Membro desde</span>
+                    <span className="text-sm font-bold">
+                      {user?.created_at ? new Date(user.created_at).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) : '-'}
+                    </span>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          )}
+
         </div>
       </div>
     </div>
