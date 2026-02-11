@@ -12,6 +12,8 @@ const SettingsPage: React.FC = () => {
   const [saving, setSaving] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState('Perfil');
   const [weight, setWeight] = React.useState<number>(0);
+  const [userPlan, setUserPlan] = React.useState<string>('free');
+  const [planExpires, setPlanExpires] = React.useState<string | null>(null);
   const [profile, setProfile] = React.useState<Partial<Profile>>({
     fullName: '',
     email: '',
@@ -56,6 +58,8 @@ const SettingsPage: React.FC = () => {
           activityLevel: data.activity_level || '',
           goal: data.goal || ''
         });
+        setUserPlan(data.plan || 'free');
+        setPlanExpires(data.plan_expires_at || null);
       } else {
         setProfile(prev => ({ ...prev, email: user?.email || '' }));
       }
@@ -406,13 +410,26 @@ const SettingsPage: React.FC = () => {
                   <div className="flex items-center justify-between mb-6">
                     <div>
                       <div className="flex items-center gap-3 mb-2">
-                        <h4 className="text-xl font-bold">Plano Gratuito</h4>
+                        <h4 className="text-xl font-bold">
+                          {userPlan === 'premium' ? 'Plano Premium' : 'Plano Gratuito'}
+                        </h4>
                         <Badge variant="success">Ativo</Badge>
                       </div>
-                      <p className="text-white/40 text-sm">Acesso a todas as funcionalidades básicas</p>
+                      <p className="text-white/40 text-sm">
+                        {userPlan === 'premium'
+                          ? 'Acesso completo a todas as funcionalidades'
+                          : 'Acesso a funcionalidades básicas'}
+                      </p>
+                      {planExpires && (
+                        <p className="text-xs text-white/30 mt-1">
+                          Válido até {new Date(planExpires).toLocaleDateString('pt-BR')}
+                        </p>
+                      )}
                     </div>
                     <div className="text-right">
-                      <p className="text-3xl font-bold text-[#c1ff72]">R$ 0</p>
+                      <p className="text-3xl font-bold text-[#c1ff72]">
+                        {userPlan === 'premium' ? 'R$ 14,90' : 'R$ 0'}
+                      </p>
                       <p className="text-xs text-white/30">/mês</p>
                     </div>
                   </div>
@@ -424,6 +441,8 @@ const SettingsPage: React.FC = () => {
                       'Gestão de tarefas',
                       'Controle financeiro',
                       'Treinos de academia',
+                      'Suplementos e nutrição',
+                      'Gráficos e relatórios',
                       'Calendário',
                     ].map(feature => (
                       <div key={feature} className="flex items-center gap-3 text-sm">
@@ -443,6 +462,12 @@ const SettingsPage: React.FC = () => {
                   <div className="flex items-center justify-between py-4 border-b border-white/5">
                     <span className="text-sm text-white/40">Email</span>
                     <span className="text-sm font-bold">{profile.email || user?.email}</span>
+                  </div>
+                  <div className="flex items-center justify-between py-4 border-b border-white/5">
+                    <span className="text-sm text-white/40">Plano atual</span>
+                    <Badge variant={userPlan === 'premium' ? 'success' : 'default'}>
+                      {userPlan === 'premium' ? 'Premium' : 'Gratuito'}
+                    </Badge>
                   </div>
                   <div className="flex items-center justify-between py-4 border-b border-white/5">
                     <span className="text-sm text-white/40">Status da conta</span>

@@ -48,6 +48,7 @@ const Register: React.FC = () => {
                     id: data.user.id,
                     email: email,
                     full_name: name,
+                    plan: 'premium',
                     updated_at: new Date().toISOString()
                 });
             }
