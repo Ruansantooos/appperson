@@ -9,6 +9,7 @@ import { Habit } from '../types';
 const HabitsPage: React.FC = () => {
   const { user } = useAuth();
   const [habits, setHabits] = useState<Habit[]>([]);
+  const [habitLogs, setHabitLogs] = useState<Record<string, string[]>>({}); // habit_id -> array of dates
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
@@ -40,6 +41,25 @@ const HabitsPage: React.FC = () => {
           createdAt: h.created_at
         }));
         setHabits(mappedHabits);
+
+        // Fetch logs for history visualization (last 28 days)
+        const twentyEightDaysAgo = new Date();
+        twentyEightDaysAgo.setDate(twentyEightDaysAgo.getDate() - 28);
+
+        const { data: logsData } = await supabase
+          .from('habit_logs')
+          .select('habit_id, date')
+          .eq('user_id', user.id)
+          .gte('date', twentyEightDaysAgo.toISOString().split('T')[0]);
+
+        if (logsData) {
+          const logsMap: Record<string, string[]> = {};
+          logsData.forEach((log: any) => {
+            if (!logsMap[log.habit_id]) logsMap[log.habit_id] = [];
+            logsMap[log.habit_id].push(log.date);
+          });
+          setHabitLogs(logsMap);
+        }
       }
     } catch (error) {
       console.error('Error fetching habits:', error);
@@ -49,11 +69,35 @@ const HabitsPage: React.FC = () => {
   };
 
   const toggleHabit = async (id: string, completed: boolean) => {
+    const today = new Date().toISOString().split('T')[0];
+
     // Optimistic update
-    setHabits(prev => prev.map(h => h.id === id ? { ...h, completedToday: !completed } : h));
+    setHabits(prev => prev.map(h => h.id === id ? {
+      ...h,
+      completedToday: !completed,
+      streak: !completed ? h.streak + 1 : Math.max(0, h.streak - 1)
+    } : h));
 
     try {
-      await supabase.from('habits').update({ completed_today: !completed }).eq('id', id);
+      // 1. Update habits table
+      await supabase.from('habits').update({
+        completed_today: !completed,
+        streak: !completed ? habits.find(h => h.id === id)!.streak + 1 : Math.max(0, habits.find(h => h.id === id)!.streak - 1)
+      }).eq('id', id);
+
+      // 2. Update/Insert habit_logs table
+      if (!completed) {
+        await supabase.from('habit_logs').upsert({
+          habit_id: id,
+          user_id: user!.id,
+          date: today,
+          completed: true
+        });
+      } else {
+        await supabase.from('habit_logs').delete().eq('habit_id', id).eq('date', today);
+      }
+
+      fetchHabits();
     } catch (error) {
       console.error('Error updating habit:', error);
       fetchHabits();
@@ -159,21 +203,23 @@ const HabitsPage: React.FC = () => {
             <Flame size={20} />
           </div>
           <p className="text-xs font-bold opacity-60 uppercase tracking-widest">Melhor Streak</p>
-          <h4 className="text-3xl font-bold mt-2">28 Dias</h4>
+          <h4 className="text-3xl font-bold mt-2">{Math.max(...habits.map(h => h.bestStreak), 0)} Dias</h4>
         </Card>
         <Card variant="blue" className="p-8 relative">
           <div className="absolute top-6 right-6 bg-black/10 p-2 rounded-full">
             <Zap size={20} />
           </div>
           <p className="text-xs font-bold opacity-60 uppercase tracking-widest">Conclusão Hoje</p>
-          <h4 className="text-3xl font-bold mt-2">60%</h4>
+          <h4 className="text-3xl font-bold mt-2">
+            {habits.length > 0 ? Math.round((habits.filter(h => h.completedToday).length / habits.length) * 100) : 0}%
+          </h4>
         </Card>
         <Card variant="peach" className="p-8 relative">
           <div className="absolute top-6 right-6 bg-black/10 p-2 rounded-full">
             <Award size={20} />
           </div>
-          <p className="text-xs font-bold opacity-60 uppercase tracking-widest">Pontuação</p>
-          <h4 className="text-3xl font-bold mt-2">Level 15</h4>
+          <p className="text-xs font-bold opacity-60 uppercase tracking-widest">Total Ativos</p>
+          <h4 className="text-3xl font-bold mt-2">{habits.length}</h4>
         </Card>
       </div>
 
@@ -242,15 +288,20 @@ const HabitsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Micro grid visualization */}
+            {/* History visualization grid */}
             <div className="mt-8 border-t border-white/5 pt-6">
               <div className="flex flex-wrap gap-1.5">
                 {Array.from({ length: 28 }).map((_, i) => {
-                  const isActive = Math.random() > 0.3;
+                  const date = new Date();
+                  date.setDate(date.getDate() - (27 - i));
+                  const dateStr = date.toISOString().split('T')[0];
+                  const isLogged = habitLogs[habit.id]?.includes(dateStr);
+
                   return (
                     <div
                       key={i}
-                      className={`w-2.5 h-2.5 rounded-[2px] ${isActive ? 'bg-[#c1ff72]/40' : 'bg-white/5'}`}
+                      title={dateStr}
+                      className={`w-2.5 h-2.5 rounded-[2px] ${isLogged ? 'bg-[#c1ff72]/40' : 'bg-white/5'}`}
                     />
                   );
                 })}

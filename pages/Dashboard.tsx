@@ -25,7 +25,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, AreaChart, Area
 } from 'recharts';
-import { MOCK_NUTRITION, WEIGHT_HISTORY } from '../lib/mock-data';
+import { WeightEntry } from '../types';
 
 // Fallback defaults if data is missing
 const DEFAULT_GYM_STATS: GymStats = {
@@ -34,7 +34,10 @@ const DEFAULT_GYM_STATS: GymStats = {
   bodyFat: 0,
   muscleMass: 0,
   caloriesConsumed: 0,
-  targetCalories: 2000
+  targetCalories: 2000,
+  protein: 0,
+  carbs: 0,
+  fat: 0
 };
 
 const DEFAULT_NUTRITION: Nutrition = {
@@ -48,12 +51,15 @@ const Dashboard: React.FC = () => {
   const [gymStats, setGymStats] = useState<GymStats>(DEFAULT_GYM_STATS);
   const [habits, setHabits] = useState<Habit[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [weightHistory, setWeightHistory] = useState<WeightEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Derived state for nutrition (mocked for now as it's not in schema yet or derives from meals)
-  // For this example we will keep using mock nutrition or derived from calories if possible.
-  // Let's use the mock nutrition for now as we didn't create a 'meals' table yet.
-  const nutrition = MOCK_NUTRITION;
+  // Derived state for nutrition from gymStats
+  const macroData = [
+    { name: 'Proteína', value: gymStats.protein, color: '#c1ff72' },
+    { name: 'Carbo', value: gymStats.carbs, color: '#8fb0bc' },
+    { name: 'Gordura', value: gymStats.fat, color: '#d8b4a6' },
+  ];
 
   useEffect(() => {
     if (!user) return;
@@ -68,7 +74,25 @@ const Dashboard: React.FC = () => {
           .eq('user_id', user.id)
           .maybeSingle();
 
-        if (gymData) setGymStats(gymData);
+        if (gymData) {
+          setGymStats({
+            ...gymData,
+            targetWeight: gymData.target_weight,
+            muscleMass: gymData.muscle_mass,
+            caloriesConsumed: gymData.calories_consumed,
+            targetCalories: gymData.target_calories,
+            bodyFat: gymData.body_fat
+          });
+        }
+
+        // Fetch Weight History
+        const { data: weightData } = await supabase
+          .from('weight_history')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: true });
+
+        if (weightData) setWeightHistory(weightData);
 
         // Fetch Habits
         const { data: habitsData, error: habitsError } = await supabase
@@ -107,11 +131,7 @@ const Dashboard: React.FC = () => {
   const calProgress = gymStats.targetCalories > 0 ? (gymStats.caloriesConsumed / gymStats.targetCalories) * 100 : 0;
   const caloriesRemaining = gymStats.targetCalories - gymStats.caloriesConsumed;
 
-  const macroData = [
-    { name: 'Proteína', value: nutrition.protein, color: '#c1ff72' },
-    { name: 'Carbo', value: nutrition.carbs, color: '#8fb0bc' },
-    { name: 'Gordura', value: nutrition.fat, color: '#d8b4a6' },
-  ];
+  // No changes needed here, macroData already updated above
 
   return (
     <div className="space-y-8 pb-10">
@@ -318,7 +338,10 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="h-[180px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={WEIGHT_HISTORY}>
+                <AreaChart data={weightHistory.map(entry => ({
+                  month: new Date(entry.date).toLocaleDateString('pt-BR', { month: 'short' }),
+                  weight: entry.weight
+                }))}>
                   <defs>
                     <linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#c1ff72" stopOpacity={0.3} />

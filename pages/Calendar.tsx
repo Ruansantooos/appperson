@@ -19,7 +19,7 @@ import {
   X,
   Loader2
 } from 'lucide-react';
-import { MOCK_EVENTS } from '../lib/mock-data';
+// No mock-data imports needed
 
 const CalendarPage: React.FC = () => {
   const { user } = useAuth();
@@ -313,9 +313,9 @@ const CalendarPage: React.FC = () => {
                         <div
                           key={event.id}
                           className={`w-full text-[9px] font-bold px-1.5 py-0.5 rounded truncate text-left ${event.category === 'Work' ? 'bg-blue-500/20 text-blue-400' :
-                              event.category === 'Personal' ? 'bg-purple-500/20 text-purple-400' :
-                                event.category === 'Health' ? 'bg-red-500/20 text-red-400' :
-                                  'bg-[#c1ff72]/20 text-[#c1ff72]'
+                            event.category === 'Personal' ? 'bg-purple-500/20 text-purple-400' :
+                              event.category === 'Health' ? 'bg-red-500/20 text-red-400' :
+                                'bg-[#c1ff72]/20 text-[#c1ff72]'
                             }`}
                         >
                           {event.title}

@@ -75,7 +75,6 @@ const SettingsPage: React.FC = () => {
         updated_at: new Date().toISOString()
       };
 
-      console.log('Saving profile data:', updateData);
 
       const { data, error } = await supabase
         .from('profiles')
@@ -85,11 +84,8 @@ const SettingsPage: React.FC = () => {
         .select();
 
       if (error) {
-        console.error('Supabase error details:', error);
         throw error;
       }
-
-      console.log('Profile saved successfully:', data);
       alert('Configurações salvas com sucesso!');
       await fetchProfile(); // Refresh data
     } catch (error: any) {
@@ -169,7 +165,7 @@ const SettingsPage: React.FC = () => {
               </div>
               <div className="text-center sm:text-left">
                 <h4 className="text-2xl font-bold">{profile.fullName || 'Usuário'}</h4>
-                <p className="text-sm text-white/30 mt-1 uppercase tracking-widest font-bold">Nexus User</p>
+                <p className="text-sm text-white/30 mt-1 uppercase tracking-widest font-bold">Central Saúde</p>
                 <div className="flex gap-2 mt-4 justify-center sm:justify-start">
                   <Badge variant="success">Pro</Badge>
                   <Badge variant="status">Sincronizado</Badge>
@@ -235,7 +231,7 @@ const SettingsPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card className="p-8 border-red-500/10 bg-red-500/[0.02]">
               <h3 className="text-lg font-bold text-red-400 mb-2">Zona Crítica</h3>
-              <p className="text-xs text-white/30 mb-8 leading-relaxed font-bold uppercase tracking-widest">Remover sua conta irá deletar permanentemente todos os seus dados e históricos do Nexus.</p>
+              <p className="text-xs text-white/30 mb-8 leading-relaxed font-bold uppercase tracking-widest">Remover sua conta irá deletar permanentemente todos os seus dados e históricos do Central Saúde.</p>
               <Button
                 variant="danger"
                 className="w-full h-12 bg-red-600/20 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white"
@@ -245,7 +241,7 @@ const SettingsPage: React.FC = () => {
               </Button>
             </Card>
             <Card variant="blue" className="p-8">
-              <h3 className="text-lg font-bold mb-4">Nexus Cloud</h3>
+              <h3 className="text-lg font-bold mb-4">Central Saúde Cloud</h3>
               <p className="text-xs font-bold opacity-60 uppercase tracking-widest leading-relaxed mb-6">Backup automático ativado. Seus dados estão sincronizados com segurança.</p>
               <div className="flex items-center justify-between bg-black/10 px-6 py-4 rounded-2xl">
                 <span className="text-xs font-bold uppercase tracking-widest">Último backup</span>

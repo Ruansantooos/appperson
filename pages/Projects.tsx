@@ -269,7 +269,7 @@ const ProjectsPageInner: React.FC = () => {
     const newLinks: GraphLink[] = [];
 
     // Root Node
-    newNodes.push({ id: 'root', label: 'Nexus Home', type: 'root', x: 400, y: 300 });
+    newNodes.push({ id: 'root', label: 'Central Saúde', type: 'root', x: 400, y: 300 });
 
     // Project Nodes
     projectsData.forEach((p, i) => {
@@ -618,7 +618,7 @@ const ProjectsPageInner: React.FC = () => {
                 <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest">Conectado</span>
               </div>
             </div>
-            <p className="text-[9px] font-bold text-white/10 uppercase tracking-[0.4em]">Nexus Dynamic Engine v2.0</p>
+            <p className="text-[9px] font-bold text-white/10 uppercase tracking-[0.4em]">Central Saúde Engine v2.0</p>
           </div>
         </Card>
       </div>

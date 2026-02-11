@@ -71,6 +71,22 @@ export interface GymStats {
   muscleMass: number;
   caloriesConsumed: number;
   targetCalories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
+export interface WeightEntry {
+  id: string;
+  weight: number;
+  date: string;
+}
+
+export interface HabitLog {
+  id: string;
+  habit_id: string;
+  date: string;
+  completed: boolean;
 }
 
 export interface Nutrition {
