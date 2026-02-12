@@ -1,12 +1,12 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  BarChart2, 
-  Heart, 
-  User, 
-  Folder,
+import {
+  LayoutDashboard,
+  BarChart2,
+  Heart,
+  Wallet,
+  CalendarDays,
   Zap,
   Dumbbell,
   Settings,
@@ -22,8 +22,8 @@ const Sidebar: React.FC = () => {
     { icon: Layers, path: '/projects' }, // Novo ícone de Projetos
     { icon: Heart, path: '/habits' },
     { icon: Dumbbell, path: '/gym' },
-    { icon: User, path: '/finance' },
-    { icon: Folder, path: '/calendar' },
+    { icon: Wallet, path: '/finance' },
+    { icon: CalendarDays, path: '/calendar' },
   ];
 
   return (

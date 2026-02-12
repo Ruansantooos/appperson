@@ -12,7 +12,7 @@ const SettingsPage: React.FC = () => {
   const [saving, setSaving] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState('Perfil');
   const [weight, setWeight] = React.useState<number>(0);
-  const [userPlan, setUserPlan] = React.useState<string>('free');
+  const [userPlan, setUserPlan] = React.useState<string>('premium');
   const [planExpires, setPlanExpires] = React.useState<string | null>(null);
   const [profile, setProfile] = React.useState<Partial<Profile>>({
     fullName: '',
@@ -58,7 +58,7 @@ const SettingsPage: React.FC = () => {
           activityLevel: data.activity_level || '',
           goal: data.goal || ''
         });
-        setUserPlan(data.plan || 'free');
+        setUserPlan(data.plan || 'premium');
         setPlanExpires(data.plan_expires_at || null);
       } else {
         setProfile(prev => ({ ...prev, email: user?.email || '' }));

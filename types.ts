@@ -42,6 +42,18 @@ export interface Transaction {
   category: string;
   amount: number;
   type: 'income' | 'expense';
+  card_id?: string;
+}
+
+export interface FinanceCard {
+  id: string;
+  bank_name: string;
+  last_four_digits: string;
+  expiration_date: string;    // formato MM/AA
+  card_type: 'credit' | 'debit';
+  card_limit: number;
+  user_id: string;
+  created_at?: string;
 }
 
 export interface Habit {
