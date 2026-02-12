@@ -43,6 +43,7 @@ export interface Transaction {
   amount: number;
   type: 'income' | 'expense';
   card_id?: string;
+  finance_scope?: 'pf' | 'pj';
 }
 
 export interface FinanceCard {
@@ -52,6 +53,21 @@ export interface FinanceCard {
   expiration_date: string;    // formato MM/AA
   card_type: 'credit' | 'debit';
   card_limit: number;
+  user_id: string;
+  created_at?: string;
+  finance_scope?: 'pf' | 'pj';
+}
+
+export interface Bill {
+  id: string;
+  description: string;
+  amount: number;
+  due_date: string;
+  recurrence: 'once' | 'weekly' | 'monthly';
+  category: string;
+  status: 'pending' | 'paid' | 'overdue';
+  card_id?: string;
+  finance_scope: 'pf' | 'pj';
   user_id: string;
   created_at?: string;
 }

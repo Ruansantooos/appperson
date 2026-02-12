@@ -11,14 +11,21 @@ import {
   X,
   Loader2,
   CreditCard,
-  Trash2
+  Trash2,
+  CalendarClock,
+  CheckCircle2,
+  AlertTriangle,
+  Clock,
+  Repeat,
+  Building2,
+  User
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Transaction, FinanceCard } from '../types';
+import { Transaction, FinanceCard, Bill } from '../types';
 
 const COLORS = ['#d8b4a6', '#8fb0bc', '#c1ff72', '#e6a06e', '#ffffff'];
 
@@ -30,11 +37,15 @@ const CARD_GRADIENTS = [
   'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
 ];
 
+const CATEGORIES = ['Food', 'Work', 'Housing', 'Shopping', 'Entertainment', 'Transport', 'Utilities', 'Health', 'Education', 'Income', 'Others'];
+
 const FinancePage: React.FC = () => {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [cards, setCards] = useState<FinanceCard[]>([]);
+  const [bills, setBills] = useState<Bill[]>([]);
   const [loading, setLoading] = useState(true);
+  const [financeScope, setFinanceScope] = useState<'pf' | 'pj'>('pf');
 
   // New Transaction Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -59,18 +70,32 @@ const FinancePage: React.FC = () => {
   });
   const [submittingCard, setSubmittingCard] = useState(false);
 
+  // New Bill Modal State
+  const [isBillModalOpen, setIsBillModalOpen] = useState(false);
+  const [newBill, setNewBill] = useState({
+    description: '',
+    amount: '',
+    due_date: '',
+    recurrence: 'once' as 'once' | 'weekly' | 'monthly',
+    category: 'Utilities',
+    card_id: ''
+  });
+  const [submittingBill, setSubmittingBill] = useState(false);
+
   useEffect(() => {
     if (!user) return;
     fetchTransactions();
     fetchCards();
-  }, [user]);
+    fetchBills();
+  }, [user, financeScope]);
 
   const fetchTransactions = async () => {
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('transactions')
         .select('*')
         .eq('user_id', user.id)
+        .eq('finance_scope', financeScope)
         .order('date', { ascending: false });
 
       if (data) setTransactions(data);
@@ -83,15 +108,31 @@ const FinancePage: React.FC = () => {
 
   const fetchCards = async () => {
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('cards')
         .select('*')
         .eq('user_id', user.id)
+        .eq('finance_scope', financeScope)
         .order('created_at', { ascending: false });
 
       if (data) setCards(data);
     } catch (error) {
       console.error('Error fetching cards:', error);
+    }
+  };
+
+  const fetchBills = async () => {
+    try {
+      const { data } = await supabase
+        .from('bills')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('finance_scope', financeScope)
+        .order('due_date', { ascending: true });
+
+      if (data) setBills(data);
+    } catch (error) {
+      console.error('Error fetching bills:', error);
     }
   };
 
@@ -106,7 +147,8 @@ const FinancePage: React.FC = () => {
         amount: parseFloat(newTransaction.amount),
         category: newTransaction.category,
         type: newTransaction.type,
-        date: newTransaction.date
+        date: newTransaction.date,
+        finance_scope: financeScope
       };
 
       if (newTransaction.card_id) {
@@ -117,7 +159,6 @@ const FinancePage: React.FC = () => {
 
       if (error) throw error;
 
-      // Reset and refresh
       setNewTransaction({
         description: '',
         amount: '',
@@ -148,7 +189,8 @@ const FinancePage: React.FC = () => {
           last_four_digits: newCard.last_four_digits,
           expiration_date: newCard.expiration_date,
           card_type: newCard.card_type,
-          card_limit: parseFloat(newCard.card_limit) || 0
+          card_limit: parseFloat(newCard.card_limit) || 0,
+          finance_scope: financeScope
         }
       ]);
 
@@ -171,11 +213,105 @@ const FinancePage: React.FC = () => {
     }
   };
 
+  const handleCreateBill = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmittingBill(true);
+
+    try {
+      const insertData: any = {
+        user_id: user.id,
+        description: newBill.description,
+        amount: parseFloat(newBill.amount),
+        due_date: newBill.due_date,
+        recurrence: newBill.recurrence,
+        category: newBill.category,
+        status: 'pending',
+        finance_scope: financeScope
+      };
+
+      if (newBill.card_id) {
+        insertData.card_id = newBill.card_id;
+      }
+
+      const { error } = await supabase.from('bills').insert([insertData]);
+
+      if (error) throw error;
+
+      setNewBill({
+        description: '',
+        amount: '',
+        due_date: '',
+        recurrence: 'once',
+        category: 'Utilities',
+        card_id: ''
+      });
+      setIsBillModalOpen(false);
+      fetchBills();
+    } catch (error) {
+      console.error('Error creating bill:', error);
+      alert('Erro ao salvar conta. Tente novamente.');
+    } finally {
+      setSubmittingBill(false);
+    }
+  };
+
+  const handlePayBill = async (bill: Bill) => {
+    try {
+      // 1. Mark bill as paid
+      const { error: updateError } = await supabase
+        .from('bills')
+        .update({ status: 'paid' })
+        .eq('id', bill.id);
+
+      if (updateError) throw updateError;
+
+      // 2. Create expense transaction automatically
+      const txData: any = {
+        user_id: user.id,
+        description: `Conta paga: ${bill.description}`,
+        amount: bill.amount,
+        category: bill.category,
+        type: 'expense',
+        date: new Date().toISOString().split('T')[0],
+        finance_scope: bill.finance_scope
+      };
+
+      if (bill.card_id) {
+        txData.card_id = bill.card_id;
+      }
+
+      const { error: txError } = await supabase.from('transactions').insert([txData]);
+
+      if (txError) throw txError;
+
+      fetchBills();
+      fetchTransactions();
+    } catch (error) {
+      console.error('Error paying bill:', error);
+      alert('Erro ao pagar conta. Tente novamente.');
+    }
+  };
+
+  const handleDeleteBill = async (billId: string) => {
+    if (!confirm('Tem certeza que deseja excluir esta conta?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('bills')
+        .delete()
+        .eq('id', billId);
+
+      if (error) throw error;
+      fetchBills();
+    } catch (error) {
+      console.error('Error deleting bill:', error);
+    }
+  };
+
   const handleDeleteCard = async (cardId: string) => {
     if (!confirm('Tem certeza que deseja excluir este cartão?')) return;
 
     try {
-      // Remove card_id from linked transactions first
       await supabase
         .from('transactions')
         .update({ card_id: null })
@@ -206,6 +342,14 @@ const FinancePage: React.FC = () => {
     return `${card.bank_name} •••• ${card.last_four_digits}`;
   };
 
+  // Determine visual status for bills (overdue if past due and still pending)
+  const getBillDisplayStatus = (bill: Bill): 'paid' | 'pending' | 'overdue' => {
+    if (bill.status === 'paid') return 'paid';
+    const today = new Date().toISOString().split('T')[0];
+    if (bill.due_date < today && bill.status === 'pending') return 'overdue';
+    return 'pending';
+  };
+
   // Calculations
   const totalBalance = transactions.reduce((acc, curr) => {
     return curr.type === 'income' ? acc + Number(curr.amount) : acc - Number(curr.amount);
@@ -233,8 +377,40 @@ const FinancePage: React.FC = () => {
     color: COLORS[index % COLORS.length]
   }));
 
+  const pendingBillsTotal = bills
+    .filter(b => getBillDisplayStatus(b) !== 'paid')
+    .reduce((acc, b) => acc + Number(b.amount), 0);
+
   return (
     <div className="space-y-8 pb-10">
+      {/* PF / PJ Scope Toggle */}
+      <div className="flex items-center justify-center">
+        <div className="flex bg-[#161616] rounded-2xl p-1 border border-white/10 w-fit">
+          <button
+            onClick={() => setFinanceScope('pf')}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${
+              financeScope === 'pf'
+                ? 'bg-[#c1ff72]/15 text-[#c1ff72] shadow-lg shadow-[#c1ff72]/5'
+                : 'text-white/40 hover:text-white/60'
+            }`}
+          >
+            <User size={16} />
+            Pessoal (PF)
+          </button>
+          <button
+            onClick={() => setFinanceScope('pj')}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${
+              financeScope === 'pj'
+                ? 'bg-[#8fb0bc]/15 text-[#8fb0bc] shadow-lg shadow-[#8fb0bc]/5'
+                : 'text-white/40 hover:text-white/60'
+            }`}
+          >
+            <Building2 size={16} />
+            Empresa (PJ)
+          </button>
+        </div>
+      </div>
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card variant="peach" className="p-6 relative">
@@ -361,6 +537,111 @@ const FinancePage: React.FC = () => {
                     )}
                   </div>
                 </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Contas a Pagar Section */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-bold flex items-center gap-2">
+            <CalendarClock size={20} className="text-[#e6a06e]" />
+            Contas a Pagar
+            {pendingBillsTotal > 0 && (
+              <span className="text-sm font-normal text-white/40 ml-2">
+                R$ {pendingBillsTotal.toFixed(2)} pendente
+              </span>
+            )}
+          </h3>
+          <Button size="sm" onClick={() => setIsBillModalOpen(true)}>
+            <Plus size={16} /> Nova Conta
+          </Button>
+        </div>
+
+        {bills.length === 0 ? (
+          <Card className="p-8 text-center">
+            <CalendarClock size={40} className="mx-auto text-white/20 mb-3" />
+            <p className="text-white/40 text-sm">Nenhuma conta cadastrada.</p>
+            <p className="text-white/20 text-xs mt-1">Adicione contas futuras para manter o controle dos seus vencimentos.</p>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {bills.map(bill => {
+              const displayStatus = getBillDisplayStatus(bill);
+              const statusConfig = {
+                paid: {
+                  bg: 'bg-emerald-500/10 border-emerald-500/20',
+                  icon: <CheckCircle2 size={18} className="text-emerald-400" />,
+                  badge: 'bg-emerald-500/20 text-emerald-400',
+                  label: 'Paga'
+                },
+                pending: {
+                  bg: 'bg-amber-500/5 border-amber-500/15',
+                  icon: <Clock size={18} className="text-amber-400" />,
+                  badge: 'bg-amber-500/20 text-amber-400',
+                  label: 'Pendente'
+                },
+                overdue: {
+                  bg: 'bg-red-500/10 border-red-500/20',
+                  icon: <AlertTriangle size={18} className="text-red-400" />,
+                  badge: 'bg-red-500/20 text-red-400',
+                  label: 'Vencida'
+                }
+              };
+
+              const config = statusConfig[displayStatus];
+              const recurrenceLabels = { once: 'Única', weekly: 'Semanal', monthly: 'Mensal' };
+
+              return (
+                <Card
+                  key={bill.id}
+                  className={`p-4 border ${config.bg} flex items-center justify-between gap-4`}
+                >
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className="shrink-0">
+                      {config.icon}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-bold text-sm truncate">{bill.description}</p>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${config.badge}`}>
+                          {config.label}
+                        </span>
+                        {bill.recurrence !== 'once' && (
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 flex items-center gap-1">
+                            <Repeat size={10} />
+                            {recurrenceLabels[bill.recurrence]}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 mt-1 text-xs text-white/40">
+                        <span>Vence: {bill.due_date}</span>
+                        <span>{bill.category}</span>
+                        {bill.card_id && <span>{getCardName(bill.card_id)}</span>}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 shrink-0">
+                    <p className="text-lg font-bold">R$ {Number(bill.amount).toFixed(2)}</p>
+                    {displayStatus !== 'paid' && (
+                      <button
+                        onClick={() => handlePayBill(bill)}
+                        className="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider"
+                      >
+                        Pagar
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleDeleteBill(bill.id)}
+                      className="p-2 rounded-xl bg-white/5 hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </Card>
               );
             })}
           </div>
@@ -526,7 +807,7 @@ const FinancePage: React.FC = () => {
                     onChange={e => setNewTransaction({ ...newTransaction, category: e.target.value })}
                     className="w-full bg-[#161616] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#c1ff72]"
                   >
-                    {['Food', 'Work', 'Housing', 'Shopping', 'Entertainment', 'Transport', 'Utilities', 'Health', 'Education', 'Income', 'Others'].map(cat => (
+                    {CATEGORIES.map(cat => (
                       <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>
@@ -670,6 +951,134 @@ const FinancePage: React.FC = () => {
                 className="w-full bg-[#c1ff72] text-black font-bold py-4 rounded-xl mt-4 hover:bg-[#b0e666] transition-colors flex items-center justify-center gap-2"
               >
                 {submittingCard ? <Loader2 size={18} className="animate-spin" /> : <><CreditCard size={18} /> Adicionar Cartão</>}
+              </button>
+            </form>
+          </Card>
+        </div>
+      )}
+
+      {/* New Bill Modal */}
+      {isBillModalOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md p-6 border-[#e6a06e]/20 relative">
+            <button
+              onClick={() => setIsBillModalOpen(false)}
+              className="absolute top-4 right-4 text-white/40 hover:text-white"
+            >
+              <X size={20} />
+            </button>
+
+            <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+              <CalendarClock size={20} className="text-[#e6a06e]" />
+              Nova Conta
+            </h3>
+
+            <form onSubmit={handleCreateBill} className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-white/40 uppercase tracking-widest block mb-2">Descrição</label>
+                <input
+                  type="text"
+                  value={newBill.description}
+                  onChange={e => setNewBill({ ...newBill, description: e.target.value })}
+                  className="w-full bg-[#161616] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#e6a06e]"
+                  placeholder="Ex: Aluguel, Internet, Luz..."
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-white/40 uppercase tracking-widest block mb-2">Valor (R$)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={newBill.amount}
+                    onChange={e => setNewBill({ ...newBill, amount: e.target.value })}
+                    className="w-full bg-[#161616] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#e6a06e]"
+                    placeholder="0.00"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-white/40 uppercase tracking-widest block mb-2">Vencimento</label>
+                  <input
+                    type="date"
+                    value={newBill.due_date}
+                    onChange={e => setNewBill({ ...newBill, due_date: e.target.value })}
+                    className="w-full bg-[#161616] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#e6a06e]"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-white/40 uppercase tracking-widest block mb-2">Recorrência</label>
+                  <div className="flex bg-[#161616] rounded-xl p-1 border border-white/10">
+                    <button
+                      type="button"
+                      onClick={() => setNewBill({ ...newBill, recurrence: 'once' })}
+                      className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase transition-all ${newBill.recurrence === 'once' ? 'bg-[#e6a06e]/20 text-[#e6a06e]' : 'text-white/40'}`}
+                    >
+                      Única
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNewBill({ ...newBill, recurrence: 'weekly' })}
+                      className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase transition-all ${newBill.recurrence === 'weekly' ? 'bg-[#e6a06e]/20 text-[#e6a06e]' : 'text-white/40'}`}
+                    >
+                      Semanal
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNewBill({ ...newBill, recurrence: 'monthly' })}
+                      className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase transition-all ${newBill.recurrence === 'monthly' ? 'bg-[#e6a06e]/20 text-[#e6a06e]' : 'text-white/40'}`}
+                    >
+                      Mensal
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-white/40 uppercase tracking-widest block mb-2">Categoria</label>
+                  <select
+                    value={newBill.category}
+                    onChange={e => setNewBill({ ...newBill, category: e.target.value })}
+                    className="w-full bg-[#161616] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#e6a06e]"
+                  >
+                    {CATEGORIES.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Card selector */}
+              {cards.length > 0 && (
+                <div>
+                  <label className="text-xs font-bold text-white/40 uppercase tracking-widest block mb-2">
+                    Cartão <span className="text-white/20">(opcional)</span>
+                  </label>
+                  <select
+                    value={newBill.card_id}
+                    onChange={e => setNewBill({ ...newBill, card_id: e.target.value })}
+                    className="w-full bg-[#161616] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#e6a06e]"
+                  >
+                    <option value="">Nenhum cartão</option>
+                    {cards.map(card => (
+                      <option key={card.id} value={card.id}>
+                        {card.bank_name} •••• {card.last_four_digits} ({card.card_type === 'credit' ? 'Crédito' : 'Débito'})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={submittingBill}
+                className="w-full bg-[#e6a06e] text-black font-bold py-4 rounded-xl mt-4 hover:bg-[#d4905e] transition-colors flex items-center justify-center gap-2"
+              >
+                {submittingBill ? <Loader2 size={18} className="animate-spin" /> : <><CalendarClock size={18} /> Adicionar Conta</>}
               </button>
             </form>
           </Card>
