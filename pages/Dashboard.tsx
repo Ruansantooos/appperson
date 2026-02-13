@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { GymStats, Habit, Transaction, Supplement, Task, WorkoutExercise } from '../types';
+import { GymStats, Habit, Transaction, Supplement, Task, WorkoutExercise, Bill } from '../types';
 import { Card, Badge } from '../components/ui/LayoutComponents';
 import {
   DollarSign,
@@ -61,6 +61,7 @@ const Dashboard: React.FC = () => {
   const [todayWorkout, setTodayWorkout] = useState<TodayWorkout | null>(null);
   const [todayTasks, setTodayTasks] = useState<Task[]>([]);
   const [weightHistory, setWeightHistory] = useState<WeightEntry[]>([]);
+  const [bills, setBills] = useState<Bill[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadSupplementChecks = useCallback(() => {
@@ -87,7 +88,7 @@ const Dashboard: React.FC = () => {
         await checkDayReset();
         loadSupplementChecks();
 
-        const [profileRes, gymRes, habitsRes, txRes, suppRes, workoutRes, tasksRes, weightRes] = await Promise.all([
+        const [profileRes, gymRes, habitsRes, txRes, suppRes, workoutRes, tasksRes, weightRes, billsRes] = await Promise.all([
           supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
           supabase.from('gym_stats').select('*').eq('user_id', user.id).maybeSingle(),
           supabase.from('habits').select('*').eq('user_id', user.id),
@@ -96,6 +97,7 @@ const Dashboard: React.FC = () => {
           supabase.from('workouts').select('*, workout_exercises(*)').eq('user_id', user.id),
           supabase.from('tasks').select('*').eq('user_id', user.id).in('status', ['Pending', 'pending']),
           supabase.from('weight_history').select('*').eq('user_id', user.id).order('date', { ascending: true }),
+          supabase.from('bills').select('*').eq('user_id', user.id).order('due_date', { ascending: true }),
         ]);
 
         if (profileRes.data?.full_name) setUserName(profileRes.data.full_name.split(' ')[0]);
@@ -115,6 +117,7 @@ const Dashboard: React.FC = () => {
         }
         if (txRes.data) setTransactions(txRes.data);
         if (weightRes.data) setWeightHistory(weightRes.data);
+        if (billsRes.data) setBills(billsRes.data);
         if (suppRes.data) {
           setSupplements(suppRes.data.map((s: any) => ({
             id: s.id, name: s.name, dosage: s.dosage || '', frequency: s.frequency || '',
@@ -190,22 +193,52 @@ const Dashboard: React.FC = () => {
 
   const recentExpenses = transactions.filter(t => t.type === 'expense').slice(0, 4);
 
-  // Weekly spending chart data
-  const weeklySpending = (() => {
-    const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  // Week boundaries: Sunday to Saturday
+  const getWeekBounds = () => {
     const now = new Date();
-    const result: { day: string; gasto: number }[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
-      const dayTotal = transactions
-        .filter(t => t.type === 'expense' && t.date === dateStr)
-        .reduce((acc, t) => acc + Number(t.amount), 0);
-      result.push({ day: days[d.getDay()], gasto: dayTotal });
-    }
-    return result;
-  })();
+    const dayOfWeek = now.getDay(); // 0=Sunday
+    const sunday = new Date(now);
+    sunday.setDate(now.getDate() - dayOfWeek);
+    sunday.setHours(0, 0, 0, 0);
+    const saturday = new Date(sunday);
+    saturday.setDate(sunday.getDate() + 6);
+    return { sunday, saturday };
+  };
+
+  const { sunday: weekStart, saturday: weekEnd } = getWeekBounds();
+  const weekStartStr = weekStart.toISOString().split('T')[0];
+  const weekEndStr = weekEnd.toISOString().split('T')[0];
+
+  // Weekly spending chart data (Sun-Sat)
+  const dayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  const weeklySpending = dayLabels.map((label, i) => {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    const dateStr = d.toISOString().split('T')[0];
+    const gasto = transactions
+      .filter(t => t.type === 'expense' && t.date === dateStr)
+      .reduce((acc, t) => acc + Number(t.amount), 0);
+    const receita = transactions
+      .filter(t => t.type === 'income' && t.date === dateStr)
+      .reduce((acc, t) => acc + Number(t.amount), 0);
+    return { day: label, date: dateStr, gasto, receita, isToday: dateStr === getToday() };
+  });
+
+  // Week totals
+  const weekExpenses = weeklySpending.reduce((acc, d) => acc + d.gasto, 0);
+  const weekIncome = weeklySpending.reduce((acc, d) => acc + d.receita, 0);
+
+  // Bills due this week
+  const weekBills = bills.filter(b => b.due_date >= weekStartStr && b.due_date <= weekEndStr);
+  const weekBillsPending = weekBills.filter(b => b.status === 'pending');
+  const weekBillsPaid = weekBills.filter(b => b.status === 'paid');
+  const weekBillsPendingTotal = weekBillsPending.reduce((acc, b) => acc + Number(b.amount), 0);
+  const weekBillsPaidTotal = weekBillsPaid.reduce((acc, b) => acc + Number(b.amount), 0);
+
+  // Today's transactions
+  const todayTransactions = transactions.filter(t => t.date === getToday());
+  const todayExpense = todayTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + Number(t.amount), 0);
+  const todayIncome = todayTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + Number(t.amount), 0);
 
   // Macro data for pie chart
   const macroData = [
@@ -419,48 +452,127 @@ const Dashboard: React.FC = () => {
             )}
           </Card>
 
-          {/* Resumo Financeiro */}
+          {/* Resumo Semanal de Pagamentos */}
           <Card className="p-6">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-sm font-bold flex items-center gap-2"><DollarSign size={16} className="text-[#c1ff72]" /> Finanças</h3>
+              <div>
+                <h3 className="text-sm font-bold flex items-center gap-2">
+                  <CalendarDays size={16} className="text-[#c1ff72]" /> Pagamentos da Semana
+                </h3>
+                <p className="text-[9px] text-white/20 mt-1">
+                  {weekStart.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} — {weekEnd.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                </p>
+              </div>
               <Link to="/finance" className="text-[10px] text-[#c1ff72] font-bold hover:underline flex items-center gap-1">
-                Ver tudo <ChevronRight size={12} />
+                Finanças <ChevronRight size={12} />
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mb-5">
-              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
-                <p className="text-[9px] font-bold text-white/30 uppercase tracking-[0.2em]">Saldo Total</p>
-                <p className={`text-lg font-bold mt-1 ${totalBalance < 0 ? 'text-red-400' : 'text-[#c1ff72]'}`}>
-                  R$ {totalBalance.toFixed(2)}
-                </p>
-              </div>
-              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
-                <p className="text-[9px] font-bold text-white/30 uppercase tracking-[0.2em]">Gastos do Mês</p>
-                <p className="text-lg font-bold mt-1 text-red-400/80">R$ {thisMonthExpenses.toFixed(2)}</p>
+            {/* Resumo do Dia */}
+            <div className="p-4 rounded-xl bg-[#c1ff72]/5 border border-[#c1ff72]/15 mb-4">
+              <p className="text-[9px] font-bold text-[#c1ff72]/60 uppercase tracking-[0.2em] mb-2">Hoje</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  {todayIncome > 0 && (
+                    <div>
+                      <p className="text-[9px] text-white/30">Entradas</p>
+                      <p className="text-sm font-bold text-[#c1ff72]">+ R$ {todayIncome.toFixed(2)}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-[9px] text-white/30">Saídas</p>
+                    <p className="text-sm font-bold text-red-400">{todayExpense > 0 ? `- R$ ${todayExpense.toFixed(2)}` : 'R$ 0,00'}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-[9px] text-white/30">Transações</p>
+                  <p className="text-sm font-bold">{todayTransactions.length}</p>
+                </div>
               </div>
             </div>
 
-            {recentExpenses.length > 0 ? (
-              <div className="space-y-2">
-                <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.2em] mb-2">Últimos Gastos</p>
-                {recentExpenses.map(tx => (
-                  <div key={tx.id} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400 shrink-0">
-                        <DollarSign size={14} />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{tx.description}</p>
-                        <p className="text-[9px] text-white/20">{tx.date} • {tx.category}</p>
-                      </div>
-                    </div>
-                    <span className="text-sm font-bold text-red-400/80 shrink-0 ml-3">- R$ {Number(tx.amount).toFixed(2)}</span>
-                  </div>
-                ))}
+            {/* Week Stats Grid */}
+            <div className="grid grid-cols-3 gap-3 mb-5">
+              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 text-center">
+                <p className="text-[9px] font-bold text-white/30 uppercase tracking-[0.15em]">Gastos</p>
+                <p className="text-base font-bold text-red-400 mt-1">R$ {weekExpenses.toFixed(2)}</p>
               </div>
-            ) : (
-              <p className="text-xs text-white/20 text-center py-4">Nenhum gasto registrado.</p>
+              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 text-center">
+                <p className="text-[9px] font-bold text-white/30 uppercase tracking-[0.15em]">Receitas</p>
+                <p className="text-base font-bold text-[#c1ff72] mt-1">R$ {weekIncome.toFixed(2)}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 text-center">
+                <p className="text-[9px] font-bold text-white/30 uppercase tracking-[0.15em]">Saldo</p>
+                <p className={`text-base font-bold mt-1 ${totalBalance < 0 ? 'text-red-400' : ''}`}>R$ {totalBalance.toFixed(2)}</p>
+              </div>
+            </div>
+
+            {/* Contas da Semana */}
+            {weekBills.length > 0 && (
+              <div className="mb-4">
+                <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.2em] mb-2">Contas da Semana</p>
+                <div className="space-y-2">
+                  {weekBills.slice(0, 4).map(bill => {
+                    const isPaid = bill.status === 'paid';
+                    const isOverdue = !isPaid && bill.due_date < getToday();
+                    return (
+                      <div key={bill.id} className={`flex items-center justify-between p-3 rounded-xl border ${
+                        isPaid ? 'bg-emerald-500/5 border-emerald-500/15' :
+                        isOverdue ? 'bg-red-500/5 border-red-500/15' :
+                        'bg-amber-500/5 border-amber-500/10'
+                      }`}>
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className={`w-2 h-2 rounded-full shrink-0 ${
+                            isPaid ? 'bg-emerald-400' : isOverdue ? 'bg-red-400' : 'bg-amber-400'
+                          }`} />
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">{bill.description}</p>
+                            <p className="text-[9px] text-white/20">
+                              {new Date(bill.due_date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0 ml-3">
+                          <span className={`text-sm font-bold ${isPaid ? 'text-emerald-400 line-through' : isOverdue ? 'text-red-400' : ''}`}>
+                            R$ {Number(bill.amount).toFixed(2)}
+                          </span>
+                          {isPaid && <Check size={14} className="text-emerald-400" />}
+                          {isOverdue && <AlertTriangle size={14} className="text-red-400" />}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {weekBillsPending.length > 0 && (
+                  <div className="mt-3 p-3 rounded-xl bg-amber-500/5 border border-amber-500/10 flex items-center justify-between">
+                    <span className="text-xs text-amber-400">{weekBillsPending.length} conta{weekBillsPending.length > 1 ? 's' : ''} pendente{weekBillsPending.length > 1 ? 's' : ''}</span>
+                    <span className="text-xs font-bold text-amber-400">R$ {weekBillsPendingTotal.toFixed(2)}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Últimos Gastos */}
+            {recentExpenses.length > 0 && (
+              <div>
+                <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.2em] mb-2">Últimos Gastos</p>
+                <div className="space-y-2">
+                  {recentExpenses.map(tx => (
+                    <div key={tx.id} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400 shrink-0">
+                          <DollarSign size={14} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{tx.description}</p>
+                          <p className="text-[9px] text-white/20">{tx.date} • {tx.category}</p>
+                        </div>
+                      </div>
+                      <span className="text-sm font-bold text-red-400/80 shrink-0 ml-3">- R$ {Number(tx.amount).toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
 
             {totalBalance < 0 && (
@@ -475,11 +587,11 @@ const Dashboard: React.FC = () => {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Weekly Spending Chart */}
+        {/* Weekly Spending Chart (Dom-Sáb) */}
         <div className="lg:col-span-5">
           <Card className="p-6 h-full">
             <h3 className="text-sm font-bold mb-1">Gastos da Semana</h3>
-            <p className="text-[9px] text-white/20 uppercase tracking-[0.2em] mb-4">Últimos 7 dias</p>
+            <p className="text-[9px] text-white/20 uppercase tracking-[0.2em] mb-1">Dom — Sáb • Total: R$ {weekExpenses.toFixed(2)}</p>
             <div className="h-[180px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={weeklySpending} barSize={20}>
@@ -490,9 +602,17 @@ const Dashboard: React.FC = () => {
                     formatter={(value: number) => [`R$ ${value.toFixed(2)}`, 'Gasto']}
                     cursor={{ fill: 'rgba(255,255,255,0.03)' }}
                   />
-                  <Bar dataKey="gasto" fill="#c1ff72" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="gasto" radius={[8, 8, 0, 0]}>
+                    {weeklySpending.map((entry, index) => (
+                      <Cell key={index} fill={entry.isToday ? '#c1ff72' : 'rgba(193,255,114,0.3)'} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
+            </div>
+            <div className="flex items-center justify-center gap-4 mt-2 text-[9px] text-white/20">
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-[#c1ff72]"></span> Hoje</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-[#c1ff72]/30"></span> Outros dias</span>
             </div>
           </Card>
         </div>
