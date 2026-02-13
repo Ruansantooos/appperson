@@ -165,3 +165,40 @@ export interface Profile {
   activityLevel?: string;
   goal?: string;
 }
+
+// PJ Types
+export interface Invoice {
+  id: string;
+  user_id: string;
+  invoice_number: string;
+  description: string;
+  amount: number;
+  type: 'emitida' | 'recebida';
+  status: 'emitida' | 'pendente' | 'cancelada';
+  issue_date: string;
+  client_name?: string;
+  created_at?: string;
+}
+
+export interface Receivable {
+  id: string;
+  user_id: string;
+  client_name: string;
+  description: string;
+  amount: number;
+  due_date: string;
+  status: 'pending' | 'received' | 'overdue';
+  created_at?: string;
+}
+
+export interface Tax {
+  id: string;
+  user_id: string;
+  tax_name: string;
+  description?: string;
+  amount: number;
+  due_date: string;
+  status: 'pending' | 'paid' | 'overdue';
+  recurrence: 'once' | 'monthly' | 'quarterly' | 'yearly';
+  created_at?: string;
+}
