@@ -168,9 +168,9 @@ const TasksPage: React.FC = () => {
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="flex items-center gap-4 w-full md:w-auto">
           <div className="relative flex-1 md:w-80">
-            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
+            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30" />
             <Input
-              className="pl-12 h-12 rounded-full border-white/5 bg-[#161616]"
+              className="pl-12 h-12 rounded-full border-[var(--card-border)] bg-[var(--input-bg)]"
               placeholder="Buscar tarefas..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
@@ -185,7 +185,7 @@ const TasksPage: React.FC = () => {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-6 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${filter === f ? 'bg-[#c1ff72] text-black' : 'bg-white/5 text-white/40 hover:bg-white/10'
+              className={`px-6 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${filter === f ? 'bg-[#c1ff72] text-black shadow-lg shadow-brand/20' : 'bg-[var(--input-bg)] text-[var(--foreground)] opacity-40 hover:opacity-100 border border-[var(--card-border)]'
                 }`}
             >
               {f}
@@ -206,7 +206,7 @@ const TasksPage: React.FC = () => {
             <div className="flex items-start gap-4">
               <button
                 onClick={() => toggleTask(task.id, task.status)}
-                className={`mt-1 flex-shrink-0 transition-colors ${task.status === 'Completed' ? 'text-[#c1ff72]' : 'text-white/20 hover:text-white/40'}`}
+                className={`mt-1 flex-shrink-0 transition-colors ${task.status === 'Completed' ? 'text-[#c1ff72]' : 'text-[var(--foreground)] opacity-20 hover:opacity-100'}`}
               >
                 {task.status === 'Completed' ? <CheckCircle2 size={24} /> : <Circle size={24} />}
               </button>
@@ -214,14 +214,14 @@ const TasksPage: React.FC = () => {
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-start">
                   <div className="min-w-0">
-                    <h3 className={`text-base font-bold truncate ${task.status === 'Completed' ? 'line-through text-white/20' : 'text-white'}`}>
+                    <h3 className={`text-base font-bold truncate ${task.status === 'Completed' ? 'line-through opacity-30 font-medium' : ''}`}>
                       {task.title}
                     </h3>
                     <div className="flex flex-wrap items-center gap-2 mt-3">
                       <Badge variant={task.priority === 'High' ? 'danger' : task.priority === 'Medium' ? 'warning' : 'default'}>
                         {task.priority}
                       </Badge>
-                      <span className="text-[10px] text-white/30 flex items-center gap-1 font-bold uppercase tracking-widest">
+                      <span className="text-[10px] opacity-30 flex items-center gap-1 font-bold uppercase tracking-widest">
                         <Calendar size={12} /> {task.dueDate}
                       </span>
                     </div>
@@ -235,22 +235,22 @@ const TasksPage: React.FC = () => {
               <div className="relative">
                 <button
                   onClick={() => setActiveMenuTaskId(activeMenuTaskId === task.id ? null : task.id)}
-                  className="text-white/20 hover:text-white p-2"
+                  className="opacity-20 hover:opacity-100 p-2 transition-opacity"
                 >
                   <MoreHorizontal size={20} />
                 </button>
 
                 {activeMenuTaskId === task.id && (
-                  <div className="absolute right-0 top-full mt-2 w-32 bg-[#161616] border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden">
+                  <div className="absolute right-0 top-full mt-2 w-32 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl shadow-2xl z-50 overflow-hidden">
                     <button
                       onClick={() => openEditModal(task)}
-                      className="w-full text-left px-4 py-3 text-sm hover:bg-white/5 flex items-center gap-2"
+                      className="w-full text-left px-4 py-3 text-sm hover:bg-[var(--input-bg)] flex items-center gap-2 transition-colors"
                     >
                       <Edit2 size={14} /> Editar
                     </button>
                     <button
                       onClick={() => handleDeleteTask(task.id)}
-                      className="w-full text-left px-4 py-3 text-sm hover:bg-white/5 text-red-400 flex items-center gap-2"
+                      className="w-full text-left px-4 py-3 text-sm hover:bg-[var(--input-bg)] text-red-400 flex items-center gap-2 transition-colors"
                     >
                       <Trash2 size={14} /> Excluir
                     </button>
@@ -280,9 +280,9 @@ const TasksPage: React.FC = () => {
             <h3 className="text-xl font-bold mb-6">{isEditMode ? 'Editar Tarefa' : 'Nova Tarefa'}</h3>
             <form onSubmit={handleSaveTask} className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-white/40 uppercase tracking-widest block mb-1">Título</label>
+                <label className="text-xs font-bold opacity-40 uppercase tracking-widest block mb-1">Título</label>
                 <input
-                  className="w-full bg-[#161616] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#c1ff72] outline-none"
+                  className="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-4 py-3 text-[var(--foreground)] focus:border-[#c1ff72] outline-none transition-all placeholder:opacity-20"
                   value={newTask.title}
                   onChange={e => setNewTask({ ...newTask, title: e.target.value })}
                   required
@@ -290,9 +290,9 @@ const TasksPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-white/40 uppercase tracking-widest block mb-1">Descrição</label>
+                <label className="text-xs font-bold opacity-40 uppercase tracking-widest block mb-1">Descrição</label>
                 <textarea
-                  className="w-full bg-[#161616] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#c1ff72] outline-none h-24 resize-none"
+                  className="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-4 py-3 text-[var(--foreground)] focus:border-[#c1ff72] outline-none h-24 resize-none transition-all placeholder:opacity-20"
                   value={newTask.description}
                   onChange={e => setNewTask({ ...newTask, description: e.target.value })}
                   placeholder="Detalhes da tarefa..."
@@ -300,33 +300,33 @@ const TasksPage: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-white/40 uppercase tracking-widest block mb-1">Prioridade</label>
+                  <label className="text-xs font-bold opacity-40 uppercase tracking-widest block mb-1">Prioridade</label>
                   <select
-                    className="w-full bg-[#161616] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#c1ff72] outline-none appearance-none"
+                    className="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-4 py-3 text-[var(--foreground)] focus:border-[#c1ff72] outline-none appearance-none transition-all"
                     value={newTask.priority}
                     onChange={e => setNewTask({ ...newTask, priority: e.target.value as any })}
                   >
-                    <option value="Low">Baixa</option>
-                    <option value="Medium">Média</option>
-                    <option value="High">Alta</option>
+                    <option value="Low" className="bg-[var(--card-bg)]">Baixa</option>
+                    <option value="Medium" className="bg-[var(--card-bg)]">Média</option>
+                    <option value="High" className="bg-[var(--card-bg)]">Alta</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-white/40 uppercase tracking-widest block mb-1">Categoria</label>
+                  <label className="text-xs font-bold opacity-40 uppercase tracking-widest block mb-1">Categoria</label>
                   <select
-                    className="w-full bg-[#161616] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#c1ff72] outline-none appearance-none"
+                    className="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-4 py-3 text-[var(--foreground)] focus:border-[#c1ff72] outline-none appearance-none transition-all"
                     value={newTask.category}
                     onChange={e => setNewTask({ ...newTask, category: e.target.value })}
                   >
-                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                    {categories.map(c => <option key={c} value={c} className="bg-[var(--card-bg)]">{c}</option>)}
                   </select>
                 </div>
               </div>
               <div>
-                <label className="text-xs font-bold text-white/40 uppercase tracking-widest block mb-1">Data de Vencimento</label>
+                <label className="text-xs font-bold opacity-40 uppercase tracking-widest block mb-1">Data de Vencimento</label>
                 <input
                   type="date"
-                  className="w-full bg-[#161616] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#c1ff72] outline-none"
+                  className="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-4 py-3 text-[var(--foreground)] focus:border-[#c1ff72] outline-none transition-all"
                   value={newTask.dueDate ? newTask.dueDate.split('T')[0] : ''}
                   onChange={e => setNewTask({ ...newTask, dueDate: e.target.value })}
                 />

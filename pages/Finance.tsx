@@ -59,6 +59,7 @@ const FinancePage: React.FC = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [receivables, setReceivables] = useState<Receivable[]>([]);
   const [taxes, setTaxes] = useState<Tax[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
 
   // New Transaction Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -68,7 +69,9 @@ const FinancePage: React.FC = () => {
     category: 'Food',
     type: 'expense' as 'income' | 'expense',
     date: new Date().toISOString().split('T')[0],
-    card_id: ''
+    card_id: '',
+    project_id: '',
+    classification: 'Despesa' as 'Custo' | 'Despesa' | 'Investimento' | 'Outros'
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -135,12 +138,26 @@ const FinancePage: React.FC = () => {
     fetchTransactions();
     fetchCards();
     fetchBills();
+    fetchProjects();
     if (financeScope === 'pj') {
       fetchInvoices();
       fetchReceivables();
       fetchTaxes();
     }
   }, [user, financeScope]);
+
+  const fetchProjects = async () => {
+    try {
+      const { data } = await supabase
+        .from('projects')
+        .select('id, name')
+        .eq('user_id', user?.id)
+        .order('name');
+      if (data) setProjects(data);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+    }
+  };
 
   const fetchTransactions = async () => {
     try {
@@ -245,11 +262,16 @@ const FinancePage: React.FC = () => {
         category: newTransaction.category,
         type: newTransaction.type,
         date: newTransaction.date,
-        finance_scope: financeScope
+        finance_scope: financeScope,
+        classification: newTransaction.classification
       };
 
       if (newTransaction.card_id) {
         insertData.card_id = newTransaction.card_id;
+      }
+
+      if (newTransaction.project_id) {
+        insertData.project_id = newTransaction.project_id;
       }
 
       const { error } = await supabase.from('transactions').insert([insertData]);
@@ -262,7 +284,9 @@ const FinancePage: React.FC = () => {
         category: CATEGORIES[0],
         type: 'expense',
         date: new Date().toISOString().split('T')[0],
-        card_id: ''
+        card_id: '',
+        project_id: '',
+        classification: 'Despesa'
       });
       setIsModalOpen(false);
       fetchTransactions();
@@ -744,25 +768,23 @@ const FinancePage: React.FC = () => {
     <div className="space-y-8 pb-10">
       {/* PF / PJ Scope Toggle */}
       <div className="flex items-center justify-center">
-        <div className="flex bg-[#161616] rounded-2xl p-1 border border-white/10 w-fit">
+        <div className="flex bg-[var(--input-bg)] rounded-2xl p-1 border border-[var(--card-border)] w-fit">
           <button
             onClick={() => setFinanceScope('pf')}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${
-              financeScope === 'pf'
-                ? 'bg-[#c1ff72]/15 text-[#c1ff72] shadow-lg shadow-[#c1ff72]/5'
-                : 'text-white/40 hover:text-white/60'
-            }`}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${financeScope === 'pf'
+              ? 'bg-[#c1ff72] text-black shadow-lg shadow-[#c1ff72]/20'
+              : 'text-[var(--foreground)] opacity-40 hover:opacity-100'
+              }`}
           >
             <User size={16} />
             Pessoal (PF)
           </button>
           <button
             onClick={() => setFinanceScope('pj')}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${
-              financeScope === 'pj'
-                ? 'bg-[#8fb0bc]/15 text-[#8fb0bc] shadow-lg shadow-[#8fb0bc]/5'
-                : 'text-white/40 hover:text-white/60'
-            }`}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${financeScope === 'pj'
+              ? 'bg-[#8fb0bc] text-black shadow-lg shadow-[#8fb0bc]/20'
+              : 'text-[var(--foreground)] opacity-40 hover:opacity-100'
+              }`}
           >
             <Building2 size={16} />
             Empresa (PJ)
@@ -907,9 +929,8 @@ const FinancePage: React.FC = () => {
                             <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${sConfig.badge}`}>
                               {sConfig.label}
                             </span>
-                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                              inv.type === 'emitida' ? 'bg-[#8fb0bc]/20 text-[#8fb0bc]' : 'bg-purple-500/20 text-purple-400'
-                            }`}>
+                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${inv.type === 'emitida' ? 'bg-[#8fb0bc]/20 text-[#8fb0bc]' : 'bg-purple-500/20 text-purple-400'
+                              }`}>
                               {inv.type === 'emitida' ? 'Emitida' : 'Recebida'}
                             </span>
                           </div>
@@ -1129,11 +1150,10 @@ const FinancePage: React.FC = () => {
                       <span className="text-sm font-bold uppercase tracking-wider opacity-90">
                         {card.bank_name}
                       </span>
-                      <span className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full ${
-                        card.card_type === 'credit'
-                          ? 'bg-purple-500/30 text-purple-300'
-                          : 'bg-emerald-500/30 text-emerald-300'
-                      }`}>
+                      <span className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full ${card.card_type === 'credit'
+                        ? 'bg-purple-500/30 text-purple-300'
+                        : 'bg-emerald-500/30 text-emerald-300'
+                        }`}>
                         {card.card_type === 'credit' ? 'Crédito' : 'Débito'}
                       </span>
                     </div>
@@ -1303,8 +1323,8 @@ const FinancePage: React.FC = () => {
                   <tr className="text-left text-white/30 text-[10px] uppercase tracking-[0.2em] border-b border-white/5 pb-4">
                     <th className="pb-4 font-medium">Data</th>
                     <th className="pb-4 font-medium">Descrição</th>
-                    <th className="pb-4 font-medium">Categoria</th>
-                    <th className="pb-4 font-medium">Cartão</th>
+                    <th className="pb-4 font-medium">Categoria / Classificação</th>
+                    <th className="pb-4 font-medium">Negócio / Cartão</th>
                     <th className="pb-4 font-medium text-right">Valor</th>
                   </tr>
                 </thead>
@@ -1314,12 +1334,35 @@ const FinancePage: React.FC = () => {
                   ) : transactions.slice(0, 8).map(tx => (
                     <tr key={tx.id} className="group border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors">
                       <td className="py-6 text-white/40 font-medium">{tx.date}</td>
-                      <td className="py-6 font-bold">{tx.description}</td>
-                      <td className="py-6">
-                        <Badge variant="status">{tx.category}</Badge>
+                      <td className="py-6 font-bold">
+                        <div>{tx.description}</div>
+                        {tx.project_id && (
+                          <div className="text-[11px] text-[#8fb0bc] flex items-center gap-1 mt-0.5">
+                            <Building2 size={10} /> {projects.find(p => p.id === tx.project_id)?.name || 'Negócio'}
+                          </div>
+                        )}
                       </td>
-                      <td className="py-6 text-white/40 text-xs">
-                        {tx.card_id ? getCardName(tx.card_id) : '—'}
+                      <td className="py-6">
+                        <div className="flex flex-col gap-1.5">
+                          <Badge variant="status">{tx.category}</Badge>
+                          {tx.classification && (
+                            <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full w-fit ${tx.classification === 'Custo' ? 'bg-amber-500/10 text-amber-500' :
+                              tx.classification === 'Investimento' ? 'bg-blue-500/10 text-blue-400' :
+                                'bg-white/5 text-white/40'
+                              }`}>
+                              {tx.classification}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-6 text-white/40 text-xs text-right md:text-left">
+                        <div className="flex flex-col gap-1">
+                          {tx.card_id ? (
+                            <span className="flex items-center gap-1.5">
+                              <CreditCard size={12} /> {getCardName(tx.card_id)}
+                            </span>
+                          ) : '—'}
+                        </div>
                       </td>
                       <td className={`py-6 text-right font-bold ${tx.type === 'income' ? 'text-[#c1ff72]' : 'text-white'}`}>
                         {tx.type === 'income' ? '+' : '-'} R$ {Number(tx.amount).toFixed(2)}
@@ -1389,21 +1432,47 @@ const FinancePage: React.FC = () => {
                   </select>
                 </div>
               </div>
-              {cards.length > 0 && (
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={labelClass}>Cartão <span className="text-white/20">(opcional)</span></label>
-                  <select value={newTransaction.card_id}
-                    onChange={e => setNewTransaction({ ...newTransaction, card_id: e.target.value })}
+                  <label className={labelClass}>Classificação</label>
+                  <select value={newTransaction.classification}
+                    onChange={e => setNewTransaction({ ...newTransaction, classification: e.target.value as any })}
                     className={inputClass}>
-                    <option value="">Nenhum cartão</option>
-                    {cards.map(card => (
-                      <option key={card.id} value={card.id}>
-                        {card.bank_name} •••• {card.last_four_digits} ({card.card_type === 'credit' ? 'Crédito' : 'Débito'})
-                      </option>
+                    <option value="Despesa">Despesa</option>
+                    <option value="Custo">Custo</option>
+                    <option value="Investimento">Investimento</option>
+                    <option value="Outros">Outros</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>Vínculo PJ <span className="text-white/20">(opcional)</span></label>
+                  <select value={newTransaction.project_id}
+                    onChange={e => setNewTransaction({ ...newTransaction, project_id: e.target.value })}
+                    className={inputClass}>
+                    <option value="">Nenhum Vínculo</option>
+                    {projects.map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
                     ))}
                   </select>
                 </div>
-              )}
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                {cards.length > 0 && (
+                  <div>
+                    <label className={labelClass}>Cartão <span className="text-white/20">(opcional)</span></label>
+                    <select value={newTransaction.card_id}
+                      onChange={e => setNewTransaction({ ...newTransaction, card_id: e.target.value })}
+                      className={inputClass}>
+                      <option value="">Nenhum cartão</option>
+                      {cards.map(card => (
+                        <option key={card.id} value={card.id}>
+                          {card.bank_name} • {card.last_four_digits}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
               <button type="submit" disabled={submitting}
                 className="w-full bg-[#c1ff72] text-black font-bold py-4 rounded-xl mt-4 hover:bg-[#b0e666] transition-colors flex items-center justify-center gap-2">
                 {submitting ? <Loader2 size={18} className="animate-spin" /> : <><Plus size={18} /> Adicionar Transação</>}

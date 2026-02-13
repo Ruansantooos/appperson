@@ -7,6 +7,7 @@ import ErrorBoundary from './components/shared/ErrorBoundary';
 
 // Auth
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
@@ -22,12 +23,12 @@ import GymPage from './pages/Gym';
 import Onboarding from './pages/Onboarding';
 import ProfilePage from './pages/Profile';
 
-const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0c0c0c] flex items-center justify-center text-[#c1ff72]">
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center text-[#c1ff72]">
         Loading...
       </div>
     )
@@ -55,7 +56,7 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#0c0c0c] text-white overflow-x-hidden">
+    <div className="flex min-h-screen bg-[var(--background)] text-[var(--foreground)] overflow-x-hidden transition-colors duration-300">
       <Sidebar />
 
       <main className="flex-1 flex flex-col min-w-0">
@@ -87,9 +88,11 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
   return (
     <AuthProvider>
-      <Router>
-        <AppContent />
-      </Router>
+      <ThemeProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </ThemeProvider>
     </AuthProvider>
   );
 };

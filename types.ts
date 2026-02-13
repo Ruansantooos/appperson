@@ -44,6 +44,8 @@ export interface Transaction {
   type: 'income' | 'expense';
   card_id?: string;
   finance_scope?: 'pf' | 'pj';
+  project_id?: string;
+  classification?: 'Custo' | 'Despesa' | 'Investimento' | 'Outros';
 }
 
 export interface FinanceCard {
@@ -164,6 +166,10 @@ export interface Profile {
   height?: number;
   activityLevel?: string;
   goal?: string;
+  plan?: 'free' | 'premium';
+  plan_expires_at?: string;
+  stripe_customer_id?: string;
+  stripe_subscription_id?: string;
 }
 
 // PJ Types

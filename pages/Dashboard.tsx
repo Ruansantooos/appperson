@@ -18,7 +18,8 @@ import {
   AlertTriangle,
   TrendingDown,
   Clock,
-  ChevronRight
+  ChevronRight,
+  Building2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -62,6 +63,7 @@ const Dashboard: React.FC = () => {
   const [todayTasks, setTodayTasks] = useState<Task[]>([]);
   const [weightHistory, setWeightHistory] = useState<WeightEntry[]>([]);
   const [bills, setBills] = useState<Bill[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadSupplementChecks = useCallback(() => {
@@ -88,7 +90,7 @@ const Dashboard: React.FC = () => {
         await checkDayReset();
         loadSupplementChecks();
 
-        const [profileRes, gymRes, habitsRes, txRes, suppRes, workoutRes, tasksRes, weightRes, billsRes] = await Promise.all([
+        const [profileRes, gymRes, habitsRes, txRes, suppRes, workoutRes, tasksRes, weightRes, billsRes, projectsRes] = await Promise.all([
           supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
           supabase.from('gym_stats').select('*').eq('user_id', user.id).maybeSingle(),
           supabase.from('habits').select('*').eq('user_id', user.id),
@@ -98,9 +100,11 @@ const Dashboard: React.FC = () => {
           supabase.from('tasks').select('*').eq('user_id', user.id).in('status', ['Pending', 'pending']),
           supabase.from('weight_history').select('*').eq('user_id', user.id).order('date', { ascending: true }),
           supabase.from('bills').select('*').eq('user_id', user.id).order('due_date', { ascending: true }),
+          supabase.from('projects').select('id, name').eq('user_id', user.id),
         ]);
 
         if (profileRes.data?.full_name) setUserName(profileRes.data.full_name.split(' ')[0]);
+        if (projectsRes.data) setProjects(projectsRes.data);
         if (gymRes.data) {
           setGymStats({
             weight: gymRes.data.weight || 0, targetWeight: gymRes.data.target_weight || 0,
@@ -193,6 +197,16 @@ const Dashboard: React.FC = () => {
 
   const recentExpenses = transactions.filter(t => t.type === 'expense').slice(0, 4);
 
+  // Business Health Metrics
+  const businessMetrics = projects.map(project => {
+    const projectTxs = transactions.filter(t => t.project_id === project.id);
+    const income = projectTxs.filter(t => t.type === 'income').reduce((acc, t) => acc + Number(t.amount), 0);
+    const cost = projectTxs.filter(t => t.classification === 'Custo').reduce((acc, t) => acc + Number(t.amount), 0);
+    const expense = projectTxs.filter(t => t.classification === 'Despesa').reduce((acc, t) => acc + Number(t.amount), 0);
+    const balance = income - cost - expense;
+    return { name: project.name, balance, income, cost, expense };
+  }).filter(b => b.income > 0 || b.cost > 0 || b.expense > 0);
+
   // Week boundaries: Sunday to Saturday
   const getWeekBounds = () => {
     const now = new Date();
@@ -267,18 +281,18 @@ const Dashboard: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold">{getGreeting()}{userName ? `, ${userName}` : ''}</h1>
-          <p className="text-sm text-white/30 mt-1 capitalize">{formatDateBR()}</p>
+          <p className="text-sm opacity-30 mt-1 capitalize">{formatDateBR()}</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative w-10 h-10">
             <svg className="w-10 h-10 -rotate-90" viewBox="0 0 48 48">
-              <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="4" />
+              <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeOpacity="0.05" strokeWidth="4" />
               <circle cx="24" cy="24" r="20" fill="none" stroke="#c1ff72" strokeWidth="4"
                 strokeDasharray={`${dailyProgress * 1.256} 125.6`} strokeLinecap="round" />
             </svg>
             <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-[#c1ff72]">{dailyProgress}%</span>
           </div>
-          <span className="text-xs text-white/30 font-bold">{completedDailyItems}/{totalDailyItems} feitos</span>
+          <span className="text-xs opacity-30 font-bold">{completedDailyItems}/{totalDailyItems} feitos</span>
         </div>
       </div>
 
@@ -306,6 +320,45 @@ const Dashboard: React.FC = () => {
         </Card>
       </div>
 
+      {/* Business Health Snapshot */}
+      {businessMetrics.length > 0 && (
+        <Card className="p-6 border-[#8fb0bc]/10">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-sm font-bold flex items-center gap-2">
+              <Building2 size={16} className="text-[#8fb0bc]" /> Saúde Financeira por Negócio
+            </h3>
+            <span className="text-[10px] opacity-30 uppercase tracking-widest">Matriz & Filiais</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {businessMetrics.map(b => (
+              <div key={b.name} className="bg-[var(--input-bg)] border border-[var(--card-border)] p-4 rounded-2xl">
+                <p className="text-xs font-bold mb-3">{b.name}</p>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-[10px]">
+                    <span className="opacity-30">Receita</span>
+                    <span className="text-[#c1ff72] font-bold">R$ {b.income.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-[10px]">
+                    <span className="opacity-30">Custos Operacionais</span>
+                    <span className="text-amber-500 font-bold">R$ {b.cost.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-[10px]">
+                    <span className="opacity-30">Despesas Gerais</span>
+                    <span className="text-red-400 font-bold">R$ {b.expense.toFixed(2)}</span>
+                  </div>
+                  <div className="pt-2 border-t border-[var(--card-border)] flex justify-between text-xs">
+                    <span className="font-bold">Resultado</span>
+                    <span className={`font-bold ${b.balance >= 0 ? 'text-[#c1ff72]' : 'text-red-400'}`}>
+                      R$ {b.balance.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* LEFT: Checklist do Dia */}
         <div className="lg:col-span-5 space-y-6">
@@ -314,24 +367,22 @@ const Dashboard: React.FC = () => {
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold flex items-center gap-2"><Zap size={16} className="text-[#c1ff72]" /> Hábitos do Dia</h3>
-              <span className="text-[10px] text-white/30 font-bold">{habits.filter(h => h.completedToday).length}/{habits.length}</span>
+              <span className="text-[10px] opacity-30 font-bold">{habits.filter(h => h.completedToday).length}/{habits.length}</span>
             </div>
             {habits.length === 0 ? (
-              <p className="text-xs text-white/20 py-2">Nenhum hábito cadastrado. <Link to="/habits" className="text-[#c1ff72] hover:underline">Criar</Link></p>
+              <p className="text-xs opacity-20 py-2">Nenhum hábito cadastrado. <Link to="/habits" className="text-[#c1ff72] hover:underline">Criar</Link></p>
             ) : (
               <div className="space-y-2">
                 {habits.map(habit => (
                   <button key={habit.id} onClick={() => toggleHabit(habit.id)}
-                    className={`w-full p-3 rounded-xl border text-left transition-all flex items-center gap-3 group ${
-                      habit.completedToday ? 'bg-[#c1ff72]/10 border-[#c1ff72]/30' : 'bg-white/[0.02] border-white/5 hover:border-white/20'
-                    }`}>
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all ${
-                      habit.completedToday ? 'bg-[#c1ff72] text-black' : 'bg-white/5 text-white/30'
-                    }`}>
-                      {habit.completedToday ? <Check size={14} strokeWidth={3} /> : <div className="w-3 h-3 rounded border border-white/20" />}
+                    className={`w-full p-3 rounded-xl border text-left transition-all flex items-center gap-3 group ${habit.completedToday ? 'bg-[#c1ff72]/10 border-[#c1ff72]/30' : 'bg-[var(--input-bg)] border-[var(--card-border)] hover:border-brand/50'
+                      }`}>
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all ${habit.completedToday ? 'bg-[#c1ff72] text-black' : 'bg-[var(--background)] border border-[var(--card-border)] text-white/30 opacity-30 shadow-sm'
+                      }`}>
+                      {habit.completedToday ? <Check size={14} strokeWidth={3} /> : <div className="w-3 h-3 rounded border border-current opacity-20" />}
                     </div>
-                    <span className={`text-sm font-medium flex-1 ${habit.completedToday ? 'line-through text-white/30' : ''}`}>{habit.name}</span>
-                    <span className="text-[9px] text-white/15 font-bold">{habit.streak}d</span>
+                    <span className={`text-sm font-medium flex-1 ${habit.completedToday ? 'line-through opacity-30' : ''}`}>{habit.name}</span>
+                    <span className="text-[9px] opacity-15 font-bold">{habit.streak}d</span>
                   </button>
                 ))}
               </div>
@@ -352,12 +403,10 @@ const Dashboard: React.FC = () => {
                   const checked = !!supplementChecks[supp.id];
                   return (
                     <button key={supp.id} onClick={() => toggleSupplement(supp.id)}
-                      className={`w-full p-3 rounded-xl border text-left transition-all flex items-center gap-3 group ${
-                        checked ? 'bg-[#c1ff72]/10 border-[#c1ff72]/30' : 'bg-white/[0.02] border-white/5 hover:border-white/20'
-                      }`}>
-                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all ${
-                        checked ? 'bg-[#c1ff72] text-black' : 'bg-white/5 text-white/30'
-                      }`}>
+                      className={`w-full p-3 rounded-xl border text-left transition-all flex items-center gap-3 group ${checked ? 'bg-[#c1ff72]/10 border-[#c1ff72]/30' : 'bg-white/[0.02] border-white/5 hover:border-white/20'
+                        }`}>
+                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all ${checked ? 'bg-[#c1ff72] text-black' : 'bg-white/5 text-white/30'
+                        }`}>
                         {checked ? <Check size={14} strokeWidth={3} /> : <div className="w-3 h-3 rounded border border-white/20" />}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -382,14 +431,13 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="space-y-2">
                 {todayTasks.map(task => (
-                  <div key={task.id} className="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full shrink-0 ${
-                      task.priority === 'High' ? 'bg-red-500' : task.priority === 'Medium' ? 'bg-yellow-500' : 'bg-blue-500'
-                    }`} />
+                  <div key={task.id} className="p-3 rounded-xl bg-[var(--input-bg)] border border-[var(--card-border)] flex items-center gap-3">
+                    <div className={`w-2 h-2 rounded-full shrink-0 ${task.priority === 'High' ? 'bg-red-500' : task.priority === 'Medium' ? 'bg-yellow-500' : 'bg-blue-500'
+                      }`} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{task.title}</p>
                       {task.dueDate && (
-                        <p className="text-[9px] text-white/20 flex items-center gap-1 mt-0.5">
+                        <p className="text-[9px] opacity-20 flex items-center gap-1 mt-0.5">
                           <Clock size={9} />
                           {new Date(task.dueDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
                         </p>
@@ -409,7 +457,7 @@ const Dashboard: React.FC = () => {
         <div className="lg:col-span-7 space-y-6">
 
           {/* Treino do Dia */}
-          <Card className="p-6 bg-gradient-to-br from-[#161616] to-[#0c0c0c] border-white/5">
+          <Card className="p-6 bg-gradient-to-br from-[var(--card-bg)] to-[var(--background)] border-[var(--card-border)]">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-sm font-bold flex items-center gap-2"><Dumbbell size={16} className="text-[#c1ff72]" /> Treino de Hoje</h3>
               <Link to="/gym" className="text-[10px] text-[#c1ff72] font-bold hover:underline flex items-center gap-1">
@@ -427,13 +475,13 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   {todayWorkout.exercises.map((ex, idx) => (
-                    <div key={ex.id || idx} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 group hover:bg-white/[0.04] transition-all">
+                    <div key={ex.id || idx} className="flex items-center justify-between p-3 rounded-xl bg-[var(--input-bg)] border border-[var(--card-border)] group hover:opacity-80 transition-all">
                       <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-bold text-white/15 w-5">{idx + 1}.</span>
+                        <span className="text-[10px] font-bold opacity-15 w-5">{idx + 1}.</span>
                         <span className="text-sm font-medium">{ex.name}</span>
                       </div>
                       <div className="flex items-center gap-4 text-xs">
-                        <span className="text-white/30">{ex.sets} x {ex.reps}</span>
+                        <span className="opacity-30">{ex.sets} x {ex.reps}</span>
                         {ex.weight && <span className="text-[#c1ff72] font-bold">{ex.weight}kg</span>}
                       </div>
                     </div>
@@ -493,16 +541,16 @@ const Dashboard: React.FC = () => {
 
             {/* Week Stats Grid */}
             <div className="grid grid-cols-3 gap-3 mb-5">
-              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 text-center">
-                <p className="text-[9px] font-bold text-white/30 uppercase tracking-[0.15em]">Gastos</p>
+              <div className="p-3 rounded-xl bg-[var(--input-bg)] border border-[var(--card-border)] text-center">
+                <p className="text-[9px] font-bold opacity-30 uppercase tracking-[0.15em]">Gastos</p>
                 <p className="text-base font-bold text-red-400 mt-1">R$ {weekExpenses.toFixed(2)}</p>
               </div>
-              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 text-center">
-                <p className="text-[9px] font-bold text-white/30 uppercase tracking-[0.15em]">Receitas</p>
+              <div className="p-3 rounded-xl bg-[var(--input-bg)] border border-[var(--card-border)] text-center">
+                <p className="text-[9px] font-bold opacity-30 uppercase tracking-[0.15em]">Receitas</p>
                 <p className="text-base font-bold text-[#c1ff72] mt-1">R$ {weekIncome.toFixed(2)}</p>
               </div>
-              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 text-center">
-                <p className="text-[9px] font-bold text-white/30 uppercase tracking-[0.15em]">Saldo</p>
+              <div className="p-3 rounded-xl bg-[var(--input-bg)] border border-[var(--card-border)] text-center">
+                <p className="text-[9px] font-bold opacity-30 uppercase tracking-[0.15em]">Saldo</p>
                 <p className={`text-base font-bold mt-1 ${totalBalance < 0 ? 'text-red-400' : ''}`}>R$ {totalBalance.toFixed(2)}</p>
               </div>
             </div>
@@ -516,15 +564,13 @@ const Dashboard: React.FC = () => {
                     const isPaid = bill.status === 'paid';
                     const isOverdue = !isPaid && bill.due_date < getToday();
                     return (
-                      <div key={bill.id} className={`flex items-center justify-between p-3 rounded-xl border ${
-                        isPaid ? 'bg-emerald-500/5 border-emerald-500/15' :
+                      <div key={bill.id} className={`flex items-center justify-between p-3 rounded-xl border ${isPaid ? 'bg-emerald-500/5 border-emerald-500/15' :
                         isOverdue ? 'bg-red-500/5 border-red-500/15' :
-                        'bg-amber-500/5 border-amber-500/10'
-                      }`}>
+                          'bg-amber-500/5 border-amber-500/10'
+                        }`}>
                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div className={`w-2 h-2 rounded-full shrink-0 ${
-                            isPaid ? 'bg-emerald-400' : isOverdue ? 'bg-red-400' : 'bg-amber-400'
-                          }`} />
+                          <div className={`w-2 h-2 rounded-full shrink-0 ${isPaid ? 'bg-emerald-400' : isOverdue ? 'bg-red-400' : 'bg-amber-400'
+                            }`} />
                           <div className="min-w-0">
                             <p className="text-sm font-medium truncate">{bill.description}</p>
                             <p className="text-[9px] text-white/20">
@@ -598,9 +644,9 @@ const Dashboard: React.FC = () => {
                   <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 10 }} />
                   <YAxis hide />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#0c0c0c', border: '1px solid #333', borderRadius: '12px', fontSize: 12 }}
+                    contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '12px', fontSize: 12, color: 'var(--foreground)' }}
                     formatter={(value: number) => [`R$ ${value.toFixed(2)}`, 'Gasto']}
-                    cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                    cursor={{ fill: 'var(--foreground)', fillOpacity: 0.03 }}
                   />
                   <Bar dataKey="gasto" radius={[8, 8, 0, 0]}>
                     {weeklySpending.map((entry, index) => (
@@ -679,7 +725,7 @@ const Dashboard: React.FC = () => {
                     </defs>
                     <YAxis domain={['dataMin - 1', 'dataMax + 1']} hide />
                     <Tooltip
-                      contentStyle={{ backgroundColor: '#0c0c0c', border: '1px solid #333', borderRadius: '12px', fontSize: 12 }}
+                      contentStyle={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '12px', fontSize: 12, color: 'var(--foreground)' }}
                       formatter={(value: number) => [`${value} kg`, 'Peso']}
                     />
                     <Area type="monotone" dataKey="peso" stroke="#c1ff72" strokeWidth={2} fillOpacity={1} fill="url(#wGrad)" />

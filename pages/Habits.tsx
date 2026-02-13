@@ -230,16 +230,16 @@ const HabitsPage: React.FC = () => {
           <Card key={habit.id} className="p-8 group relative overflow-visible">
             <div className="flex justify-between items-start mb-10">
               <div className="flex gap-6">
-                <div className={`w-14 h-14 rounded-[20px] flex items-center justify-center transition-all ${habit.completedToday ? 'bg-[#c1ff72] text-black shadow-[0_0_20px_rgba(193,255,114,0.3)]' : 'bg-white/5 text-white/20'}`}>
+                <div className={`w-14 h-14 rounded-[20px] flex items-center justify-center transition-all ${habit.completedToday ? 'bg-[#c1ff72] text-black shadow-[0_0_20px_rgba(193,255,114,0.3)]' : 'bg-[var(--input-bg)] text-[var(--foreground)] opacity-20'}`}>
                   <Zap size={28} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white">{habit.name}</h3>
+                  <h3 className="text-xl font-bold">{habit.name}</h3>
                   <div className="flex items-center gap-4 mt-2">
-                    <span className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] flex items-center gap-1">
+                    <span className="text-[10px] font-bold opacity-30 uppercase tracking-[0.2em] flex items-center gap-1">
                       <Flame size={12} className="text-[#e6a06e]" /> {habit.streak} dias
                     </span>
-                    <span className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] flex items-center gap-1">
+                    <span className="text-[10px] font-bold opacity-30 uppercase tracking-[0.2em] flex items-center gap-1">
                       <Award size={12} className="text-[#c1ff72]" /> Recorde: {habit.bestStreak}
                     </span>
                   </div>
@@ -248,13 +248,13 @@ const HabitsPage: React.FC = () => {
               <div className="flex gap-2">
                 <button
                   onClick={() => openEditModal(habit)}
-                  className="text-white/20 hover:text-[#c1ff72] transition-colors"
+                  className="opacity-20 hover:text-[#c1ff72] hover:opacity-100 transition-all"
                 >
                   <Edit2 size={20} />
                 </button>
                 <button
                   onClick={() => handleDelete(habit.id)}
-                  className="text-white/20 hover:text-red-400 transition-colors"
+                  className="opacity-20 hover:text-red-400 hover:opacity-100 transition-all"
                 >
                   <Trash2 size={20} />
                 </button>
@@ -264,11 +264,11 @@ const HabitsPage: React.FC = () => {
             <div className="space-y-6">
               <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest">
                 <span className="text-[#c1ff72]">{habit.progress}% CONCLUÍDO</span>
-                <span className="text-white/30">META: {habit.target}</span>
+                <span className="opacity-30">META: {habit.target}</span>
               </div>
-              <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+              <div className="w-full bg-[var(--input-bg)] h-1.5 rounded-full overflow-hidden border border-[var(--card-border)]">
                 <div
-                  className={`h-full rounded-full transition-all duration-1000 ${habit.completedToday ? 'bg-[#c1ff72]' : 'bg-white/20'}`}
+                  className={`h-full rounded-full transition-all duration-1000 ${habit.completedToday ? 'bg-[#c1ff72]' : 'bg-[var(--foreground)] opacity-20'}`}
                   style={{ width: `${habit.progress}%` }}
                 />
               </div>
@@ -277,12 +277,11 @@ const HabitsPage: React.FC = () => {
                 <Button
                   onClick={() => toggleHabit(habit.id, habit.completedToday)}
                   variant={habit.completedToday ? 'outline' : 'primary'}
-                  className={`flex-1 h-12 ${habit.completedToday ? 'border-[#c1ff72]/20 text-[#c1ff72]' : ''}`}
-                  disabled={false}
+                  className={`flex-1 h-12 ${habit.completedToday ? 'border-[#c1ff72]/20 text-[#c1ff72] bg-[#c1ff72]/5' : ''}`}
                 >
                   {habit.completedToday ? <><Check size={18} /> Concluído</> : 'Marcar como Feito'}
                 </Button>
-                <button className="w-12 h-12 rounded-full border border-white/5 flex items-center justify-center text-white/30 hover:bg-white/5 transition-colors">
+                <button className="w-12 h-12 rounded-full border border-[var(--card-border)] bg-[var(--input-bg)] flex items-center justify-center opacity-40 hover:opacity-100 transition-all">
                   <ArrowUpRight size={18} />
                 </button>
               </div>
@@ -313,9 +312,9 @@ const HabitsPage: React.FC = () => {
         {/* Add New Habit Card */}
         <button
           onClick={openCreateModal}
-          className="p-8 rounded-[28px] border-2 border-dashed border-white/5 hover:border-[#c1ff72]/30 hover:bg-[#c1ff72]/5 transition-all group flex flex-col items-center justify-center gap-4 text-white/20 hover:text-[#c1ff72]"
+          className="p-8 rounded-[28px] border-2 border-dashed border-[var(--card-border)] hover:border-[#c1ff72]/30 hover:bg-[#c1ff72]/5 transition-all group flex flex-col items-center justify-center gap-4 opacity-20 hover:opacity-100 hover:text-[#c1ff72]"
         >
-          <div className="w-16 h-16 rounded-full border border-current flex items-center justify-center">
+          <div className="w-16 h-16 rounded-full border border-current flex items-center justify-center transition-transform group-hover:scale-110">
             <Plus size={32} />
           </div>
           <span className="font-bold uppercase tracking-[0.2em] text-xs">Adicionar Novo Hábito</span>
@@ -339,35 +338,35 @@ const HabitsPage: React.FC = () => {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-white/40 mb-2">
+                <label className="block text-xs font-bold uppercase tracking-widest opacity-40 mb-2">
                   Nome do Hábito
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full h-14 px-6 bg-[#161616] border border-white/5 rounded-xl text-white focus:border-[#c1ff72] outline-none transition-all"
+                  className="w-full h-14 px-6 bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl text-[var(--foreground)] focus:border-[#c1ff72] outline-none transition-all placeholder:opacity-20"
                   placeholder="Ex: Meditar 10 minutos"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-white/40 mb-2">
+                <label className="block text-xs font-bold uppercase tracking-widest opacity-40 mb-2">
                   Meta
                 </label>
                 <input
                   type="text"
                   value={formData.target}
                   onChange={(e) => setFormData({ ...formData, target: e.target.value })}
-                  className="w-full h-14 px-6 bg-[#161616] border border-white/5 rounded-xl text-white focus:border-[#c1ff72] outline-none transition-all"
+                  className="w-full h-14 px-6 bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl text-[var(--foreground)] focus:border-[#c1ff72] outline-none transition-all placeholder:opacity-20"
                   placeholder="Ex: Diariamente"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-white/40 mb-2">
+                <label className="block text-xs font-bold uppercase tracking-widest opacity-40 mb-2">
                   Progresso Inicial (%)
                 </label>
                 <input
@@ -376,7 +375,7 @@ const HabitsPage: React.FC = () => {
                   max="100"
                   value={formData.progress}
                   onChange={(e) => setFormData({ ...formData, progress: parseInt(e.target.value) || 0 })}
-                  className="w-full h-14 px-6 bg-[#161616] border border-white/5 rounded-xl text-white focus:border-[#c1ff72] outline-none transition-all"
+                  className="w-full h-14 px-6 bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl text-[var(--foreground)] focus:border-[#c1ff72] outline-none transition-all"
                 />
               </div>
 

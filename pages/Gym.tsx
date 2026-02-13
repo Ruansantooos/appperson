@@ -273,11 +273,11 @@ const GymPage: React.FC = () => {
           <p className="text-[10px] font-bold opacity-60 uppercase tracking-[0.2em]">Consumido</p>
           <h4 className="text-2xl font-bold mt-2">{gymStats.caloriesConsumed} kcal</h4>
         </Card>
-        <Card className="p-6 relative bg-white/5 border-white/10 group">
+        <Card className="p-6 relative bg-[var(--input-bg)] border-[var(--card-border)] group">
           <div className="absolute top-4 right-4 bg-[#c1ff72] p-1.5 rounded-full text-black">
             <Flame size={14} />
           </div>
-          <p className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">Restante</p>
+          <p className="text-[10px] font-bold opacity-40 uppercase tracking-[0.2em]">Restante</p>
           <div className="flex items-baseline gap-2 mt-2">
             <h4 className="text-2xl font-bold text-[#c1ff72]">{caloriesRemaining}</h4>
             <span className="text-[10px] font-bold opacity-40">kcal</span>
@@ -293,24 +293,24 @@ const GymPage: React.FC = () => {
               <h3 className="text-lg font-bold">Resumo Nutricional</h3>
             </div>
 
-            <div className="bg-white/[0.03] p-6 rounded-[24px] border border-white/5 mb-8">
+            <div className="bg-[var(--foreground)]/[0.03] p-6 rounded-[24px] border border-[var(--card-border)] mb-8">
               <div className="flex justify-between items-end mb-4">
                 <div>
-                  <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">Meta de Calorias</p>
-                  <h4 className="text-3xl font-bold mt-1">{gymStats.caloriesConsumed} <span className="text-lg font-medium text-white/20">/ {gymStats.targetCalories} kcal</span></h4>
+                  <p className="text-[10px] font-bold opacity-30 uppercase tracking-[0.2em]">Meta de Calorias</p>
+                  <h4 className="text-3xl font-bold mt-1">{gymStats.caloriesConsumed} <span className="text-lg font-medium opacity-20">/ {gymStats.targetCalories} kcal</span></h4>
                 </div>
                 <div className="text-right">
                   <p className="text-[10px] font-bold text-[#c1ff72] uppercase tracking-[0.2em]">{Math.round(calProgress)}%</p>
                 </div>
               </div>
-              <div className="w-full h-3 bg-white/5 rounded-full overflow-hidden">
+              <div className="w-full h-3 bg-[var(--foreground)]/5 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-[#c1ff72] rounded-full transition-all duration-1000"
                   style={{ width: `${Math.min(calProgress, 100)}%` }}
                 />
               </div>
-              <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.1em] mt-4 text-center">
-                Faltam <span className="text-white">{caloriesRemaining} kcal</span> para atingir sua meta diária
+              <p className="text-[10px] font-bold opacity-30 uppercase tracking-[0.1em] mt-4 text-center">
+                Faltam <span className="text-[var(--foreground)]">{caloriesRemaining} kcal</span> para atingir sua meta diária
               </p>
             </div>
 
@@ -381,20 +381,19 @@ const GymPage: React.FC = () => {
                   <button
                     key={day.full}
                     onClick={() => setSelectedDay(day.full)}
-                    className={`flex flex-col items-center px-4 py-3 rounded-2xl text-xs font-bold uppercase transition-all shrink-0 ${
-                      isSelected
-                        ? 'bg-[#c1ff72] text-black shadow-[0_0_15px_rgba(193,255,114,0.2)]'
+                    className={`flex flex-col items-center px-4 py-3 rounded-2xl text-xs font-bold uppercase transition-all shrink-0 border border-[var(--card-border)] ${isSelected
+                        ? 'bg-[#c1ff72] text-black shadow-[0_0_15px_rgba(193,255,114,0.2)] border-transparent'
                         : hasWorkout
-                          ? 'bg-white/10 text-white hover:bg-white/15'
-                          : 'bg-white/[0.02] text-white/30 hover:bg-white/5'
-                    }`}
+                          ? 'bg-[var(--input-bg)] text-[var(--foreground)] hover:opacity-80'
+                          : 'bg-transparent text-[var(--foreground)] opacity-30 hover:opacity-60'
+                      }`}
                   >
                     <span className="tracking-widest">{day.short}</span>
                     {isToday && (
                       <div className={`w-1.5 h-1.5 rounded-full mt-1 ${isSelected ? 'bg-black' : 'bg-[#c1ff72]'}`} />
                     )}
                     {!isToday && hasWorkout && (
-                      <div className={`w-1.5 h-1.5 rounded-full mt-1 ${isSelected ? 'bg-black/30' : 'bg-white/20'}`} />
+                      <div className={`w-1.5 h-1.5 rounded-full mt-1 ${isSelected ? 'bg-black/30' : 'opacity-40 bg-[var(--foreground)]'}`} />
                     )}
                   </button>
                 );
@@ -421,18 +420,18 @@ const GymPage: React.FC = () => {
                 </div>
                 <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2">
                   {selectedWorkout.exercises?.map((ex, idx) => (
-                    <div key={ex.id || idx} className="flex items-center justify-between p-4 rounded-[20px] bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all group">
+                    <div key={ex.id || idx} className="flex items-center justify-between p-4 rounded-[20px] bg-[var(--input-bg)] border border-[var(--card-border)] hover:opacity-80 transition-all group">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white/30 group-hover:text-[#c1ff72] transition-colors">
+                        <div className="w-10 h-10 rounded-xl bg-[var(--background)] flex items-center justify-center opacity-30 group-hover:text-[#c1ff72] group-hover:opacity-100 transition-all">
                           <Dumbbell size={18} />
                         </div>
                         <div>
-                          <h4 className="font-bold text-sm text-white">{ex.name}</h4>
-                          <p className="text-[9px] text-white/20 font-bold uppercase tracking-widest">{ex.sets} séries {ex.weight ? `• ${ex.weight}kg` : ''}</p>
+                          <h4 className="font-bold text-sm">{ex.name}</h4>
+                          <p className="text-[9px] opacity-20 font-bold uppercase tracking-widest">{ex.sets} séries {ex.weight ? `• ${ex.weight}kg` : ''}</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest">Reps</p>
+                        <p className="text-[9px] font-bold opacity-20 uppercase tracking-widest">Reps</p>
                         <p className="text-base font-bold text-[#c1ff72]">{ex.reps}</p>
                       </div>
                     </div>
@@ -476,18 +475,18 @@ const GymPage: React.FC = () => {
               </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 relative z-10">
-              {supplements.length === 0 ? <p className="text-white/20 text-xs italic col-span-full">Nenhum suplemento adicionado.</p> : supplements.map((item) => (
+              {supplements.length === 0 ? <p className="opacity-20 text-xs italic col-span-full">Nenhum suplemento adicionado.</p> : supplements.map((item) => (
                 <div key={item.id} className="flex items-center justify-between bg-black/10 p-4 rounded-2xl border border-white/5 group">
                   <div>
                     <p className="text-sm font-bold">{item.name}</p>
                     <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest">{item.dosage} {item.frequency ? `• ${item.frequency}` : ''}</p>
                     {item.currentStock > 0 && (
-                      <p className="text-[10px] text-white/20 mt-1">{item.currentStock} doses restantes</p>
+                      <p className="text-[10px] opacity-20 mt-1">{item.currentStock} doses restantes</p>
                     )}
                   </div>
                   <button
                     onClick={() => handleDeleteSupplement(item.id)}
-                    className="w-8 h-8 rounded-full flex items-center justify-center transition-all text-white/20 hover:text-red-500 hover:bg-red-500/10"
+                    className="w-8 h-8 rounded-full flex items-center justify-center transition-all opacity-20 hover:text-red-500 hover:opacity-100 hover:bg-red-500/10"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -522,19 +521,19 @@ const GymPage: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-white/40 uppercase tracking-widest block mb-1">Dose</label>
+                  <label className="text-xs font-bold opacity-40 uppercase tracking-widest block mb-1">Dose</label>
                   <input
-                    className="w-full bg-[#161616] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#c1ff72] outline-none"
+                    className="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-4 py-3 text-[var(--foreground)] focus:border-[#c1ff72] outline-none"
                     value={newSupplement.dosage}
                     onChange={e => setNewSupplement({ ...newSupplement, dosage: e.target.value })}
                     placeholder="Ex: 5g"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-white/40 uppercase tracking-widest block mb-1">Estoque</label>
+                  <label className="text-xs font-bold opacity-40 uppercase tracking-widest block mb-1">Estoque</label>
                   <input
                     type="number"
-                    className="w-full bg-[#161616] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#c1ff72] outline-none"
+                    className="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-4 py-3 text-[var(--foreground)] focus:border-[#c1ff72] outline-none"
                     value={newSupplement.currentStock}
                     onChange={e => setNewSupplement({ ...newSupplement, currentStock: e.target.value })}
                   />
@@ -573,13 +572,12 @@ const GymPage: React.FC = () => {
                         type="button"
                         onClick={() => setNewWorkout({ ...newWorkout, dayOfWeek: day.full })}
                         disabled={taken && !isSelected}
-                        className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
-                          isSelected
+                        className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${isSelected
                             ? 'bg-[#c1ff72] text-black'
                             : taken
                               ? 'bg-white/5 text-white/15 cursor-not-allowed'
                               : 'bg-white/5 text-white/50 hover:bg-white/10'
-                        }`}
+                          }`}
                       >
                         {day.short}
                         {taken && !isSelected && <span className="block text-[8px] mt-0.5 opacity-50">Ocupado</span>}
