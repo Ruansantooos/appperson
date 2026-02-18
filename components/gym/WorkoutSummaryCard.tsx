@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { Zap, X } from 'lucide-react';
 import { WorkoutSession } from '../../types';
+import { Logo } from '../shared/Logo';
 
 interface WorkoutSummaryCardProps {
   session: WorkoutSession;
@@ -70,10 +70,13 @@ const WorkoutSummaryCard: React.FC<WorkoutSummaryCardProps> = ({ session, onClos
       <div className="max-w-sm w-full bg-gradient-to-b from-[#111] to-[#0a0a0a] border border-[#c1ff72]/10 rounded-[28px] p-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <p className="text-[10px] font-bold uppercase tracking-[0.3em] opacity-40">
-            C O R E L Y S
-          </p>
-          <Zap size={16} className="text-[#c1ff72]" />
+          <div className="flex items-center gap-2">
+            <Logo size={22} />
+            <p className="text-[10px] font-bold uppercase tracking-[0.3em] opacity-40">
+              C O R E L Y S
+            </p>
+          </div>
+          <Logo size={16} />
         </div>
 
         {/* Workout Info */}
