@@ -1,6 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ArrowLeft, Timer, Dumbbell, Check, Trophy } from 'lucide-react';
 import { Workout, WorkoutSession, WorkoutExerciseLog } from '../../types';
+
+const STORAGE_KEY = 'corelys_active_workout';
+
+export interface PersistedWorkoutState {
+  workout: Workout;
+  startedAt: string;
+  exercises: WorkoutExerciseLog[];
+}
 
 interface ActiveWorkoutProps {
   workout: Workout;
@@ -8,29 +16,76 @@ interface ActiveWorkoutProps {
   onCancel: () => void;
 }
 
+function loadPersistedState(): PersistedWorkoutState | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function persistState(state: PersistedWorkoutState) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+export function clearPersistedWorkout() {
+  localStorage.removeItem(STORAGE_KEY);
+}
+
+export function getPersistedWorkout(): PersistedWorkoutState | null {
+  return loadPersistedState();
+}
+
 const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({ workout, onFinish, onCancel }) => {
-  const [seconds, setSeconds] = useState(0);
-  const [exercises, setExercises] = useState<WorkoutExerciseLog[]>(() =>
-    (workout.exercises || []).map(ex => ({
+  // Restore or initialize
+  const persisted = loadPersistedState();
+  const isResuming = persisted && persisted.workout.id === workout.id;
+
+  const startedAtRef = useRef(isResuming ? persisted!.startedAt : new Date().toISOString());
+
+  const [exercises, setExercises] = useState<WorkoutExerciseLog[]>(() => {
+    if (isResuming) return persisted!.exercises;
+    return (workout.exercises || []).map(ex => ({
       exerciseId: ex.id,
       name: ex.name,
       targetSets: ex.sets,
       targetReps: ex.reps,
       weight: ex.weight,
       completed: false,
-    }))
-  );
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const startedAtRef = useRef(new Date().toISOString());
+    }));
+  });
 
+  const calcElapsed = useCallback(() => {
+    return Math.floor((Date.now() - new Date(startedAtRef.current).getTime()) / 1000);
+  }, []);
+
+  const [seconds, setSeconds] = useState(calcElapsed);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Persist on first mount (new session)
+  useEffect(() => {
+    if (!isResuming) {
+      persistState({ workout, startedAt: startedAtRef.current, exercises });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Timer: recalculates from startedAt every second (survives remount)
   useEffect(() => {
     intervalRef.current = setInterval(() => {
-      setSeconds(s => s + 1);
+      setSeconds(calcElapsed());
     }, 1000);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, []);
+  }, [calcElapsed]);
+
+  // Persist exercises whenever they change
+  useEffect(() => {
+    persistState({ workout, startedAt: startedAtRef.current, exercises });
+  }, [exercises, workout]);
 
   const toggleExercise = (index: number) => {
     setExercises(prev =>
@@ -49,21 +104,24 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({ workout, onFinish, onCanc
 
   const handleFinish = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
+    const finalSeconds = calcElapsed();
     const session: WorkoutSession = {
       workoutId: workout.id,
       workoutName: workout.name,
       muscleGroup: workout.muscleGroup,
       startedAt: startedAtRef.current,
       finishedAt: new Date().toISOString(),
-      durationSeconds: seconds,
+      durationSeconds: finalSeconds,
       exercises,
     };
+    clearPersistedWorkout();
     onFinish(session);
   };
 
   const handleBack = () => {
     if (window.confirm('Tem certeza que deseja cancelar o treino? O progresso será perdido.')) {
       if (intervalRef.current) clearInterval(intervalRef.current);
+      clearPersistedWorkout();
       onCancel();
     }
   };

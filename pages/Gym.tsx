@@ -23,7 +23,7 @@ import {
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Supplement, Workout, GymStats, Meal, SavedFood, WorkoutSession } from '../types';
-import ActiveWorkout from '../components/gym/ActiveWorkout';
+import ActiveWorkout, { getPersistedWorkout } from '../components/gym/ActiveWorkout';
 import WorkoutSummaryCard from '../components/gym/WorkoutSummaryCard';
 
 const DEFAULT_GYM_STATS: GymStats = {
@@ -108,6 +108,14 @@ const GymPage: React.FC = () => {
     if (!user) return;
     fetchAll();
   }, [user]);
+
+  // Restore active workout from localStorage on mount
+  useEffect(() => {
+    const persisted = getPersistedWorkout();
+    if (persisted) {
+      setActiveWorkout(persisted.workout);
+    }
+  }, []);
 
   const fetchAll = async () => {
     setLoading(true);
