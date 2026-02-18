@@ -7,11 +7,11 @@ import {
   Heart,
   Wallet,
   CalendarDays,
-  Zap,
   Dumbbell,
   Settings,
   Layers
 } from 'lucide-react';
+import { Logo } from './Logo';
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
@@ -29,8 +29,8 @@ const Sidebar: React.FC = () => {
   return (
     <aside className="hidden lg:flex flex-col w-20 bg-[var(--sidebar-bg)] h-screen sticky top-0 py-8 items-center justify-between border-r border-[var(--card-border)] transition-colors duration-300">
       <div className="flex flex-col items-center gap-10">
-        <div className="w-12 h-12 bg-[#c1ff72]/10 rounded-xl flex items-center justify-center text-[#c1ff72] mb-4">
-          <Zap size={22} fill="currentColor" />
+        <div className="w-12 h-12 bg-[#c1ff72]/5 rounded-xl flex items-center justify-center mb-4">
+          <Logo size={28} />
         </div>
 
         <nav className="flex flex-col gap-6 bg-[var(--input-bg)] p-3 rounded-[32px] border border-[var(--card-border)]">

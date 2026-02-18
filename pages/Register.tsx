@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { Link } from 'react-router-dom';
 import { Card } from '../components/ui/LayoutComponents';
 import { Lock, Mail, Loader2, AlertCircle, CheckCircle, User } from 'lucide-react';
+import { Logo } from '../components/shared/Logo';
 
 const Register: React.FC = () => {
     const [name, setName] = useState('');
@@ -96,7 +97,10 @@ const Register: React.FC = () => {
     return (
         <div className="flex min-h-screen bg-[#0c0c0c] items-center justify-center p-4">
             <div className="w-full max-w-md">
-                <div className="text-center mb-8">
+                <div className="text-center mb-8 flex flex-col items-center">
+                    <div className="mb-4">
+                        <Logo size={48} />
+                    </div>
                     <h1 className="text-3xl font-bold text-white mb-2">Corelys</h1>
                     <p className="opacity-40">Crie sua conta gratuita</p>
                 </div>
