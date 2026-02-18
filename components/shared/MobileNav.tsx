@@ -1,10 +1,25 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, CheckSquare, Wallet, Zap, Dumbbell, Layers } from 'lucide-react';
 
+const STORAGE_KEY = 'corelys_active_workout';
+
 const MobileNav: React.FC = () => {
   const location = useLocation();
+  const [hidden, setHidden] = useState(() => !!localStorage.getItem(STORAGE_KEY));
+
+  // Listen for localStorage changes (from same tab via storage event won't fire, so poll)
+  useEffect(() => {
+    const check = () => setHidden(!!localStorage.getItem(STORAGE_KEY));
+    check();
+    const interval = setInterval(check, 500);
+    window.addEventListener('storage', check);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', check);
+    };
+  }, []);
 
   const navItems = [
     { label: 'Home', icon: LayoutDashboard, path: '/' },
@@ -14,6 +29,8 @@ const MobileNav: React.FC = () => {
     { label: 'Finance', icon: Wallet, path: '/finance' },
     { label: 'Projects', icon: Layers, path: '/projects' },
   ];
+
+  if (hidden) return null;
 
   return (
     <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] h-16 bg-[var(--sidebar-bg)]/90 backdrop-blur-xl border border-[var(--card-border)] rounded-[24px] flex items-center justify-around px-2 z-50 shadow-2xl transition-colors duration-300">
