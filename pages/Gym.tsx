@@ -14,7 +14,8 @@ import {
   Trash2,
   Star,
   Bookmark,
-  Play
+  Play,
+  Pencil
 } from 'lucide-react';
 import {
   PieChart, Pie, Cell, ResponsiveContainer
@@ -91,6 +92,17 @@ const GymPage: React.FC = () => {
   // Active Workout State
   const [activeWorkout, setActiveWorkout] = useState<Workout | null>(null);
   const [completedSession, setCompletedSession] = useState<WorkoutSession | null>(null);
+
+  // Edit Workout State
+  const [isEditWorkoutModalOpen, setIsEditWorkoutModalOpen] = useState(false);
+  const [editWorkout, setEditWorkout] = useState<{
+    id: string;
+    name: string;
+    dayOfWeek: string;
+    muscleGroup: string;
+    exercises: { id?: string; name: string; sets: string; reps: string; weight: string }[];
+  } | null>(null);
+  const [editTempExercise, setEditTempExercise] = useState({ name: '', sets: '3', reps: '10-12', weight: '' });
 
   useEffect(() => {
     if (!user) return;
@@ -348,6 +360,73 @@ const GymPage: React.FC = () => {
     if (!confirm('Deletar este suplemento?')) return;
     await supabase.from('supplements').delete().eq('id', suppId);
     fetchSupplements();
+  };
+
+  const openEditWorkout = (workout: Workout) => {
+    setEditWorkout({
+      id: workout.id,
+      name: workout.name,
+      dayOfWeek: workout.dayOfWeek,
+      muscleGroup: workout.muscleGroup,
+      exercises: (workout.exercises || []).map(ex => ({
+        id: ex.id,
+        name: ex.name,
+        sets: ex.sets,
+        reps: ex.reps,
+        weight: ex.weight,
+      })),
+    });
+    setEditTempExercise({ name: '', sets: '3', reps: '10-12', weight: '' });
+    setIsEditWorkoutModalOpen(true);
+  };
+
+  const handleAddExerciseToEdit = () => {
+    if (!editTempExercise.name || !editWorkout) return;
+    setEditWorkout(prev => prev ? {
+      ...prev,
+      exercises: [...prev.exercises, { name: editTempExercise.name, sets: editTempExercise.sets, reps: editTempExercise.reps, weight: editTempExercise.weight }],
+    } : prev);
+    setEditTempExercise({ name: '', sets: '3', reps: '10-12', weight: '' });
+  };
+
+  const handleSaveEditWorkout = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editWorkout) return;
+    setSubmitting(true);
+    try {
+      // Update workout info
+      const { error: workoutError } = await supabase.from('workouts').update({
+        name: editWorkout.name,
+        day_of_week: editWorkout.dayOfWeek,
+        muscle_group: editWorkout.muscleGroup,
+      }).eq('id', editWorkout.id);
+      if (workoutError) throw workoutError;
+
+      // Delete all existing exercises and re-insert
+      await supabase.from('workout_exercises').delete().eq('workout_id', editWorkout.id);
+
+      if (editWorkout.exercises.length > 0) {
+        const exercisesToInsert = editWorkout.exercises.map((ex, idx) => ({
+          workout_id: editWorkout.id,
+          user_id: user!.id,
+          name: ex.name,
+          sets: ex.sets,
+          reps: ex.reps,
+          weight: ex.weight,
+          order_index: idx,
+        }));
+        const { error: exercisesError } = await supabase.from('workout_exercises').insert(exercisesToInsert);
+        if (exercisesError) throw exercisesError;
+      }
+
+      setIsEditWorkoutModalOpen(false);
+      setEditWorkout(null);
+      fetchWorkouts();
+    } catch (e) {
+      alert('Erro ao salvar alterações do treino.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // Get workout for selected day
@@ -628,13 +707,22 @@ const GymPage: React.FC = () => {
                       <p className="text-[10px] text-[#c1ff72] font-bold uppercase tracking-[0.2em]">{selectedWorkout.muscleGroup}</p>
                     )}
                   </div>
-                  <button
-                    onClick={() => handleDeleteWorkout(selectedWorkout.id)}
-                    className="opacity-20 hover:text-red-500 hover:opacity-100 transition-all p-2"
-                    title="Deletar treino"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => openEditWorkout(selectedWorkout)}
+                      className="opacity-20 hover:text-[#c1ff72] hover:opacity-100 transition-all p-2"
+                      title="Editar treino"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteWorkout(selectedWorkout.id)}
+                      className="opacity-20 hover:text-red-500 hover:opacity-100 transition-all p-2"
+                      title="Deletar treino"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Iniciar Treino Button */}
@@ -906,6 +994,136 @@ const GymPage: React.FC = () => {
           </Card>
         </div>
       )}
+      {/* Edit Workout Modal */}
+      {isEditWorkoutModalOpen && editWorkout && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-2xl p-6 border-[#c1ff72]/20 relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <button
+              onClick={() => { setIsEditWorkoutModalOpen(false); setEditWorkout(null); }}
+              className="absolute top-4 right-4 text-white/40 hover:text-white"
+            >
+              <X size={20} />
+            </button>
+            <h3 className="text-xl font-bold mb-6">Editar Treino</h3>
+            <form onSubmit={handleSaveEditWorkout} className="space-y-6">
+              {/* Day of Week Selector */}
+              <div>
+                <label className="text-xs font-bold opacity-40 uppercase tracking-widest block mb-2">Dia da Semana</label>
+                <div className="flex gap-2 flex-wrap">
+                  {DAYS_OF_WEEK.map(day => {
+                    const taken = workouts.some(w => w.dayOfWeek === day.full && w.id !== editWorkout.id);
+                    const isSelected = editWorkout.dayOfWeek === day.full;
+                    return (
+                      <button
+                        key={day.full}
+                        type="button"
+                        onClick={() => setEditWorkout({ ...editWorkout, dayOfWeek: day.full })}
+                        disabled={taken && !isSelected}
+                        className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${isSelected
+                          ? 'bg-[#c1ff72] text-black'
+                          : taken
+                            ? 'bg-[var(--foreground)]/5 opacity-15 cursor-not-allowed'
+                            : 'bg-[var(--foreground)]/5 opacity-50 hover:bg-[var(--foreground)]/10'
+                          }`}
+                      >
+                        {day.short}
+                        {taken && !isSelected && <span className="block text-[8px] mt-0.5 opacity-50">Ocupado</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold opacity-40 uppercase tracking-widest block mb-1">Nome do Treino</label>
+                  <input
+                    className="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-4 py-3 text-[var(--foreground)] focus:border-[#c1ff72] outline-none transition-all"
+                    value={editWorkout.name}
+                    onChange={e => setEditWorkout({ ...editWorkout, name: e.target.value })}
+                    required
+                    placeholder="Ex: Treino A - Peito"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold opacity-40 uppercase tracking-widest block mb-1">Grupo Muscular</label>
+                  <input
+                    className="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-4 py-3 text-[var(--foreground)] focus:border-[#c1ff72] outline-none transition-all"
+                    value={editWorkout.muscleGroup}
+                    onChange={e => setEditWorkout({ ...editWorkout, muscleGroup: e.target.value })}
+                    placeholder="Ex: Peito e Tríceps"
+                  />
+                </div>
+              </div>
+
+              {/* Exercise Builder */}
+              <div className="bg-[var(--foreground)]/5 rounded-xl p-4 border border-[var(--card-border)]">
+                <h4 className="text-sm font-bold mb-4 flex items-center gap-2"><Dumbbell size={16} /> Exercícios</h4>
+                <div className="grid grid-cols-12 gap-2 mb-4">
+                  <div className="col-span-5">
+                    <input
+                      className="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-lg px-3 py-2 text-sm text-[var(--foreground)] focus:border-[#c1ff72] outline-none"
+                      placeholder="Nome do exercício"
+                      value={editTempExercise.name}
+                      onChange={e => setEditTempExercise({ ...editTempExercise, name: e.target.value })}
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <input
+                      className="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-lg px-3 py-2 text-sm text-[var(--foreground)] focus:border-[#c1ff72] outline-none"
+                      placeholder="Séries"
+                      value={editTempExercise.sets}
+                      onChange={e => setEditTempExercise({ ...editTempExercise, sets: e.target.value })}
+                    />
+                  </div>
+                  <div className="col-span-3">
+                    <input
+                      className="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-lg px-3 py-2 text-sm text-[var(--foreground)] focus:border-[#c1ff72] outline-none"
+                      placeholder="Reps (ex: 8-12)"
+                      value={editTempExercise.reps}
+                      onChange={e => setEditTempExercise({ ...editTempExercise, reps: e.target.value })}
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <button
+                      type="button"
+                      onClick={handleAddExerciseToEdit}
+                      disabled={!editTempExercise.name}
+                      className="w-full h-full bg-[#c1ff72]/20 text-[#c1ff72] font-bold rounded-lg border border-[#c1ff72]/50 hover:bg-[#c1ff72] hover:text-black transition-all flex items-center justify-center"
+                    >
+                      <Plus size={16} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  {editWorkout.exercises.map((ex, idx) => (
+                    <div key={idx} className="flex items-center justify-between bg-[var(--background)]/50 p-3 rounded-lg border border-[var(--card-border)]">
+                      <span className="text-sm font-bold">{idx + 1}. {ex.name}</span>
+                      <div className="flex items-center gap-4 text-xs opacity-50">
+                        <span>{ex.sets} x {ex.reps} {ex.weight ? `• ${ex.weight}kg` : ''}</span>
+                        <button
+                          type="button"
+                          onClick={() => setEditWorkout(prev => prev ? { ...prev, exercises: prev.exercises.filter((_, i) => i !== idx) } : prev)}
+                          className="opacity-40 hover:text-red-500 hover:opacity-100 transition-all"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {editWorkout.exercises.length === 0 && <p className="text-xs opacity-20 text-center py-2">Nenhum exercício adicionado.</p>}
+                </div>
+              </div>
+
+              <button type="submit" disabled={submitting} className="w-full bg-[#c1ff72] text-black font-bold py-3 rounded-xl hover:bg-[#b0e666] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                {submitting ? <Loader2 className="animate-spin mx-auto" /> : 'Salvar Alterações'}
+              </button>
+            </form>
+          </Card>
+        </div>
+      )}
+
       {/* Active Workout Overlay */}
       {activeWorkout && (
         <ActiveWorkout
