@@ -175,7 +175,7 @@ const SettingsPage: React.FC = () => {
                 key={item.label}
                 className={`w-full flex items-center justify-between px-6 py-4 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === item.label
                   ? 'bg-[#c1ff72] text-black shadow-[0_0_15px_rgba(193,255,114,0.2)]'
-                  : 'text-white/40 hover:bg-white/5 hover:text-white'
+                  : 'opacity-40 hover:bg-[var(--foreground)]/5 hover:opacity-100 transition-all'
                   }`}
                 onClick={() => setActiveTab(item.label)}
               >
@@ -214,7 +214,7 @@ const SettingsPage: React.FC = () => {
                   </div>
                   <div className="text-center sm:text-left">
                     <h4 className="text-2xl font-bold">{profile.fullName || 'Usuário'}</h4>
-                    <p className="text-sm text-white/30 mt-1">{profile.email}</p>
+                    <p className="text-sm opacity-30 mt-1">{profile.email}</p>
                     <div className="flex gap-2 mt-4 justify-center sm:justify-start">
                       <Badge variant="success">Ativo</Badge>
                     </div>
@@ -223,7 +223,7 @@ const SettingsPage: React.FC = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-3">
-                    <label className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Nome Completo</label>
+                    <label className="text-[10px] font-bold opacity-20 uppercase tracking-[0.2em]">Nome Completo</label>
                     <Input
                       value={profile.fullName}
                       onChange={e => setProfile({ ...profile, fullName: e.target.value })}
@@ -231,7 +231,7 @@ const SettingsPage: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-3">
-                    <label className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Email Principal</label>
+                    <label className="text-[10px] font-bold opacity-20 uppercase tracking-[0.2em]">Email Principal</label>
                     <Input
                       value={profile.email}
                       disabled
@@ -239,7 +239,7 @@ const SettingsPage: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-3">
-                    <label className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Gênero</label>
+                    <label className="text-[10px] font-bold opacity-20 uppercase tracking-[0.2em]">Gênero</label>
                     <div className="grid grid-cols-3 gap-3">
                       {[
                         { label: 'Masculino', value: 'Male' },
@@ -249,11 +249,10 @@ const SettingsPage: React.FC = () => {
                         <button
                           key={g.value}
                           onClick={() => setProfile({ ...profile, gender: g.value as any })}
-                          className={`h-14 rounded-xl border flex items-center justify-center text-sm font-bold transition-all ${
-                            profile.gender === g.value
-                              ? 'bg-[#c1ff72] text-black border-[#c1ff72]'
-                              : 'border-white/10 hover:border-white/30 text-white/60'
-                          }`}
+                          className={`h-14 rounded-xl border flex items-center justify-center text-sm font-bold transition-all ${profile.gender === g.value
+                            ? 'bg-[#c1ff72] text-black border-[#c1ff72]'
+                            : 'border-[var(--card-border)] hover:border-[var(--foreground)]/30 opacity-60'
+                            }`}
                         >
                           {g.label}
                         </button>
@@ -261,7 +260,7 @@ const SettingsPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <label className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Data de Nascimento</label>
+                    <label className="text-[10px] font-bold opacity-20 uppercase tracking-[0.2em]">Data de Nascimento</label>
                     <Input
                       type="date"
                       value={profile.birthDate}
@@ -270,7 +269,7 @@ const SettingsPage: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-3">
-                    <label className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Altura (cm)</label>
+                    <label className="text-[10px] font-bold opacity-20 uppercase tracking-[0.2em]">Altura (cm)</label>
                     <Input
                       type="number"
                       value={profile.height}
@@ -279,7 +278,7 @@ const SettingsPage: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-3">
-                    <label className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Peso Atual (kg)</label>
+                    <label className="text-[10px] font-bold opacity-20 uppercase tracking-[0.2em]">Peso Atual (kg)</label>
                     <Input
                       type="number"
                       value={weight}
@@ -289,7 +288,7 @@ const SettingsPage: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-3">
-                    <label className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Nível de Atividade</label>
+                    <label className="text-[10px] font-bold opacity-20 uppercase tracking-[0.2em]">Nível de Atividade</label>
                     <select
                       value={profile.activityLevel}
                       onChange={e => setProfile({ ...profile, activityLevel: e.target.value })}
@@ -303,7 +302,7 @@ const SettingsPage: React.FC = () => {
                     </select>
                   </div>
                   <div className="space-y-3">
-                    <label className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Objetivo</label>
+                    <label className="text-[10px] font-bold opacity-20 uppercase tracking-[0.2em]">Objetivo</label>
                     <select
                       value={profile.goal}
                       onChange={e => setProfile({ ...profile, goal: e.target.value })}
@@ -347,7 +346,7 @@ const SettingsPage: React.FC = () => {
 
               <Card className="p-8 border-red-500/10 bg-red-500/[0.02]">
                 <h3 className="text-lg font-bold text-red-400 mb-2">Zona Crítica</h3>
-                <p className="text-xs text-white/30 mb-6 leading-relaxed">Remover sua conta irá deletar permanentemente todos os seus dados e históricos.</p>
+                <p className="text-xs opacity-30 mb-6 leading-relaxed">Remover sua conta irá deletar permanentemente todos os seus dados e históricos.</p>
                 <Button
                   variant="danger"
                   className="w-full sm:w-auto h-12 bg-red-600/20 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white"
@@ -363,7 +362,7 @@ const SettingsPage: React.FC = () => {
           {activeTab === 'Notificações' && (
             <Card className="p-10">
               <h3 className="text-2xl font-bold mb-2">Notificações</h3>
-              <p className="text-white/40 text-sm mb-10">Escolha quais notificações você deseja receber.</p>
+              <p className="opacity-40 text-sm mb-10">Escolha quais notificações você deseja receber.</p>
 
               <div className="space-y-4">
                 {[
@@ -375,27 +374,25 @@ const SettingsPage: React.FC = () => {
                   <div key={item.key} className="flex items-center justify-between p-6 bg-white/[0.02] border border-white/5 rounded-2xl">
                     <div>
                       <h4 className="font-bold text-sm">{item.label}</h4>
-                      <p className="text-xs text-white/30 mt-1">{item.desc}</p>
+                      <p className="text-xs opacity-30 mt-1">{item.desc}</p>
                     </div>
                     <button
                       onClick={() => setNotifications(prev => ({ ...prev, [item.key]: !prev[item.key as keyof typeof prev] }))}
-                      className={`w-14 h-8 rounded-full transition-all relative ${
-                        notifications[item.key as keyof typeof notifications]
-                          ? 'bg-[#c1ff72]'
-                          : 'bg-white/10'
-                      }`}
+                      className={`w-14 h-8 rounded-full transition-all relative ${notifications[item.key as keyof typeof notifications]
+                        ? 'bg-[#c1ff72]'
+                        : 'bg-white/10'
+                        }`}
                     >
-                      <div className={`w-6 h-6 bg-white rounded-full absolute top-1 transition-all shadow-md ${
-                        notifications[item.key as keyof typeof notifications]
-                          ? 'left-7'
-                          : 'left-1'
-                      }`} />
+                      <div className={`w-6 h-6 bg-white rounded-full absolute top-1 transition-all shadow-md ${notifications[item.key as keyof typeof notifications]
+                        ? 'left-7'
+                        : 'left-1'
+                        }`} />
                     </button>
                   </div>
                 ))}
               </div>
 
-              <p className="text-xs text-white/20 mt-8">As notificações serão enviadas por email para {profile.email || user?.email}.</p>
+              <p className="text-xs opacity-20 mt-8">As notificações serão enviadas por email para {profile.email || user?.email}.</p>
             </Card>
           )}
 
@@ -404,7 +401,7 @@ const SettingsPage: React.FC = () => {
             <div className="space-y-6">
               <Card className="p-10">
                 <h3 className="text-2xl font-bold mb-2">Seu Plano</h3>
-                <p className="text-white/40 text-sm mb-10">Gerencie sua assinatura do Central Saúde.</p>
+                <p className="opacity-40 text-sm mb-10">Gerencie sua assinatura do Corelys.</p>
 
                 <div className="p-8 bg-gradient-to-br from-[#c1ff72]/10 to-[#c1ff72]/5 border border-[#c1ff72]/20 rounded-2xl">
                   <div className="flex items-center justify-between mb-6">
@@ -415,13 +412,13 @@ const SettingsPage: React.FC = () => {
                         </h4>
                         <Badge variant="success">Ativo</Badge>
                       </div>
-                      <p className="text-white/40 text-sm">
+                      <p className="opacity-40 text-sm">
                         {userPlan === 'premium'
                           ? 'Acesso completo a todas as funcionalidades'
                           : 'Acesso a funcionalidades básicas'}
                       </p>
                       {planExpires && (
-                        <p className="text-xs text-white/30 mt-1">
+                        <p className="text-xs opacity-30 mt-1">
                           Válido até {new Date(planExpires).toLocaleDateString('pt-BR')}
                         </p>
                       )}
@@ -430,7 +427,7 @@ const SettingsPage: React.FC = () => {
                       <p className="text-3xl font-bold text-[#c1ff72]">
                         {userPlan === 'premium' ? 'R$ 14,90' : 'R$ 0'}
                       </p>
-                      <p className="text-xs text-white/30">/mês</p>
+                      <p className="text-xs opacity-30">/mês</p>
                     </div>
                   </div>
 
@@ -449,7 +446,7 @@ const SettingsPage: React.FC = () => {
                         <div className="w-5 h-5 rounded-full bg-[#c1ff72]/20 flex items-center justify-center">
                           <div className="w-2 h-2 rounded-full bg-[#c1ff72]" />
                         </div>
-                        <span className="text-white/60">{feature}</span>
+                        <span className="opacity-60">{feature}</span>
                       </div>
                     ))}
                   </div>
@@ -460,21 +457,21 @@ const SettingsPage: React.FC = () => {
                 <h3 className="text-lg font-bold mb-2">Informações da Conta</h3>
                 <div className="space-y-4 mt-6">
                   <div className="flex items-center justify-between py-4 border-b border-white/5">
-                    <span className="text-sm text-white/40">Email</span>
+                    <span className="text-sm opacity-40">Email</span>
                     <span className="text-sm font-bold">{profile.email || user?.email}</span>
                   </div>
                   <div className="flex items-center justify-between py-4 border-b border-white/5">
-                    <span className="text-sm text-white/40">Plano atual</span>
+                    <span className="text-sm opacity-40">Plano atual</span>
                     <Badge variant={userPlan === 'premium' ? 'success' : 'default'}>
                       {userPlan === 'premium' ? 'Premium' : 'Gratuito'}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between py-4 border-b border-white/5">
-                    <span className="text-sm text-white/40">Status da conta</span>
+                    <span className="text-sm opacity-40">Status da conta</span>
                     <Badge variant="success">Ativa</Badge>
                   </div>
                   <div className="flex items-center justify-between py-4">
-                    <span className="text-sm text-white/40">Membro desde</span>
+                    <span className="text-sm opacity-40">Membro desde</span>
                     <span className="text-sm font-bold">
                       {user?.created_at ? new Date(user.created_at).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) : '-'}
                     </span>

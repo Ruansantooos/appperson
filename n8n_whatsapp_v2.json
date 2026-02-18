@@ -1,0 +1,306 @@
+{
+  "name": "WhatsApp Bot - Corelys v2",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-corelys-v2",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook WhatsApp",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 300],
+      "webhookId": "whatsapp-corelys-v2"
+    },
+
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"ok\" }",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "respond-webhook-immediate",
+      "name": "Responder 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [220, 100]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// =============================================\n// PARSE DA MENSAGEM DO WHATSAPP (Evolution API)\n// Suporta: texto, audio, imagens\n// =============================================\n\nconst body = $input.first().json.body || $input.first().json;\n\nlet phone = '';\nlet message = '';\nlet pushName = '';\nlet messageType = 'text';\nlet isFromMe = false;\nlet isGroup = false;\nlet isStatus = false;\n\ntry {\n  // Evolution API v2 format\n  const data = body.data || body;\n  const key = data.key || {};\n  const remoteJid = key.remoteJid || data.remoteJid || '';\n\n  // Detectar tipo de mensagem\n  isFromMe = key.fromMe === true;\n  isGroup = remoteJid.includes('@g.us');\n  isStatus = remoteJid === 'status@broadcast';\n\n  phone = remoteJid.replace('@s.whatsapp.net', '').replace('@c.us', '').replace(/[^0-9]/g, '');\n  pushName = data.pushName || '';\n\n  // Extrair mensagem por tipo\n  const msg = data.message || {};\n  if (msg.conversation) {\n    message = msg.conversation;\n    messageType = 'text';\n  } else if (msg.extendedTextMessage?.text) {\n    message = msg.extendedTextMessage.text;\n    messageType = 'text';\n  } else if (msg.audioMessage) {\n    message = '[AUDIO]';\n    messageType = 'audio';\n  } else if (msg.imageMessage) {\n    message = msg.imageMessage.caption || '[IMAGEM]';\n    messageType = 'image';\n  } else if (msg.documentMessage) {\n    message = msg.documentMessage.fileName || '[DOCUMENTO]';\n    messageType = 'document';\n  } else if (msg.videoMessage) {\n    message = msg.videoMessage.caption || '[VIDEO]';\n    messageType = 'video';\n  } else {\n    message = '';\n    messageType = 'other';\n  }\n} catch (e) {\n  // Fallback para outros formatos\n  phone = (body.phone || body.from || body.number || '').replace(/[^0-9]/g, '');\n  message = body.message || body.text || body.body || '';\n  pushName = body.name || body.pushName || '';\n}\n\nreturn [{ json: {\n  phone,\n  message,\n  pushName,\n  messageType,\n  isFromMe,\n  isGroup,\n  isStatus,\n  timestamp: Date.now()\n} }];"
+      },
+      "id": "parse-message",
+      "name": "Parse Mensagem",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 300]
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "" },
+          "conditions": [
+            {
+              "id": "has-phone",
+              "leftValue": "={{ $json.phone }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEquals" }
+            },
+            {
+              "id": "has-message",
+              "leftValue": "={{ $json.message }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEquals" }
+            },
+            {
+              "id": "not-from-me",
+              "leftValue": "={{ $json.isFromMe }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "notTrue" }
+            },
+            {
+              "id": "not-group",
+              "leftValue": "={{ $json.isGroup }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "notTrue" }
+            },
+            {
+              "id": "not-status",
+              "leftValue": "={{ $json.isStatus }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "notTrue" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "filter-message",
+      "name": "Filtros: Valida + Nao Grupo + Nao Propria",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [440, 300]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// =============================================\n// ANTI-FLOOD: Debounce por telefone (2s)\n// Usa staticData do workflow para controle\n// =============================================\n\nconst phone = $input.first().json.phone;\nconst now = Date.now();\nconst DEBOUNCE_MS = 2000; // 2 segundos\n\n// Usar staticData do workflow para persistir entre execucoes\nconst staticData = $getWorkflowStaticData('global');\nif (!staticData.lastMessages) staticData.lastMessages = {};\n\nconst lastTime = staticData.lastMessages[phone] || 0;\nconst timeDiff = now - lastTime;\n\nif (timeDiff < DEBOUNCE_MS) {\n  // Mensagem muito rapida, ignorar (provavelmente duplicata)\n  return [];\n}\n\n// Atualizar timestamp\nstaticData.lastMessages[phone] = now;\n\n// Limpar entradas antigas (>5min) para nao acumular memoria\nconst CLEANUP_THRESHOLD = 5 * 60 * 1000;\nfor (const p of Object.keys(staticData.lastMessages)) {\n  if (now - staticData.lastMessages[p] > CLEANUP_THRESHOLD) {\n    delete staticData.lastMessages[p];\n  }\n}\n\nreturn [$input.first()];"
+      },
+      "id": "anti-flood",
+      "name": "Anti-Flood (Debounce 2s)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 300]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// =============================================\n// BUSCAR USUARIO PELO TELEFONE NO SUPABASE\n// =============================================\n\nconst SUPA_URL = process.env.SUPABASE_URL || 'https://SEU-PROJETO.supabase.co';\nconst SUPA_KEY = process.env.SUPABASE_KEY || 'SUA_SERVICE_ROLE_KEY';\n\nconst phone = $input.first().json.phone;\nconst message = $input.first().json.message;\nconst pushName = $input.first().json.pushName;\nconst messageType = $input.first().json.messageType;\n\ntry {\n  const res = await fetch(\n    `${SUPA_URL}/rest/v1/profiles?phone=eq.${phone}&select=id,full_name,email,phone`,\n    { headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` } }\n  );\n  const data = await res.json();\n\n  if (data && data.length > 0) {\n    return [{\n      json: {\n        userFound: true,\n        userId: data[0].id,\n        userName: data[0].full_name || pushName || 'Usuario',\n        phone,\n        message,\n        messageType\n      }\n    }];\n  } else {\n    return [{\n      json: {\n        userFound: false,\n        phone,\n        message,\n        pushName,\n        messageType\n      }\n    }];\n  }\n} catch (err) {\n  return [{ json: { userFound: false, phone, message, pushName, messageType, error: err.message } }];\n}"
+      },
+      "id": "get-user",
+      "name": "Buscar Usuario",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 300]
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "" },
+          "conditions": [
+            {
+              "id": "check-user",
+              "leftValue": "={{ $json.userFound }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "check-user-exists",
+      "name": "Usuario Existe?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1100, 300]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// =============================================\n// PREPARAR CONTEXTO PARA MENSAGEM NAO CADASTRADO\n// Envia via Evolution API\n// =============================================\n\nconst EVOLUTION_URL = process.env.EVOLUTION_API_URL || 'https://SUA-EVOLUTION-API.com';\nconst EVOLUTION_INSTANCE = process.env.EVOLUTION_INSTANCE || 'SUA_INSTANCIA';\nconst EVOLUTION_KEY = process.env.EVOLUTION_API_KEY || 'SUA_EVOLUTION_API_KEY';\n\nconst phone = $input.first().json.phone;\nconst pushName = $input.first().json.pushName || 'amigo(a)';\n\ntry {\n  const res = await fetch(`${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`, {\n    method: 'POST',\n    headers: { 'apikey': EVOLUTION_KEY, 'Content-Type': 'application/json' },\n    body: JSON.stringify({\n      number: phone,\n      text: `Oi ${pushName}! 👋\\n\\nVoce ainda nao esta cadastrado no Corelys.\\n\\nPara conectar seu WhatsApp:\\n1. Acesse o app Corelys\\n2. Va em Perfil > Configuracoes\\n3. Adicione seu numero de telefone\\n\\nDepois disso, me mande uma mensagem e eu vou te ajudar com tudo! 🚀`\n    })\n  });\n  if (!res.ok) {\n    const err = await res.text();\n    return [{ json: { sent: false, error: err } }];\n  }\n  return [{ json: { sent: true } }];\n} catch (err) {\n  return [{ json: { sent: false, error: err.message } }];\n}"
+      },
+      "id": "send-not-found",
+      "name": "Enviar: Nao Cadastrado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 500]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// =============================================\n// TRATAR AUDIO: Placeholder para Whisper\n// Se for audio, informa que ainda nao suporta\n// =============================================\n\nconst messageType = $input.first().json.messageType;\n\nif (messageType === 'audio') {\n  // TODO: Integrar com Whisper para transcrever audio\n  // Por enquanto, informa ao usuario\n  return [{\n    json: {\n      ...$input.first().json,\n      message: '[O usuario enviou um audio. Informe que por enquanto voce so processa mensagens de texto, mas em breve tera suporte a audio.]',\n      originalType: 'audio'\n    }\n  }];\n}\n\nif (messageType === 'image') {\n  return [{\n    json: {\n      ...$input.first().json,\n      message: '[O usuario enviou uma imagem. Informe que por enquanto voce so processa mensagens de texto.]',\n      originalType: 'image'\n    }\n  }];\n}\n\nreturn [$input.first()];"
+      },
+      "id": "handle-media",
+      "name": "Tratar Tipo de Midia",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 200]
+    },
+
+    {
+      "parameters": {
+        "agent": "conversationalAgent",
+        "promptType": "define",
+        "text": "={{ $json.message }}",
+        "options": {
+          "systemMessage": "=Voce e Jarvis, assistente pessoal via WhatsApp do sistema Corelys.\nResponda SEMPRE em portugues brasileiro, de forma concisa e amigavel.\n\nDADOS DO USUARIO:\n- ID: {{ $json.userId }}\n- Nome: {{ $json.userName }}\n- Telefone: {{ $json.phone }}\n\nMODULOS DISPONIVEIS:\n📋 TAREFAS: criar (adicionar_tarefa), listar (listar_tarefas), concluir (concluir_tarefa), editar (editar_tarefa), deletar (deletar_tarefa)\n  - Parametros de criar: userId, titulo, prioridade (High/Medium/Low), categoria, descricao, data_entrega\n  - Para concluir/editar/deletar: SEMPRE liste primeiro para encontrar o ID correto\n\n🎯 HABITOS: listar (listar_habitos), registrar check-in (registrar_habito), criar novo (adicionar_habito)\n  - Para registrar: SEMPRE liste primeiro para encontrar o habitId\n  - Parametros de criar: userId, nome, meta\n\n💰 FINANCAS: registrar transacao (adicionar_transacao), ver resumo mensal (ver_resumo_financeiro), contas a pagar (ver_contas_a_pagar), adicionar conta (adicionar_conta), pagar conta (pagar_conta)\n  - Suporta PF e PJ: use parametro escopo ('pf' ou 'pj')\n  - Parametros de transacao: userId, descricao, valor, tipo (income/expense), categoria, escopo, classificacao\n  - Valores monetarios: SEMPRE com R$ e 2 casas decimais\n\n🏋 ACADEMIA: ver metricas (ver_status_academia), atualizar peso (atualizar_peso), registrar refeicao (adicionar_refeicao), ver nutricao do dia (ver_nutricao_hoje), buscar alimento salvo (buscar_alimento_salvo)\n  - Parametros de refeicao: userId, nome, calorias, proteina, carboidrato, gordura\n\n📅 AGENDA: criar evento (adicionar_evento), ver proximos (ver_proximos_eventos)\n  - Parametros de evento: userId, titulo, dataInicio (ISO 8601), dataFim, categoria, local\n\n📁 PROJETOS: listar projetos ativos (listar_projetos)\n📝 NOTAS: criar nota rapida (adicionar_nota) - parametros: userId, titulo, conteudo, categoria\n📊 RESUMO: ver dashboard do dia (ver_resumo_diario)\n\nREGRAS IMPORTANTES:\n1. SEMPRE passe o userId ({{ $json.userId }}) ao chamar qualquer ferramenta\n2. Saudacao generica (oi, ola, bom dia) → chame ver_resumo_diario para dar o resumo do dia\n3. Se faltar informacao obrigatoria → pergunte educadamente antes de agir\n4. Apos qualquer acao → confirme com detalhes do que foi feito\n5. Para concluir tarefa ou registrar habito → LISTE PRIMEIRO para encontrar o ID, depois execute\n6. Valores monetarios → R$ com 2 casas decimais\n7. Respostas curtas e objetivas (maximo 500 caracteres quando possivel)\n8. Data de hoje: {{ new Date().toISOString().split('T')[0] }}\n9. Use emojis com moderacao para organizar a resposta\n10. Se o usuario perguntar algo fora do escopo → responda que so pode ajudar com os modulos listados\n11. Se houver erro → informe de forma amigavel e sugira tentar novamente\n12. Para financas PJ → pergunte se e PF ou PJ quando ambiguo"
+        }
+      },
+      "id": "ai-agent",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [1540, 200]
+    },
+
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {
+          "temperature": 0.3,
+          "maxTokens": 1024
+        }
+      },
+      "id": "chat-model",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [1440, 500],
+      "credentials": {
+        "openAiApi": {
+          "id": "CONFIGURE_SUA_CREDENTIAL",
+          "name": "OpenAI API"
+        }
+      }
+    },
+
+    {
+      "parameters": {
+        "sessionKey": "={{ $('Buscar Usuario').item.json.phone }}",
+        "contextWindowLength": 10
+      },
+      "id": "memory",
+      "name": "Memoria por Telefone",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.2,
+      "position": [1640, 500]
+    },
+
+    {
+      "parameters": {
+        "sseEndpoint": "={{ process.env.MCP_SERVER_URL || 'http://localhost:5678/mcp/mcp-corelys-v2/sse' }}"
+      },
+      "id": "mcp-tools",
+      "name": "MCP: Corelys Tools",
+      "type": "@n8n/n8n-nodes-langchain.toolMcp",
+      "typeVersion": 1,
+      "position": [1540, 500]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// =============================================\n// ENVIAR RESPOSTA VIA EVOLUTION API\n// Com tratamento de erro\n// =============================================\n\nconst EVOLUTION_URL = process.env.EVOLUTION_API_URL || 'https://SUA-EVOLUTION-API.com';\nconst EVOLUTION_INSTANCE = process.env.EVOLUTION_INSTANCE || 'SUA_INSTANCIA';\nconst EVOLUTION_KEY = process.env.EVOLUTION_API_KEY || 'SUA_EVOLUTION_API_KEY';\n\ntry {\n  const phone = $('Buscar Usuario').item.json.phone;\n  const output = $input.first().json.output || $input.first().json.text || 'Desculpe, nao consegui processar sua mensagem. Tente novamente.';\n\n  // Limpar a resposta para envio (remover caracteres problematicos)\n  const cleanText = output\n    .replace(/\\*/g, '')  // remover markdown bold\n    .substring(0, 4000); // limite WhatsApp\n\n  const res = await fetch(`${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`, {\n    method: 'POST',\n    headers: {\n      'apikey': EVOLUTION_KEY,\n      'Content-Type': 'application/json'\n    },\n    body: JSON.stringify({\n      number: phone,\n      text: cleanText\n    })\n  });\n\n  if (!res.ok) {\n    const errText = await res.text();\n    return [{ json: { sent: false, error: errText } }];\n  }\n\n  return [{ json: { sent: true, phone, responseLength: cleanText.length } }];\n} catch (err) {\n  return [{ json: { sent: false, error: err.message } }];\n}"
+      },
+      "id": "send-response",
+      "name": "Enviar Resposta WhatsApp",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1760, 200]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// =============================================\n// ERROR HANDLER: Envia mensagem amigavel de erro\n// =============================================\n\nconst EVOLUTION_URL = process.env.EVOLUTION_API_URL || 'https://SUA-EVOLUTION-API.com';\nconst EVOLUTION_INSTANCE = process.env.EVOLUTION_INSTANCE || 'SUA_INSTANCIA';\nconst EVOLUTION_KEY = process.env.EVOLUTION_API_KEY || 'SUA_EVOLUTION_API_KEY';\n\ntry {\n  // Tentar pegar o telefone de qualquer node anterior\n  let phone = '';\n  try { phone = $('Buscar Usuario').item.json.phone; } catch(e) {}\n  if (!phone) try { phone = $('Parse Mensagem').item.json.phone; } catch(e) {}\n\n  if (phone) {\n    await fetch(`${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`, {\n      method: 'POST',\n      headers: { 'apikey': EVOLUTION_KEY, 'Content-Type': 'application/json' },\n      body: JSON.stringify({\n        number: phone,\n        text: 'Ops! Tive um problema ao processar sua mensagem. 😅\\nPor favor, tente novamente em alguns segundos.'\n      })\n    });\n  }\n  return [{ json: { errorHandled: true, phone } }];\n} catch (err) {\n  return [{ json: { errorHandled: false, error: err.message } }];\n}"
+      },
+      "id": "error-handler",
+      "name": "Error Handler",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1760, 500]
+    }
+  ],
+  "connections": {
+    "Webhook WhatsApp": {
+      "main": [
+        [
+          { "node": "Responder 200 OK", "type": "main", "index": 0 },
+          { "node": "Parse Mensagem", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Parse Mensagem": {
+      "main": [
+        [{ "node": "Filtros: Valida + Nao Grupo + Nao Propria", "type": "main", "index": 0 }]
+      ]
+    },
+    "Filtros: Valida + Nao Grupo + Nao Propria": {
+      "main": [
+        [{ "node": "Anti-Flood (Debounce 2s)", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Anti-Flood (Debounce 2s)": {
+      "main": [
+        [{ "node": "Buscar Usuario", "type": "main", "index": 0 }]
+      ]
+    },
+    "Buscar Usuario": {
+      "main": [
+        [{ "node": "Usuario Existe?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Usuario Existe?": {
+      "main": [
+        [{ "node": "Tratar Tipo de Midia", "type": "main", "index": 0 }],
+        [{ "node": "Enviar: Nao Cadastrado", "type": "main", "index": 0 }]
+      ]
+    },
+    "Tratar Tipo de Midia": {
+      "main": [
+        [{ "node": "AI Agent", "type": "main", "index": 0 }]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [{ "node": "Enviar Resposta WhatsApp", "type": "main", "index": 0 }]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]
+      ]
+    },
+    "Memoria por Telefone": {
+      "ai_memory": [
+        [{ "node": "AI Agent", "type": "ai_memory", "index": 0 }]
+      ]
+    },
+    "MCP: Corelys Tools": {
+      "ai_tool": [
+        [{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": ""
+  }
+}

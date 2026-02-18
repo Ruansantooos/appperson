@@ -107,7 +107,7 @@ const ProfilePage: React.FC = () => {
         await signOut();
     };
 
-    if (loading) return <div className="text-center p-10 text-white/50">Carregando perfil...</div>;
+    if (loading) return <div className="text-center p-10 opacity-50">Carregando perfil...</div>;
 
     return (
         <div className="space-y-6 pb-20">
@@ -254,7 +254,7 @@ const ProfilePage: React.FC = () => {
                             </div>
                         </div>
                         <div className="mt-4 text-center">
-                            <p className="text-xs text-white/30 italic">Para atualizar o peso, use a aba "Academia".</p>
+                            <p className="text-xs opacity-30 italic">Para atualizar o peso, use a aba "Academia".</p>
                         </div>
                     </Card>
                 </div>

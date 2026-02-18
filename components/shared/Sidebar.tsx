@@ -18,11 +18,11 @@ const Sidebar: React.FC = () => {
 
   const navItems = [
     { icon: LayoutDashboard, path: '/' },
+    { icon: Wallet, path: '/finance' },
     { icon: BarChart2, path: '/tasks' },
     { icon: Layers, path: '/projects' }, // Novo ícone de Projetos
     { icon: Heart, path: '/habits' },
     { icon: Dumbbell, path: '/gym' },
-    { icon: Wallet, path: '/finance' },
     { icon: CalendarDays, path: '/calendar' },
   ];
 
@@ -41,8 +41,8 @@ const Sidebar: React.FC = () => {
                 key={item.path}
                 to={item.path}
                 className={`w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-300 ${isActive
-                    ? 'bg-[#c1ff72] text-black shadow-[0_0_20px_rgba(193,255,114,0.3)]'
-                    : 'text-[var(--foreground)] opacity-40 hover:opacity-100'
+                  ? 'bg-[#c1ff72] text-black shadow-[0_0_20px_rgba(193,255,114,0.3)]'
+                  : 'text-[var(--foreground)] opacity-40 hover:opacity-100'
                   }`}
               >
                 <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />

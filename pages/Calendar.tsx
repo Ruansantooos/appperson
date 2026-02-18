@@ -245,11 +245,11 @@ const CalendarPage: React.FC = () => {
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-4 bg-[#161616] p-1.5 rounded-full border border-white/5">
           <button className="px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest bg-[#c1ff72] text-black">Mês</button>
-          <button className="px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors">Semana</button>
-          <button className="px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors">Dia</button>
+          <button className="px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest opacity-40 hover:opacity-100 transition-all">Semana</button>
+          <button className="px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest opacity-40 hover:opacity-100 transition-all">Dia</button>
         </div>
         <div className="flex gap-3">
-          <button className="w-10 h-10 rounded-full border border-white/5 flex items-center justify-center text-white/40 hover:bg-white/5"><Search size={18} /></button>
+          <button className="w-10 h-10 rounded-full border border-[var(--card-border)] flex items-center justify-center opacity-40 hover:bg-[var(--foreground)]/5 transition-all"><Search size={18} /></button>
           <Button
             onClick={() => setIsModalOpen(true)}
             className="h-10 px-8 shadow-[0_0_20px_rgba(193,255,114,0.2)]"
@@ -265,10 +265,10 @@ const CalendarPage: React.FC = () => {
           <Card className="p-8 border-white/5 bg-[#0e0e0e]">
             <div className="flex items-center justify-between mb-10">
               <div className="flex items-center gap-6">
-                <h3 className="text-3xl font-bold tracking-tighter capitalize">{months[currentDate.getMonth()]} <span className="text-white/10 italic">{currentDate.getFullYear()}</span></h3>
+                <h3 className="text-3xl font-bold tracking-tighter capitalize">{months[currentDate.getMonth()]} <span className="opacity-10 italic">{currentDate.getFullYear()}</span></h3>
                 <div className="flex gap-2">
-                  <button onClick={prevMonth} className="w-8 h-8 rounded-lg border border-white/5 flex items-center justify-center text-white/20 hover:text-white hover:border-[#c1ff72] transition-all"><ChevronLeft size={16} /></button>
-                  <button onClick={nextMonth} className="w-8 h-8 rounded-lg border border-white/5 flex items-center justify-center text-white/20 hover:text-white hover:border-[#c1ff72] transition-all"><ChevronRight size={16} /></button>
+                  <button onClick={prevMonth} className="w-8 h-8 rounded-lg border border-[var(--card-border)] flex items-center justify-center opacity-20 hover:opacity-100 hover:border-[#c1ff72] transition-all"><ChevronLeft size={16} /></button>
+                  <button onClick={nextMonth} className="w-8 h-8 rounded-lg border border-[var(--card-border)] flex items-center justify-center opacity-20 hover:opacity-100 hover:border-[#c1ff72] transition-all"><ChevronRight size={16} /></button>
                 </div>
               </div>
               <Badge variant="status">Hoje é {new Date().getDate()} de {months[new Date().getMonth()]}</Badge>
@@ -276,7 +276,7 @@ const CalendarPage: React.FC = () => {
 
             <div className="grid grid-cols-7 mb-4">
               {days.map(d => (
-                <div key={d} className="text-center text-[10px] font-bold text-white/20 uppercase tracking-[0.3em] py-4">{d}</div>
+                <div key={d} className="text-center text-[10px] font-bold opacity-20 uppercase tracking-[0.3em] py-4">{d}</div>
               ))}
             </div>
 

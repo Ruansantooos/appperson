@@ -2,7 +2,7 @@
 import { Task, Transaction, Habit, CalendarEvent, GymStats, Nutrition, Workout, Project, GraphNode, GraphLink } from '../types';
 
 export const MOCK_PROJECTS: Project[] = [
-  { id: 'p1', name: 'Nexus Assistant v2', description: 'Revolução da interface pessoal', status: 'Active', tags: ['#dev', '#design'], lastEdited: '2024-05-19', links: ['p2', 'p3'] },
+  { id: 'p1', name: 'Corelys v2', description: 'Revolução da interface pessoal', status: 'Active', tags: ['#dev', '#design'], lastEdited: '2024-05-19', links: ['p2', 'p3'] },
   { id: 'p2', name: 'Health MOC', description: 'Mapa de controle de saúde e biohacking', status: 'Active', tags: ['#health', '#bio'], lastEdited: '2024-05-18', links: ['p1'] },
   { id: 'p3', name: 'Finance Q2 Strategy', description: 'Planejamento de investimentos', status: 'Slowburn', tags: ['#money'], lastEdited: '2024-05-15', links: ['p1'] },
   { id: 'p4', name: 'Reading List 2024', description: 'Livros para expandir a mente', status: 'Idle', tags: ['#growth'], lastEdited: '2024-05-10', links: [] },

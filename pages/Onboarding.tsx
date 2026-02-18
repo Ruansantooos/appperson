@@ -136,14 +136,14 @@ const Onboarding: React.FC = () => {
                     <div className="space-y-6">
                         <div className="text-center space-y-2">
                             <h1 className="text-3xl font-bold">Bem-vindo(a)!</h1>
-                            <p className="text-white/40">Vamos configurar seu perfil para personalizar sua experiência.</p>
+                            <p className="opacity-40">Vamos configurar seu perfil para personalizar sua experiência.</p>
                         </div>
 
                         <div className="space-y-4 pt-4">
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-widest text-white/40 mb-2">Seu Nome</label>
+                                <label className="block text-xs font-bold uppercase tracking-widest opacity-40 mb-2">Seu Nome</label>
                                 <div className="relative">
-                                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={20} />
+                                    <User className="absolute left-4 top-1/2 -translate-y-1/2 opacity-20" size={20} />
                                     <Input
                                         placeholder="Como gostaria de ser chamado?"
                                         className="pl-12 h-14 bg-[#161616] border-white/5"
@@ -170,7 +170,7 @@ const Onboarding: React.FC = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-widest text-white/40 mb-2">Gênero</label>
+                                <label className="block text-xs font-bold uppercase tracking-widest opacity-40 mb-2">Gênero</label>
                                 <div className="grid grid-cols-2 gap-3">
                                     {['Masculino', 'Feminino'].map(g => (
                                         <button
@@ -178,7 +178,7 @@ const Onboarding: React.FC = () => {
                                             onClick={() => updateForm('gender', g === 'Masculino' ? 'Male' : 'Female')}
                                             className={`h-14 rounded-xl border flex items-center justify-center font-bold transition-all ${(formData.gender === 'Male' && g === 'Masculino') || (formData.gender === 'Female' && g === 'Feminino')
                                                 ? 'bg-[#c1ff72] text-black border-[#c1ff72]'
-                                                : 'border-white/10 hover:border-white/30 text-white/60'
+                                                : 'border-[var(--card-border)] hover:border-[var(--foreground)]/30 opacity-60'
                                                 }`}
                                         >
                                             {g}
@@ -188,9 +188,9 @@ const Onboarding: React.FC = () => {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-widest text-white/40 mb-2">Data de Nascimento</label>
+                                <label className="block text-xs font-bold uppercase tracking-widest opacity-40 mb-2">Data de Nascimento</label>
                                 <div className="relative">
-                                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={20} />
+                                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 opacity-20" size={20} />
                                     <Input
                                         type="date"
                                         className="pl-12 h-14 bg-[#161616] border-white/5"
@@ -220,9 +220,9 @@ const Onboarding: React.FC = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-widest text-white/40 mb-2">Altura (cm)</label>
+                                <label className="block text-xs font-bold uppercase tracking-widest opacity-40 mb-2">Altura (cm)</label>
                                 <div className="relative">
-                                    <Ruler className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={20} />
+                                    <Ruler className="absolute left-4 top-1/2 -translate-y-1/2 opacity-20" size={20} />
                                     <Input
                                         type="number"
                                         placeholder="Ex: 175"
@@ -234,9 +234,9 @@ const Onboarding: React.FC = () => {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-widest text-white/40 mb-2">Peso Atual (kg)</label>
+                                <label className="block text-xs font-bold uppercase tracking-widest opacity-40 mb-2">Peso Atual (kg)</label>
                                 <div className="relative">
-                                    <Dumbbell className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={20} />
+                                    <Dumbbell className="absolute left-4 top-1/2 -translate-y-1/2 opacity-20" size={20} />
                                     <Input
                                         type="number"
                                         placeholder="Ex: 70.5"
@@ -266,7 +266,7 @@ const Onboarding: React.FC = () => {
                         <h2 className="text-2xl font-bold">Objetivo</h2>
 
                         <div className="space-y-4">
-                            <label className="block text-xs font-bold uppercase tracking-widest text-white/40">Qual seu nível de atividade?</label>
+                            <label className="block text-xs font-bold uppercase tracking-widest opacity-40">Qual seu nível de atividade?</label>
                             <div className="grid grid-cols-1 gap-3">
                                 {['Sedentário', 'Levemente Ativo', 'Moderadamente Ativo', 'Muito Ativo'].map(level => (
                                     <button
@@ -274,7 +274,7 @@ const Onboarding: React.FC = () => {
                                         onClick={() => updateForm('activityLevel', level)}
                                         className={`p-4 rounded-xl border text-left transition-all ${formData.activityLevel === level
                                             ? 'bg-[#c1ff72]/10 border-[#c1ff72] text-[#c1ff72]'
-                                            : 'border-white/5 hover:border-white/20 text-white/60'
+                                            : 'border-[var(--card-border)] hover:border-[var(--foreground)]/20 opacity-60'
                                             }`}
                                     >
                                         <span className="font-bold block">{level}</span>
@@ -284,7 +284,7 @@ const Onboarding: React.FC = () => {
                         </div>
 
                         <div className="space-y-4 pt-4">
-                            <label className="block text-xs font-bold uppercase tracking-widest text-white/40">Qual seu principal objetivo?</label>
+                            <label className="block text-xs font-bold uppercase tracking-widest opacity-40">Qual seu principal objetivo?</label>
                             <div className="grid grid-cols-1 gap-3">
                                 {['Perder Peso', 'Ganhar Massa Muscular', 'Manter Peso', 'Saúde Geral'].map(goal => (
                                     <button

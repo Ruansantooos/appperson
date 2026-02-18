@@ -283,7 +283,13 @@ const Dashboard: React.FC = () => {
           <h1 className="text-2xl lg:text-3xl font-bold">{getGreeting()}{userName ? `, ${userName}` : ''}</h1>
           <p className="text-sm opacity-30 mt-1 capitalize">{formatDateBR()}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <Link
+            to="/calendar"
+            className="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-[var(--input-bg)] border border-[var(--card-border)] text-[var(--foreground)] opacity-40 hover:opacity-100 hover:border-[#c1ff72]/30 transition-all"
+          >
+            <CalendarDays size={18} />
+          </Link>
           <div className="relative w-10 h-10">
             <svg className="w-10 h-10 -rotate-90" viewBox="0 0 48 48">
               <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeOpacity="0.05" strokeWidth="4" />
@@ -377,12 +383,12 @@ const Dashboard: React.FC = () => {
                   <button key={habit.id} onClick={() => toggleHabit(habit.id)}
                     className={`w-full p-3 rounded-xl border text-left transition-all flex items-center gap-3 group ${habit.completedToday ? 'bg-[#c1ff72]/10 border-[#c1ff72]/30' : 'bg-[var(--input-bg)] border-[var(--card-border)] hover:border-brand/50'
                       }`}>
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all ${habit.completedToday ? 'bg-[#c1ff72] text-black' : 'bg-[var(--background)] border border-[var(--card-border)] text-white/30 opacity-30 shadow-sm'
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all ${habit.completedToday ? 'bg-[#c1ff72] text-black' : 'bg-[var(--background)] border border-[var(--card-border)] opacity-30 shadow-sm'
                       }`}>
                       {habit.completedToday ? <Check size={14} strokeWidth={3} /> : <div className="w-3 h-3 rounded border border-current opacity-20" />}
                     </div>
                     <span className={`text-sm font-medium flex-1 ${habit.completedToday ? 'line-through opacity-30' : ''}`}>{habit.name}</span>
-                    <span className="text-[9px] opacity-15 font-bold">{habit.streak}d</span>
+                    <span className="text-[10px] opacity-15 font-bold">{habit.streak}d</span>
                   </button>
                 ))}
               </div>
@@ -393,10 +399,10 @@ const Dashboard: React.FC = () => {
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold flex items-center gap-2"><Pill size={16} className="text-[#c1ff72]" /> Suplementos</h3>
-              <span className="text-[10px] text-white/30 font-bold">{supplements.filter(s => supplementChecks[s.id]).length}/{supplements.length}</span>
+              <span className="text-[10px] opacity-30 font-bold">{supplements.filter(s => supplementChecks[s.id]).length}/{supplements.length}</span>
             </div>
             {supplements.length === 0 ? (
-              <p className="text-xs text-white/20 py-2">Nenhum suplemento. <Link to="/gym" className="text-[#c1ff72] hover:underline">Adicionar</Link></p>
+              <p className="text-xs opacity-20 py-2">Nenhum suplemento. <Link to="/gym" className="text-[#c1ff72] hover:underline">Adicionar</Link></p>
             ) : (
               <div className="space-y-2">
                 {supplements.map(supp => {
@@ -405,13 +411,13 @@ const Dashboard: React.FC = () => {
                     <button key={supp.id} onClick={() => toggleSupplement(supp.id)}
                       className={`w-full p-3 rounded-xl border text-left transition-all flex items-center gap-3 group ${checked ? 'bg-[#c1ff72]/10 border-[#c1ff72]/30' : 'bg-white/[0.02] border-white/5 hover:border-white/20'
                         }`}>
-                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all ${checked ? 'bg-[#c1ff72] text-black' : 'bg-white/5 text-white/30'
+                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all ${checked ? 'bg-[#c1ff72] text-black' : 'bg-[var(--input-bg)] opacity-30 shadow-sm'
                         }`}>
-                        {checked ? <Check size={14} strokeWidth={3} /> : <div className="w-3 h-3 rounded border border-white/20" />}
+                        {checked ? <Check size={14} strokeWidth={3} /> : <div className="w-3 h-3 rounded border border-[var(--card-border)] opacity-20" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <span className={`text-sm font-medium block ${checked ? 'line-through text-white/30' : ''}`}>{supp.name}</span>
-                        <span className="text-[9px] text-white/15">{supp.dosage}</span>
+                        <span className={`text-sm font-medium block ${checked ? 'line-through opacity-30' : ''}`}>{supp.name}</span>
+                        <span className="text-[10px] opacity-15">{supp.dosage}</span>
                       </div>
                     </button>
                   );
@@ -470,7 +476,7 @@ const Dashboard: React.FC = () => {
                 <div className="flex items-center gap-3 mb-4">
                   <div className="px-4 py-2 rounded-xl bg-[#c1ff72] text-black font-bold text-sm">{todayWorkout.name}</div>
                   {todayWorkout.muscleGroup && (
-                    <span className="text-xs text-white/40">{todayWorkout.muscleGroup}</span>
+                    <span className="text-xs opacity-40">{todayWorkout.muscleGroup}</span>
                   )}
                 </div>
                 <div className="space-y-2">
@@ -487,15 +493,15 @@ const Dashboard: React.FC = () => {
                     </div>
                   ))}
                   {todayWorkout.exercises.length === 0 && (
-                    <p className="text-xs text-white/20 text-center py-4">Nenhum exercício cadastrado neste treino.</p>
+                    <p className="text-xs opacity-20 text-center py-4">Nenhum exercício cadastrado neste treino.</p>
                   )}
                 </div>
               </div>
             ) : (
-              <div className="py-8 text-center">
-                <Dumbbell size={40} className="text-white/5 mx-auto mb-3" />
-                <p className="text-sm text-white/20">Dia de descanso</p>
-                <p className="text-[10px] text-white/10 mt-1">Nenhum treino agendado para hoje</p>
+              <div className="py-8 text-center text-[var(--foreground)]">
+                <Dumbbell size={40} className="opacity-5 mx-auto mb-3" />
+                <p className="text-sm opacity-20">Dia de descanso</p>
+                <p className="text-[10px] opacity-10 mt-1">Nenhum treino agendado para hoje</p>
               </div>
             )}
           </Card>
@@ -507,7 +513,7 @@ const Dashboard: React.FC = () => {
                 <h3 className="text-sm font-bold flex items-center gap-2">
                   <CalendarDays size={16} className="text-[#c1ff72]" /> Pagamentos da Semana
                 </h3>
-                <p className="text-[9px] text-white/20 mt-1">
+                <p className="text-[9px] opacity-20 mt-1">
                   {weekStart.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} — {weekEnd.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
                 </p>
               </div>
@@ -523,17 +529,17 @@ const Dashboard: React.FC = () => {
                 <div className="flex items-center gap-4">
                   {todayIncome > 0 && (
                     <div>
-                      <p className="text-[9px] text-white/30">Entradas</p>
+                      <p className="text-[9px] opacity-30">Entradas</p>
                       <p className="text-sm font-bold text-[#c1ff72]">+ R$ {todayIncome.toFixed(2)}</p>
                     </div>
                   )}
                   <div>
-                    <p className="text-[9px] text-white/30">Saídas</p>
+                    <p className="text-[9px] opacity-30">Saídas</p>
                     <p className="text-sm font-bold text-red-400">{todayExpense > 0 ? `- R$ ${todayExpense.toFixed(2)}` : 'R$ 0,00'}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-[9px] text-white/30">Transações</p>
+                  <p className="text-[9px] opacity-30">Transações</p>
                   <p className="text-sm font-bold">{todayTransactions.length}</p>
                 </div>
               </div>
@@ -558,7 +564,7 @@ const Dashboard: React.FC = () => {
             {/* Contas da Semana */}
             {weekBills.length > 0 && (
               <div className="mb-4">
-                <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.2em] mb-2">Contas da Semana</p>
+                <p className="text-[9px] font-bold opacity-20 uppercase tracking-[0.2em] mb-2">Contas da Semana</p>
                 <div className="space-y-2">
                   {weekBills.slice(0, 4).map(bill => {
                     const isPaid = bill.status === 'paid';
@@ -573,7 +579,7 @@ const Dashboard: React.FC = () => {
                             }`} />
                           <div className="min-w-0">
                             <p className="text-sm font-medium truncate">{bill.description}</p>
-                            <p className="text-[9px] text-white/20">
+                            <p className="text-[9px] opacity-20">
                               {new Date(bill.due_date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })}
                             </p>
                           </div>
@@ -601,7 +607,7 @@ const Dashboard: React.FC = () => {
             {/* Últimos Gastos */}
             {recentExpenses.length > 0 && (
               <div>
-                <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.2em] mb-2">Últimos Gastos</p>
+                <p className="text-[9px] font-bold opacity-20 uppercase tracking-[0.2em] mb-2">Últimos Gastos</p>
                 <div className="space-y-2">
                   {recentExpenses.map(tx => (
                     <div key={tx.id} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5">
@@ -611,7 +617,7 @@ const Dashboard: React.FC = () => {
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-medium truncate">{tx.description}</p>
-                          <p className="text-[9px] text-white/20">{tx.date} • {tx.category}</p>
+                          <p className="text-[10px] opacity-20">{tx.date} • {tx.category}</p>
                         </div>
                       </div>
                       <span className="text-sm font-bold text-red-400/80 shrink-0 ml-3">- R$ {Number(tx.amount).toFixed(2)}</span>
@@ -637,7 +643,7 @@ const Dashboard: React.FC = () => {
         <div className="lg:col-span-5">
           <Card className="p-6 h-full">
             <h3 className="text-sm font-bold mb-1">Gastos da Semana</h3>
-            <p className="text-[9px] text-white/20 uppercase tracking-[0.2em] mb-1">Dom — Sáb • Total: R$ {weekExpenses.toFixed(2)}</p>
+            <p className="text-[9px] opacity-20 uppercase tracking-[0.2em] mb-1">Dom — Sáb • Total: R$ {weekExpenses.toFixed(2)}</p>
             <div className="h-[180px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={weeklySpending} barSize={20}>
@@ -656,7 +662,7 @@ const Dashboard: React.FC = () => {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="flex items-center justify-center gap-4 mt-2 text-[9px] text-white/20">
+            <div className="flex items-center justify-center gap-4 mt-2 text-[9px] opacity-20">
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-[#c1ff72]"></span> Hoje</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-[#c1ff72]/30"></span> Outros dias</span>
             </div>
@@ -667,7 +673,7 @@ const Dashboard: React.FC = () => {
         <div className="lg:col-span-4">
           <Card className="p-6 h-full">
             <h3 className="text-sm font-bold mb-1">Nutrição Hoje</h3>
-            <p className="text-[9px] text-white/20 uppercase tracking-[0.2em] mb-4">{gymStats.caloriesConsumed} / {gymStats.targetCalories} kcal ({calProgress}%)</p>
+            <p className="text-[9px] opacity-20 uppercase tracking-[0.2em] mb-4">{gymStats.caloriesConsumed} / {gymStats.targetCalories} kcal ({calProgress}%)</p>
             <div className="flex items-center gap-6">
               <div className="h-[140px] w-[140px] relative shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
@@ -692,7 +698,7 @@ const Dashboard: React.FC = () => {
                   <div key={item.name} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                      <span className="text-xs text-white/40">{item.name}</span>
+                      <span className="text-xs opacity-40">{item.name}</span>
                     </div>
                     <span className="text-sm font-bold">{item.value}g</span>
                   </div>
@@ -707,9 +713,9 @@ const Dashboard: React.FC = () => {
           <Card className="p-6 h-full bg-[#161616]">
             <div className="flex items-center justify-between mb-1">
               <h3 className="text-sm font-bold">Peso</h3>
-              <Scale size={14} className="text-white/15" />
+              <Scale size={14} className="opacity-15" />
             </div>
-            <p className="text-[9px] text-white/20 uppercase tracking-[0.2em] mb-4">Evolução</p>
+            <p className="text-[9px] opacity-20 uppercase tracking-[0.2em] mb-4">Evolução</p>
             <div className="h-[120px]">
               {weightHistory.length > 1 ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -732,18 +738,18 @@ const Dashboard: React.FC = () => {
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="flex items-center justify-center h-full text-white/10 text-xs">
+                <div className="flex items-center justify-center h-full opacity-10 text-xs">
                   Sem histórico
                 </div>
               )}
             </div>
-            <div className="flex justify-between items-center mt-3 pt-3 border-t border-white/5">
+            <div className="flex justify-between items-center mt-3 pt-3 border-t border-[var(--card-border)]">
               <div>
-                <p className="text-[9px] text-white/20">Atual</p>
+                <p className="text-[9px] opacity-20">Atual</p>
                 <p className="text-lg font-bold">{gymStats.weight} kg</p>
               </div>
               <div className="text-right">
-                <p className="text-[9px] text-white/20">Meta</p>
+                <p className="text-[9px] opacity-20">Meta</p>
                 <p className="text-lg font-bold text-[#c1ff72]">{gymStats.targetWeight || '—'} kg</p>
               </div>
             </div>

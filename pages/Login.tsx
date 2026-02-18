@@ -40,8 +40,8 @@ const Login: React.FC = () => {
         <div className="flex min-h-screen bg-[#0c0c0c] items-center justify-center p-4">
             <div className="w-full max-w-md">
                 <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-white mb-2">Central Saúde</h1>
-                    <p className="text-white/40">Entre na sua conta para continuar</p>
+                    <h1 className="text-3xl font-bold text-white mb-2">Corelys</h1>
+                    <p className="opacity-40">Entre na sua conta para continuar</p>
                 </div>
 
                 <Card className="p-8 border-[#c1ff72]/10">
@@ -54,9 +54,9 @@ const Login: React.FC = () => {
                         )}
 
                         <div className="space-y-2">
-                            <label className="text-xs font-bold uppercase tracking-widest text-white/40">Email</label>
+                            <label className="text-xs font-bold uppercase tracking-widest opacity-40">Email</label>
                             <div className="relative">
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20">
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 opacity-20">
                                     <Mail size={18} />
                                 </div>
                                 <input
@@ -71,7 +71,7 @@ const Login: React.FC = () => {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-xs font-bold uppercase tracking-widest text-white/40">Senha</label>
+                            <label className="text-xs font-bold uppercase tracking-widest opacity-40">Senha</label>
                             <div className="relative">
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20">
                                     <Lock size={18} />
@@ -102,7 +102,7 @@ const Login: React.FC = () => {
                     </form>
 
                     <div className="mt-6 text-center">
-                        <p className="text-sm text-white/30">
+                        <p className="text-sm opacity-30">
                             Ainda não tem uma conta?{' '}
                             <Link
                                 to="/register"

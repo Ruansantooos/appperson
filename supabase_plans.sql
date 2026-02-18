@@ -1,5 +1,5 @@
 -- =============================================
--- SISTEMA DE PLANOS - Central Saúde
+-- SISTEMA DE PLANOS - Corelys
 -- Cole este SQL no Supabase SQL Editor
 -- =============================================
 

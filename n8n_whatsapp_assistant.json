@@ -1,0 +1,250 @@
+{
+  "name": "WhatsApp Assistente Pessoal (MCP)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook WhatsApp",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 300],
+      "webhookId": "whatsapp-assistant"
+    },
+    {
+      "parameters": {
+        "jsCode": "// =============================================\n// PARSE DA MENSAGEM DO WHATSAPP\n// Adapte conforme sua API (Evolution API, Z-API, etc)\n// =============================================\n\nconst body = $input.first().json.body || $input.first().json;\n\nlet phone = '';\nlet message = '';\nlet pushName = '';\n\nif (body.data) {\n  phone = (body.data.key?.remoteJid || '').replace('@s.whatsapp.net', '').replace('@c.us', '');\n  message = body.data.message?.conversation || body.data.message?.extendedTextMessage?.text || '';\n  pushName = body.data.pushName || '';\n} else if (body.remoteJid) {\n  phone = body.remoteJid.replace('@s.whatsapp.net', '').replace('@c.us', '');\n  message = body.message?.conversation || '';\n  pushName = body.pushName || '';\n} else {\n  phone = body.phone || body.from || body.number || '';\n  message = body.message || body.text || body.body || '';\n  pushName = body.name || body.pushName || '';\n}\n\nphone = phone.replace(/[^0-9]/g, '');\n\nif (!phone || !message) {\n  return [{ json: { error: true, reason: 'Mensagem vazia ou telefone nao identificado' } }];\n}\n\nreturn [{ json: { phone, message, pushName } }];"
+      },
+      "id": "parse-message",
+      "name": "Parse Mensagem",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "" },
+          "conditions": [
+            {
+              "id": "check-error",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "notTrue" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "check-parse",
+      "name": "Mensagem Valida?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// =============================================\n// BUSCA USUARIO PELO TELEFONE NO SUPABASE\n// ALTERE: SUPABASE_URL e SUPABASE_KEY\n// =============================================\n\nconst SUPABASE_URL = 'https://SEU-PROJETO.supabase.co';\nconst SUPABASE_KEY = 'SUA_SERVICE_ROLE_KEY';\n\nconst phone = $input.first().json.phone;\nconst message = $input.first().json.message;\nconst pushName = $input.first().json.pushName;\n\ntry {\n  const res = await fetch(\n    `${SUPABASE_URL}/rest/v1/profiles?phone=eq.${phone}&select=id,full_name,email,phone`,\n    {\n      headers: {\n        'apikey': SUPABASE_KEY,\n        'Authorization': `Bearer ${SUPABASE_KEY}`\n      }\n    }\n  );\n  const data = await res.json();\n\n  if (data && data.length > 0) {\n    return [{\n      json: {\n        userFound: true,\n        userId: data[0].id,\n        userName: data[0].full_name || pushName || 'Usuario',\n        phone,\n        message\n      }\n    }];\n  } else {\n    return [{\n      json: {\n        userFound: false,\n        phone,\n        message,\n        pushName\n      }\n    }];\n  }\n} catch (err) {\n  return [{ json: { userFound: false, phone, message, error: err.message } }];\n}"
+      },
+      "id": "get-user",
+      "name": "Buscar Usuario",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "" },
+          "conditions": [
+            {
+              "id": "check-user",
+              "leftValue": "={{ $json.userFound }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "check-user-exists",
+      "name": "Usuario Existe?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [880, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://SUA-EVOLUTION-API.com/message/sendText/SUA_INSTANCIA",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "SUA_EVOLUTION_API_KEY" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $json.phone }}\",\n  \"text\": \"Oi {{ $json.pushName }}! \\n\\nVoce ainda nao esta cadastrado no sistema. \\n\\nPor favor, acesse o app e adicione seu numero de telefone no perfil para conectar o WhatsApp.\"\n}",
+        "options": {}
+      },
+      "id": "send-not-found",
+      "name": "Enviar Msg: Nao Cadastrado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 500]
+    },
+    {
+      "parameters": {
+        "agent": "conversationalAgent",
+        "promptType": "define",
+        "text": "={{ $json.message }}",
+        "options": {
+          "systemMessage": "=Voce e um assistente pessoal via WhatsApp chamado Jarvis. Responda sempre em portugues brasileiro, de forma concisa e amigavel. Use emojis com moderacao.\n\n## DADOS DO USUARIO\n- ID: {{ $json.userId }}\n- Nome: {{ $json.userName }}\n- Telefone: {{ $json.phone }}\n\nSEMPRE passe o userId ({{ $json.userId }}) ao chamar qualquer ferramenta.\n\n## CAPACIDADES\nVoce pode ajudar com: Tarefas, Refeicoes/Nutricao, Financas, Habitos, Academia, Agenda.\n\n## REGRAS\n1. Saudacao generica? Responda listando o que pode fazer\n2. Faltou info? Pergunte educadamente\n3. Apos acao, confirme com detalhes\n4. Para concluir tarefa ou registrar habito, SEMPRE liste primeiro para encontrar o ID\n5. Valores monetarios: R$ com 2 casas decimais\n6. Respostas curtas e objetivas\n7. Data de hoje: {{ new Date().toISOString().split('T')[0] }}"
+        }
+      },
+      "id": "ai-agent",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [1100, 300]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {
+          "temperature": 0.3,
+          "maxTokens": 1024
+        }
+      },
+      "id": "chat-model",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [1000, 600],
+      "credentials": {
+        "openAiApi": {
+          "id": "CONFIGURE_SUA_CREDENTIAL",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionKey": "={{ $json.phone }}",
+        "contextWindowLength": 10
+      },
+      "id": "memory",
+      "name": "Memoria por Telefone",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.2,
+      "position": [1200, 600]
+    },
+    {
+      "parameters": {
+        "sseEndpoint": "http://localhost:3001/sse"
+      },
+      "id": "mcp-tools",
+      "name": "MCP: Assistente Pessoal",
+      "type": "@n8n/n8n-nodes-langchain.toolMcp",
+      "typeVersion": 1,
+      "position": [1100, 700]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://SUA-EVOLUTION-API.com/message/sendText/SUA_INSTANCIA",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "SUA_EVOLUTION_API_KEY" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $('Buscar Usuario').item.json.phone }}\",\n  \"text\": \"{{ $json.output.replace(/\\\"/g, '\\\\\"').replace(/\\n/g, '\\\\n') }}\"\n}",
+        "options": {}
+      },
+      "id": "send-response",
+      "name": "Enviar Resposta WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1400, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "noData",
+        "options": {}
+      },
+      "id": "respond-webhook",
+      "name": "Responder Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1600, 300]
+    }
+  ],
+  "connections": {
+    "Webhook WhatsApp": {
+      "main": [
+        [{ "node": "Parse Mensagem", "type": "main", "index": 0 }]
+      ]
+    },
+    "Parse Mensagem": {
+      "main": [
+        [{ "node": "Mensagem Valida?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Mensagem Valida?": {
+      "main": [
+        [{ "node": "Buscar Usuario", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Buscar Usuario": {
+      "main": [
+        [{ "node": "Usuario Existe?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Usuario Existe?": {
+      "main": [
+        [{ "node": "AI Agent", "type": "main", "index": 0 }],
+        [{ "node": "Enviar Msg: Nao Cadastrado", "type": "main", "index": 0 }]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [{ "node": "Enviar Resposta WhatsApp", "type": "main", "index": 0 }]
+      ]
+    },
+    "Enviar Resposta WhatsApp": {
+      "main": [
+        [{ "node": "Responder Webhook", "type": "main", "index": 0 }]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]
+      ]
+    },
+    "Memoria por Telefone": {
+      "ai_memory": [
+        [{ "node": "AI Agent", "type": "ai_memory", "index": 0 }]
+      ]
+    },
+    "MCP: Assistente Pessoal": {
+      "ai_tool": [
+        [{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

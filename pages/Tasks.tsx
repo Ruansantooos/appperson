@@ -262,8 +262,9 @@ const TasksPage: React.FC = () => {
           </Card>
         ))}
         {filteredTasks.length === 0 && (
-          <div className="col-span-full py-20 text-center text-white/20">
-            <p>Nenhuma tarefa encontrada.</p>
+          <div className="col-span-full py-20 text-center opacity-20">
+            <Search size={48} className="mx-auto mb-4 opacity-10" />
+            <p className="text-lg font-medium">Nenhuma tarefa encontrada</p>
           </div>
         )}
       </div>
@@ -273,7 +274,7 @@ const TasksPage: React.FC = () => {
           <Card className="w-full max-w-lg p-6 border-[#c1ff72]/20 relative">
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 text-white/40 hover:text-white"
+              className="absolute top-4 right-4 opacity-40 hover:opacity-100 transition-all"
             >
               <X size={20} />
             </button>

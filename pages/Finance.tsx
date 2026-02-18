@@ -66,7 +66,7 @@ const FinancePage: React.FC = () => {
   const [newTransaction, setNewTransaction] = useState({
     description: '',
     amount: '',
-    category: 'Food',
+    category: CATEGORIES_PF[0],
     type: 'expense' as 'income' | 'expense',
     date: new Date().toISOString().split('T')[0],
     card_id: '',
@@ -93,7 +93,7 @@ const FinancePage: React.FC = () => {
     amount: '',
     due_date: '',
     recurrence: 'once' as 'once' | 'weekly' | 'monthly',
-    category: 'Utilities',
+    category: CATEGORIES_PF[0],
     card_id: ''
   });
   const [submittingBill, setSubmittingBill] = useState(false);
@@ -132,6 +132,12 @@ const FinancePage: React.FC = () => {
   const [submittingTax, setSubmittingTax] = useState(false);
 
   const CATEGORIES = financeScope === 'pj' ? CATEGORIES_PJ : CATEGORIES_PF;
+
+  // Reset category when scope changes
+  useEffect(() => {
+    setNewTransaction(prev => ({ ...prev, category: financeScope === 'pj' ? CATEGORIES_PJ[0] : CATEGORIES_PF[0] }));
+    setNewBill(prev => ({ ...prev, category: financeScope === 'pj' ? CATEGORIES_PJ[0] : CATEGORIES_PF[0] }));
+  }, [financeScope]);
 
   useEffect(() => {
     if (!user) return;
@@ -762,7 +768,7 @@ const FinancePage: React.FC = () => {
   };
 
   const inputClass = "w-full bg-[#161616] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#8fb0bc]";
-  const labelClass = "text-xs font-bold text-white/40 uppercase tracking-widest block mb-2";
+  const labelClass = "text-xs font-bold opacity-40 uppercase tracking-widest block mb-2";
 
   return (
     <div className="space-y-8 pb-10">
@@ -847,22 +853,22 @@ const FinancePage: React.FC = () => {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-[#161616] rounded-xl p-5 text-center">
-                <p className="text-xs text-white/40 uppercase tracking-widest mb-2">Receita Bruta</p>
+                <p className="text-xs opacity-40 uppercase tracking-widest mb-2">Receita Bruta</p>
                 <p className="text-2xl font-bold text-[#c1ff72]">R$ {incomeMonth.toFixed(2)}</p>
               </div>
               <div className="bg-[#161616] rounded-xl p-5 text-center flex flex-col items-center justify-center">
-                <p className="text-xs text-white/40 uppercase tracking-widest mb-2">(-) Despesas Totais</p>
+                <p className="text-xs opacity-40 uppercase tracking-widest mb-2">(-) Despesas Totais</p>
                 <p className="text-2xl font-bold text-red-400">R$ {expenseMonth.toFixed(2)}</p>
                 {pendingTaxesTotal > 0 && (
                   <p className="text-[10px] text-amber-400 mt-1">+ R$ {pendingTaxesTotal.toFixed(2)} em impostos pendentes</p>
                 )}
               </div>
               <div className={`rounded-xl p-5 text-center ${lucroLiquido >= 0 ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
-                <p className="text-xs text-white/40 uppercase tracking-widest mb-2">(=) Resultado</p>
+                <p className="text-xs opacity-40 uppercase tracking-widest mb-2">(=) Resultado</p>
                 <p className={`text-2xl font-bold ${lucroLiquido >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                   R$ {lucroLiquido.toFixed(2)}
                 </p>
-                <p className="text-[10px] text-white/30 mt-1">
+                <p className="text-[10px] opacity-30 mt-1">
                   Margem: {incomeMonth > 0 ? ((lucroLiquido / incomeMonth) * 100).toFixed(1) : '0'}%
                 </p>
               </div>
@@ -889,7 +895,7 @@ const FinancePage: React.FC = () => {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="flex items-center justify-center gap-6 mt-4 text-xs text-white/40">
+            <div className="flex items-center justify-center gap-6 mt-4 text-xs opacity-40">
               <span className="flex items-center gap-2"><span className="w-3 h-3 rounded bg-[#c1ff72]"></span> Entradas previstas</span>
               <span className="flex items-center gap-2"><span className="w-3 h-3 rounded bg-red-500"></span> Saídas previstas</span>
             </div>
@@ -911,9 +917,9 @@ const FinancePage: React.FC = () => {
             </div>
 
             {invoices.length === 0 ? (
-              <Card className="p-8 text-center">
-                <FileText size={40} className="mx-auto text-white/20 mb-3" />
-                <p className="text-white/40 text-sm">Nenhuma nota fiscal cadastrada.</p>
+              <Card className="p-8 text-center bg-[var(--input-bg)]">
+                <FileText size={40} className="mx-auto opacity-20 mb-3" />
+                <p className="opacity-40 text-sm">Nenhuma nota fiscal cadastrada.</p>
               </Card>
             ) : (
               <div className="space-y-3">
@@ -934,7 +940,7 @@ const FinancePage: React.FC = () => {
                               {inv.type === 'emitida' ? 'Emitida' : 'Recebida'}
                             </span>
                           </div>
-                          <div className="flex items-center gap-3 mt-1 text-xs text-white/40">
+                          <div className="flex items-center gap-3 mt-1 text-xs opacity-40">
                             <span>{inv.description}</span>
                             {inv.client_name && <span>{inv.client_name}</span>}
                             <span>{inv.issue_date}</span>
@@ -945,7 +951,7 @@ const FinancePage: React.FC = () => {
                         <p className="text-lg font-bold">R$ {Number(inv.amount).toFixed(2)}</p>
                         <button
                           onClick={() => handleDeleteInvoice(inv.id)}
-                          className="p-2 rounded-xl bg-white/5 hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-colors"
+                          className="p-2 rounded-xl bg-[var(--foreground)]/5 hover:bg-red-500/20 opacity-30 hover:opacity-100 hover:text-red-400 transition-all"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -964,7 +970,7 @@ const FinancePage: React.FC = () => {
                 <Users size={20} className="text-[#c1ff72]" />
                 Contas a Receber
                 {pendingReceivablesTotal > 0 && (
-                  <span className="text-sm font-normal text-white/40 ml-2">
+                  <span className="text-sm font-normal opacity-40 ml-2">
                     R$ {pendingReceivablesTotal.toFixed(2)} pendente
                   </span>
                 )}
@@ -975,9 +981,9 @@ const FinancePage: React.FC = () => {
             </div>
 
             {receivables.length === 0 ? (
-              <Card className="p-8 text-center">
-                <Users size={40} className="mx-auto text-white/20 mb-3" />
-                <p className="text-white/40 text-sm">Nenhuma conta a receber cadastrada.</p>
+              <Card className="p-8 text-center bg-[var(--input-bg)]">
+                <Users size={40} className="mx-auto opacity-20 mb-3" />
+                <p className="opacity-40 text-sm">Nenhuma conta a receber cadastrada.</p>
               </Card>
             ) : (
               <div className="space-y-3">
@@ -995,7 +1001,7 @@ const FinancePage: React.FC = () => {
                               {config.label}
                             </span>
                           </div>
-                          <div className="flex items-center gap-3 mt-1 text-xs text-white/40">
+                          <div className="flex items-center gap-3 mt-1 text-xs opacity-40">
                             <span>{rec.client_name}</span>
                             <span>Vence: {rec.due_date}</span>
                           </div>
@@ -1013,7 +1019,7 @@ const FinancePage: React.FC = () => {
                         )}
                         <button
                           onClick={() => handleDeleteReceivable(rec.id)}
-                          className="p-2 rounded-xl bg-white/5 hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-colors"
+                          className="p-2 rounded-xl bg-[var(--foreground)]/5 hover:bg-red-500/20 opacity-30 hover:opacity-100 transition-all"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -1043,10 +1049,10 @@ const FinancePage: React.FC = () => {
             </div>
 
             {taxes.length === 0 ? (
-              <Card className="p-8 text-center">
-                <Landmark size={40} className="mx-auto text-white/20 mb-3" />
-                <p className="text-white/40 text-sm">Nenhum imposto cadastrado.</p>
-                <p className="text-white/20 text-xs mt-1">Adicione DAS, ISS, IRPJ e outros para controlar seus vencimentos.</p>
+              <Card className="p-8 text-center bg-[var(--input-bg)]">
+                <Landmark size={40} className="mx-auto opacity-20 mb-3" />
+                <p className="opacity-40 text-sm">Nenhum imposto cadastrado.</p>
+                <p className="opacity-20 text-xs mt-1">Adicione DAS, ISS, IRPJ e outros para controlar seus vencimentos.</p>
               </Card>
             ) : (
               <div className="space-y-3">
@@ -1070,7 +1076,7 @@ const FinancePage: React.FC = () => {
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-3 mt-1 text-xs text-white/40">
+                          <div className="flex items-center gap-3 mt-1 text-xs opacity-40">
                             <span>Vence: {tax.due_date}</span>
                             {tax.description && <span>{tax.description}</span>}
                           </div>
@@ -1117,10 +1123,10 @@ const FinancePage: React.FC = () => {
         </div>
 
         {cards.length === 0 ? (
-          <Card className="p-8 text-center">
-            <CreditCard size={40} className="mx-auto text-white/20 mb-3" />
-            <p className="text-white/40 text-sm">Nenhum cartão cadastrado.</p>
-            <p className="text-white/20 text-xs mt-1">Adicione seu primeiro cartão para acompanhar seus gastos.</p>
+          <Card className="p-8 text-center bg-[var(--input-bg)]">
+            <CreditCard size={40} className="mx-auto opacity-20 mb-3" />
+            <p className="opacity-40 text-sm">Nenhum cartão cadastrado.</p>
+            <p className="opacity-20 text-xs mt-1">Adicione seu primeiro cartão para acompanhar seus gastos.</p>
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1202,7 +1208,7 @@ const FinancePage: React.FC = () => {
             <CalendarClock size={20} className="text-[#e6a06e]" />
             Contas a Pagar
             {pendingBillsTotal > 0 && (
-              <span className="text-sm font-normal text-white/40 ml-2">
+              <span className="text-sm font-normal opacity-40 ml-2">
                 R$ {pendingBillsTotal.toFixed(2)} pendente
               </span>
             )}
@@ -1213,10 +1219,10 @@ const FinancePage: React.FC = () => {
         </div>
 
         {bills.length === 0 ? (
-          <Card className="p-8 text-center">
-            <CalendarClock size={40} className="mx-auto text-white/20 mb-3" />
-            <p className="text-white/40 text-sm">Nenhuma conta cadastrada.</p>
-            <p className="text-white/20 text-xs mt-1">Adicione contas futuras para manter o controle dos seus vencimentos.</p>
+          <Card className="p-8 text-center bg-[var(--input-bg)]">
+            <CalendarClock size={40} className="mx-auto opacity-20 mb-3" />
+            <p className="opacity-40 text-sm">Nenhuma conta cadastrada.</p>
+            <p className="opacity-20 text-xs mt-1">Adicione contas futuras para manter o controle dos seus vencimentos.</p>
           </Card>
         ) : (
           <div className="space-y-3">
@@ -1243,7 +1249,7 @@ const FinancePage: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-white/40">
+                      <div className="flex items-center gap-3 mt-1 text-xs opacity-40">
                         <span>Vence: {bill.due_date}</span>
                         <span>{bill.category}</span>
                         {bill.card_id && <span>{getCardName(bill.card_id)}</span>}
@@ -1263,7 +1269,7 @@ const FinancePage: React.FC = () => {
                     )}
                     <button
                       onClick={() => handleDeleteBill(bill.id)}
-                      className="p-2 rounded-xl bg-white/5 hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-colors"
+                      className="p-2 rounded-xl bg-[var(--foreground)]/5 hover:bg-red-500/20 opacity-30 hover:opacity-100 hover:text-red-400 transition-all"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -1279,7 +1285,7 @@ const FinancePage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-4">
           <Card className="p-8 h-full">
-            <h3 className="text-lg font-medium text-white/60 mb-8">Gastos por Categoria</h3>
+            <h3 className="text-lg font-medium opacity-60 mb-8">Gastos por Categoria</h3>
             <div className="h-[250px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={categoryData} layout="vertical" margin={{ left: -20 }}>
@@ -1296,11 +1302,11 @@ const FinancePage: React.FC = () => {
             <div className="mt-6 space-y-4">
               {categoryData.map(cat => (
                 <div key={cat.name} className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
-                  <div className="flex items-center gap-3 text-white/40">
+                  <div className="flex items-center gap-3 opacity-40">
                     <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }}></span>
                     {cat.name}
                   </div>
-                  <span className="text-white">R$ {cat.value}</span>
+                  <span className="font-bold">R$ {cat.value}</span>
                 </div>
               ))}
             </div>
@@ -1320,20 +1326,20 @@ const FinancePage: React.FC = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="text-left text-white/30 text-[10px] uppercase tracking-[0.2em] border-b border-white/5 pb-4">
+                  <tr className="text-left opacity-30 text-[10px] uppercase tracking-[0.2em] border-b border-[var(--card-border)] pb-4">
                     <th className="pb-4 font-medium">Data</th>
                     <th className="pb-4 font-medium">Descrição</th>
                     <th className="pb-4 font-medium">Categoria / Classificação</th>
-                    <th className="pb-4 font-medium">Negócio / Cartão</th>
+                    <th className="pb-4 font-medium text-right md:text-left">Negócio / Cartão</th>
                     <th className="pb-4 font-medium text-right">Valor</th>
                   </tr>
                 </thead>
                 <tbody className="text-sm">
                   {transactions.length === 0 ? (
-                    <tr><td colSpan={5} className="py-6 text-center text-white/40">Nenhuma transação.</td></tr>
+                    <tr><td colSpan={5} className="py-6 text-center opacity-40">Nenhuma transação.</td></tr>
                   ) : transactions.slice(0, 8).map(tx => (
-                    <tr key={tx.id} className="group border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors">
-                      <td className="py-6 text-white/40 font-medium">{tx.date}</td>
+                    <tr key={tx.id} className="group border-b border-[var(--card-border)] last:border-0 hover:bg-[var(--foreground)]/[0.02] transition-colors">
+                      <td className="py-6 opacity-40 font-medium">{tx.date}</td>
                       <td className="py-6 font-bold">
                         <div>{tx.description}</div>
                         {tx.project_id && (
@@ -1348,14 +1354,14 @@ const FinancePage: React.FC = () => {
                           {tx.classification && (
                             <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full w-fit ${tx.classification === 'Custo' ? 'bg-amber-500/10 text-amber-500' :
                               tx.classification === 'Investimento' ? 'bg-blue-500/10 text-blue-400' :
-                                'bg-white/5 text-white/40'
+                                'bg-[var(--foreground)]/5 opacity-40'
                               }`}>
                               {tx.classification}
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="py-6 text-white/40 text-xs text-right md:text-left">
+                      <td className="py-6 opacity-40 text-xs text-right md:text-left">
                         <div className="flex flex-col gap-1">
                           {tx.card_id ? (
                             <span className="flex items-center gap-1.5">
@@ -1364,7 +1370,7 @@ const FinancePage: React.FC = () => {
                           ) : '—'}
                         </div>
                       </td>
-                      <td className={`py-6 text-right font-bold ${tx.type === 'income' ? 'text-[#c1ff72]' : 'text-white'}`}>
+                      <td className={`py-6 text-right font-bold ${tx.type === 'income' ? 'text-[#c1ff72]' : 'text-[var(--foreground)]'}`}>
                         {tx.type === 'income' ? '+' : '-'} R$ {Number(tx.amount).toFixed(2)}
                       </td>
                     </tr>
@@ -1383,7 +1389,7 @@ const FinancePage: React.FC = () => {
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <Card className="w-full max-w-md p-6 border-[#c1ff72]/20 relative">
-            <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 text-white/40 hover:text-white">
+            <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 opacity-40 hover:opacity-100 transition-all">
               <X size={20} />
             </button>
             <h3 className="text-xl font-bold mb-6">Nova Transação</h3>
@@ -1414,11 +1420,11 @@ const FinancePage: React.FC = () => {
                   <label className={labelClass}>Tipo</label>
                   <div className="flex bg-[#161616] rounded-xl p-1 border border-white/10">
                     <button type="button" onClick={() => setNewTransaction({ ...newTransaction, type: 'expense' })}
-                      className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase transition-all ${newTransaction.type === 'expense' ? 'bg-red-500/20 text-red-500' : 'text-white/40'}`}>
+                      className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase transition-all ${newTransaction.type === 'expense' ? 'bg-red-500/20 text-red-500' : 'opacity-40'}`}>
                       Saída
                     </button>
                     <button type="button" onClick={() => setNewTransaction({ ...newTransaction, type: 'income' })}
-                      className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase transition-all ${newTransaction.type === 'income' ? 'bg-[#c1ff72]/20 text-[#c1ff72]' : 'text-white/40'}`}>
+                      className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase transition-all ${newTransaction.type === 'income' ? 'bg-[#c1ff72]/20 text-[#c1ff72]' : 'opacity-40'}`}>
                       Entrada
                     </button>
                   </div>
@@ -1445,7 +1451,7 @@ const FinancePage: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className={labelClass}>Vínculo PJ <span className="text-white/20">(opcional)</span></label>
+                  <label className={labelClass}>Vínculo PJ <span className="opacity-20">(opcional)</span></label>
                   <select value={newTransaction.project_id}
                     onChange={e => setNewTransaction({ ...newTransaction, project_id: e.target.value })}
                     className={inputClass}>
@@ -1459,7 +1465,7 @@ const FinancePage: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 {cards.length > 0 && (
                   <div>
-                    <label className={labelClass}>Cartão <span className="text-white/20">(opcional)</span></label>
+                    <label className={labelClass}>Cartão <span className="opacity-20">(opcional)</span></label>
                     <select value={newTransaction.card_id}
                       onChange={e => setNewTransaction({ ...newTransaction, card_id: e.target.value })}
                       className={inputClass}>
@@ -1486,7 +1492,7 @@ const FinancePage: React.FC = () => {
       {isCardModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <Card className="w-full max-w-md p-6 border-[#c1ff72]/20 relative">
-            <button onClick={() => setIsCardModalOpen(false)} className="absolute top-4 right-4 text-white/40 hover:text-white">
+            <button onClick={() => setIsCardModalOpen(false)} className="absolute top-4 right-4 opacity-40 hover:opacity-100 transition-all">
               <X size={20} />
             </button>
             <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
@@ -1551,7 +1557,7 @@ const FinancePage: React.FC = () => {
       {isBillModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <Card className="w-full max-w-md p-6 border-[#e6a06e]/20 relative">
-            <button onClick={() => setIsBillModalOpen(false)} className="absolute top-4 right-4 text-white/40 hover:text-white">
+            <button onClick={() => setIsBillModalOpen(false)} className="absolute top-4 right-4 opacity-40 hover:opacity-100 transition-all">
               <X size={20} />
             </button>
             <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
@@ -1583,7 +1589,7 @@ const FinancePage: React.FC = () => {
                   <label className={labelClass}>Recorrência</label>
                   <div className="flex bg-[#161616] rounded-xl p-1 border border-white/10">
                     <button type="button" onClick={() => setNewBill({ ...newBill, recurrence: 'once' })}
-                      className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase transition-all ${newBill.recurrence === 'once' ? 'bg-[#e6a06e]/20 text-[#e6a06e]' : 'text-white/40'}`}>
+                      className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase transition-all ${newBill.recurrence === 'once' ? 'bg-[#e6a06e]/20 text-[#e6a06e]' : 'opacity-40'}`}>
                       Única
                     </button>
                     <button type="button" onClick={() => setNewBill({ ...newBill, recurrence: 'weekly' })}
@@ -1607,7 +1613,7 @@ const FinancePage: React.FC = () => {
               </div>
               {cards.length > 0 && (
                 <div>
-                  <label className={labelClass}>Cartão <span className="text-white/20">(opcional)</span></label>
+                  <label className={labelClass}>Cartão <span className="opacity-20">(opcional)</span></label>
                   <select value={newBill.card_id}
                     onChange={e => setNewBill({ ...newBill, card_id: e.target.value })}
                     className={inputClass}>
@@ -1712,7 +1718,7 @@ const FinancePage: React.FC = () => {
       {isReceivableModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <Card className="w-full max-w-md p-6 border-[#c1ff72]/20 relative">
-            <button onClick={() => setIsReceivableModalOpen(false)} className="absolute top-4 right-4 text-white/40 hover:text-white">
+            <button onClick={() => setIsReceivableModalOpen(false)} className="absolute top-4 right-4 opacity-40 hover:opacity-100 transition-all">
               <X size={20} />
             </button>
             <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
@@ -1758,7 +1764,7 @@ const FinancePage: React.FC = () => {
       {isTaxModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <Card className="w-full max-w-md p-6 border-red-500/20 relative">
-            <button onClick={() => setIsTaxModalOpen(false)} className="absolute top-4 right-4 text-white/40 hover:text-white">
+            <button onClick={() => setIsTaxModalOpen(false)} className="absolute top-4 right-4 opacity-40 hover:opacity-100 transition-all">
               <X size={20} />
             </button>
             <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
@@ -1772,7 +1778,7 @@ const FinancePage: React.FC = () => {
                   className={inputClass} placeholder="Ex: DAS, ISS, IRPJ..." required />
               </div>
               <div>
-                <label className={labelClass}>Descrição <span className="text-white/20">(opcional)</span></label>
+                <label className={labelClass}>Descrição <span className="opacity-20">(opcional)</span></label>
                 <input type="text" value={newTax.description}
                   onChange={e => setNewTax({ ...newTax, description: e.target.value })}
                   className={inputClass} placeholder="Ex: Simples Nacional competência Jan/2026" />
@@ -1796,7 +1802,7 @@ const FinancePage: React.FC = () => {
                 <div className="flex bg-[#161616] rounded-xl p-1 border border-white/10">
                   {(['once', 'monthly', 'quarterly', 'yearly'] as const).map(rec => (
                     <button key={rec} type="button" onClick={() => setNewTax({ ...newTax, recurrence: rec })}
-                      className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase transition-all ${newTax.recurrence === rec ? 'bg-red-500/20 text-red-400' : 'text-white/40'}`}>
+                      className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase transition-all ${newTax.recurrence === rec ? 'bg-red-500/20 text-red-400' : 'opacity-40'}`}>
                       {recurrenceLabels[rec]}
                     </button>
                   ))}

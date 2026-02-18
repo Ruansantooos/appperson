@@ -1,0 +1,544 @@
+{
+  "name": "MCP Server - Corelys v2",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "mcp-trigger",
+      "name": "MCP Server Trigger",
+      "type": "@n8n/n8n-nodes-langchain.mcpTrigger",
+      "typeVersion": 1,
+      "position": [800, 0],
+      "webhookId": "mcp-corelys-v2"
+    },
+
+    {
+      "parameters": {
+        "operation": "create",
+        "tableId": "tasks",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldName": "user_id", "fieldValue": "={{ $json.userId }}" },
+            { "fieldName": "title", "fieldValue": "={{ $json.titulo }}" },
+            { "fieldName": "priority", "fieldValue": "={{ $json.prioridade || 'Medium' }}" },
+            { "fieldName": "status", "fieldValue": "Pending" },
+            { "fieldName": "category", "fieldValue": "={{ $json.categoria || 'Personal' }}" },
+            { "fieldName": "description", "fieldValue": "={{ $json.descricao || '' }}" },
+            { "fieldName": "due_date", "fieldValue": "={{ $json.data_entrega || null }}" }
+          ]
+        }
+      },
+      "id": "sb-criar-tarefa",
+      "name": "adicionar_tarefa",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [200, 300],
+      "credentials": { "supabaseApi": { "id": "CONFIGURE_CREDENTIAL", "name": "Supabase" } }
+    },
+
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "tasks",
+        "returnAll": false,
+        "limit": 20,
+        "filterType": "string",
+        "filterString": "=user_id=eq.{{ $json.userId }}&status=eq.Pending&order=created_at.desc&select=id,title,priority,category,due_date,description"
+      },
+      "id": "sb-listar-tarefas",
+      "name": "listar_tarefas",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [450, 300],
+      "credentials": { "supabaseApi": { "id": "CONFIGURE_CREDENTIAL", "name": "Supabase" } }
+    },
+
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "tasks",
+        "filterType": "string",
+        "filterString": "=id=eq.{{ $json.taskId }}&user_id=eq.{{ $json.userId }}",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldName": "status", "fieldValue": "Completed" }
+          ]
+        }
+      },
+      "id": "sb-concluir-tarefa",
+      "name": "concluir_tarefa",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [700, 300],
+      "credentials": { "supabaseApi": { "id": "CONFIGURE_CREDENTIAL", "name": "Supabase" } }
+    },
+
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "tasks",
+        "filterType": "string",
+        "filterString": "=id=eq.{{ $json.taskId }}&user_id=eq.{{ $json.userId }}",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldName": "title", "fieldValue": "={{ $json.titulo || undefined }}" },
+            { "fieldName": "priority", "fieldValue": "={{ $json.prioridade || undefined }}" },
+            { "fieldName": "category", "fieldValue": "={{ $json.categoria || undefined }}" },
+            { "fieldName": "description", "fieldValue": "={{ $json.descricao || undefined }}" },
+            { "fieldName": "due_date", "fieldValue": "={{ $json.data_entrega || undefined }}" }
+          ]
+        }
+      },
+      "id": "sb-editar-tarefa",
+      "name": "editar_tarefa",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [950, 300],
+      "credentials": { "supabaseApi": { "id": "CONFIGURE_CREDENTIAL", "name": "Supabase" } }
+    },
+
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "tasks",
+        "filterType": "string",
+        "filterString": "=id=eq.{{ $json.taskId }}&user_id=eq.{{ $json.userId }}"
+      },
+      "id": "sb-deletar-tarefa",
+      "name": "deletar_tarefa",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1200, 300],
+      "credentials": { "supabaseApi": { "id": "CONFIGURE_CREDENTIAL", "name": "Supabase" } }
+    },
+
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "habits",
+        "returnAll": true,
+        "filterType": "string",
+        "filterString": "=user_id=eq.{{ $json.userId }}&order=name.asc&select=id,name,streak,best_streak,target,completed_today"
+      },
+      "id": "sb-listar-habitos",
+      "name": "listar_habitos",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [200, 550],
+      "credentials": { "supabaseApi": { "id": "CONFIGURE_CREDENTIAL", "name": "Supabase" } }
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// REGISTRAR HABITO (Check-in + Streak)\nconst SUPA_URL = process.env.SUPABASE_URL || 'https://SEU-PROJETO.supabase.co';\nconst SUPA_KEY = process.env.SUPABASE_KEY || 'SUA_SERVICE_ROLE_KEY';\nconst H = { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };\nconst HG = { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` };\n\ntry {\n  const { userId, habitId } = $input.first().json;\n  const today = new Date().toISOString().split('T')[0];\n\n  // 1. Verificar se ja registrou hoje\n  const checkRes = await fetch(`${SUPA_URL}/rest/v1/habit_logs?habit_id=eq.${habitId}&user_id=eq.${userId}&date=eq.${today}&select=id`, { headers: HG });\n  const existing = await checkRes.json();\n  if (existing.length > 0) return [{ json: { result: 'Este habito ja foi registrado hoje!' } }];\n\n  // 2. Buscar habito atual\n  const habitRes = await fetch(`${SUPA_URL}/rest/v1/habits?id=eq.${habitId}&select=name,streak,best_streak`, { headers: HG });\n  const habit = (await habitRes.json())[0];\n  if (!habit) return [{ json: { result: 'Habito nao encontrado.' } }];\n\n  // 3. Inserir log\n  await fetch(`${SUPA_URL}/rest/v1/habit_logs`, { method: 'POST', headers: H, body: JSON.stringify({ habit_id: habitId, user_id: userId, date: today, completed: true }) });\n\n  // 4. Atualizar streak\n  const newStreak = (habit.streak || 0) + 1;\n  const newBest = Math.max(newStreak, habit.best_streak || 0);\n  await fetch(`${SUPA_URL}/rest/v1/habits?id=eq.${habitId}`, { method: 'PATCH', headers: H, body: JSON.stringify({ completed_today: true, streak: newStreak, best_streak: newBest }) });\n\n  return [{ json: { result: `Habito \"${habit.name}\" registrado! Streak: ${newStreak} dias | Melhor: ${newBest} dias` } }];\n} catch (err) {\n  return [{ json: { result: `Erro: ${err.message}` } }];\n}"
+      },
+      "id": "code-registrar-habito",
+      "name": "registrar_habito",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 550]
+    },
+
+    {
+      "parameters": {
+        "operation": "create",
+        "tableId": "habits",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldName": "user_id", "fieldValue": "={{ $json.userId }}" },
+            { "fieldName": "name", "fieldValue": "={{ $json.nome }}" },
+            { "fieldName": "target", "fieldValue": "={{ $json.meta || 'Diario' }}" },
+            { "fieldName": "streak", "fieldValue": "0" },
+            { "fieldName": "best_streak", "fieldValue": "0" },
+            { "fieldName": "completed_today", "fieldValue": "false" }
+          ]
+        }
+      },
+      "id": "sb-criar-habito",
+      "name": "adicionar_habito",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [700, 550],
+      "credentials": { "supabaseApi": { "id": "CONFIGURE_CREDENTIAL", "name": "Supabase" } }
+    },
+
+    {
+      "parameters": {
+        "operation": "create",
+        "tableId": "transactions",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldName": "user_id", "fieldValue": "={{ $json.userId }}" },
+            { "fieldName": "description", "fieldValue": "={{ $json.descricao }}" },
+            { "fieldName": "amount", "fieldValue": "={{ Math.abs(Number($json.valor)) }}" },
+            { "fieldName": "type", "fieldValue": "={{ $json.tipo || 'expense' }}" },
+            { "fieldName": "category", "fieldValue": "={{ $json.categoria || 'Others' }}" },
+            { "fieldName": "finance_scope", "fieldValue": "={{ $json.escopo || 'pf' }}" },
+            { "fieldName": "classification", "fieldValue": "={{ $json.classificacao || null }}" }
+          ]
+        }
+      },
+      "id": "sb-criar-transacao",
+      "name": "adicionar_transacao",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [200, 800],
+      "credentials": { "supabaseApi": { "id": "CONFIGURE_CREDENTIAL", "name": "Supabase" } }
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// VER RESUMO FINANCEIRO DO MES\nconst SUPA_URL = process.env.SUPABASE_URL || 'https://SEU-PROJETO.supabase.co';\nconst SUPA_KEY = process.env.SUPABASE_KEY || 'SUA_SERVICE_ROLE_KEY';\nconst HG = { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` };\n\ntry {\n  const { userId, escopo } = $input.first().json;\n  const scope = escopo || 'pf';\n  const now = new Date();\n  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];\n  const lastDay = new Date(now.getFullYear(), now.getMonth()+1, 0).toISOString().split('T')[0];\n\n  const res = await fetch(`${SUPA_URL}/rest/v1/transactions?user_id=eq.${userId}&finance_scope=eq.${scope}&date=gte.${firstDay}&date=lte.${lastDay}&order=date.desc&limit=30&select=description,amount,type,category,date`, { headers: HG });\n  const data = await res.json();\n\n  let receitas = 0, despesas = 0;\n  data.forEach(t => { if (t.type === 'income') receitas += Number(t.amount); else despesas += Number(t.amount); });\n\n  let r = `Resumo financeiro ${scope.toUpperCase()} do mes:\\nReceitas: R$ ${receitas.toFixed(2)}\\nDespesas: R$ ${despesas.toFixed(2)}\\nSaldo: R$ ${(receitas - despesas).toFixed(2)}`;\n  if (data.length > 0) {\n    r += '\\n\\nUltimas transacoes:';\n    data.slice(0,10).forEach(t => { r += `\\n${t.type==='income'?'+':'-'} R$ ${Number(t.amount).toFixed(2)} - ${t.description} (${t.category})`; });\n  }\n  return [{ json: { result: r } }];\n} catch (err) {\n  return [{ json: { result: `Erro: ${err.message}` } }];\n}"
+      },
+      "id": "code-resumo-financeiro",
+      "name": "ver_resumo_financeiro",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 800]
+    },
+
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "bills",
+        "returnAll": false,
+        "limit": 20,
+        "filterType": "string",
+        "filterString": "=user_id=eq.{{ $json.userId }}&finance_scope=eq.{{ $json.escopo || 'pf' }}&status=neq.paid&order=due_date.asc&select=id,description,amount,due_date,status,category,recurrence"
+      },
+      "id": "sb-listar-contas",
+      "name": "ver_contas_a_pagar",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [700, 800],
+      "credentials": { "supabaseApi": { "id": "CONFIGURE_CREDENTIAL", "name": "Supabase" } }
+    },
+
+    {
+      "parameters": {
+        "operation": "create",
+        "tableId": "bills",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldName": "user_id", "fieldValue": "={{ $json.userId }}" },
+            { "fieldName": "description", "fieldValue": "={{ $json.descricao }}" },
+            { "fieldName": "amount", "fieldValue": "={{ Math.abs(Number($json.valor)) }}" },
+            { "fieldName": "due_date", "fieldValue": "={{ $json.vencimento }}" },
+            { "fieldName": "category", "fieldValue": "={{ $json.categoria || 'Others' }}" },
+            { "fieldName": "recurrence", "fieldValue": "={{ $json.recorrencia || 'once' }}" },
+            { "fieldName": "status", "fieldValue": "pending" },
+            { "fieldName": "finance_scope", "fieldValue": "={{ $json.escopo || 'pf' }}" }
+          ]
+        }
+      },
+      "id": "sb-criar-conta",
+      "name": "adicionar_conta",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [950, 800],
+      "credentials": { "supabaseApi": { "id": "CONFIGURE_CREDENTIAL", "name": "Supabase" } }
+    },
+
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "bills",
+        "filterType": "string",
+        "filterString": "=id=eq.{{ $json.billId }}&user_id=eq.{{ $json.userId }}",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldName": "status", "fieldValue": "paid" }
+          ]
+        }
+      },
+      "id": "sb-pagar-conta",
+      "name": "pagar_conta",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1200, 800],
+      "credentials": { "supabaseApi": { "id": "CONFIGURE_CREDENTIAL", "name": "Supabase" } }
+    },
+
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "gym_stats",
+        "returnAll": false,
+        "limit": 1,
+        "filterType": "string",
+        "filterString": "=user_id=eq.{{ $json.userId }}&select=weight,target_weight,body_fat,muscle_mass,calories_consumed,target_calories,protein,carbs,fat"
+      },
+      "id": "sb-ver-academia",
+      "name": "ver_status_academia",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [200, 1050],
+      "credentials": { "supabaseApi": { "id": "CONFIGURE_CREDENTIAL", "name": "Supabase" } }
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// ATUALIZAR PESO + HISTORICO\nconst SUPA_URL = process.env.SUPABASE_URL || 'https://SEU-PROJETO.supabase.co';\nconst SUPA_KEY = process.env.SUPABASE_KEY || 'SUA_SERVICE_ROLE_KEY';\nconst H = { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };\n\ntry {\n  const { userId, peso } = $input.first().json;\n\n  await fetch(`${SUPA_URL}/rest/v1/gym_stats?user_id=eq.${userId}`, {\n    method: 'PATCH', headers: H, body: JSON.stringify({ weight: Number(peso) })\n  });\n\n  await fetch(`${SUPA_URL}/rest/v1/weight_history`, {\n    method: 'POST', headers: H, body: JSON.stringify({ user_id: userId, weight: Number(peso) })\n  });\n\n  return [{ json: { result: `Peso atualizado para ${peso}kg e registrado no historico!` } }];\n} catch (err) {\n  return [{ json: { result: `Erro: ${err.message}` } }];\n}"
+      },
+      "id": "code-atualizar-peso",
+      "name": "atualizar_peso",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 1050]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// ADICIONAR REFEICAO + RECALCULAR MACROS\nconst SUPA_URL = process.env.SUPABASE_URL || 'https://SEU-PROJETO.supabase.co';\nconst SUPA_KEY = process.env.SUPABASE_KEY || 'SUA_SERVICE_ROLE_KEY';\nconst H = { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };\nconst HG = { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` };\n\ntry {\n  const { userId, nome, calorias, proteina, carboidrato, gordura } = $input.first().json;\n  const today = new Date().toISOString().split('T')[0];\n\n  // 1. Inserir refeicao\n  const res = await fetch(`${SUPA_URL}/rest/v1/meals`, {\n    method: 'POST', headers: H,\n    body: JSON.stringify({ user_id: userId, name: nome, calories: Number(calorias)||0, protein: Number(proteina)||0, carbs: Number(carboidrato)||0, fat: Number(gordura)||0, date: today })\n  });\n  if (!res.ok) return [{ json: { result: 'Erro ao registrar refeicao.' } }];\n\n  // 2. Recalcular totais do dia\n  const mealsRes = await fetch(`${SUPA_URL}/rest/v1/meals?user_id=eq.${userId}&date=eq.${today}&select=calories,protein,carbs,fat`, { headers: HG });\n  const meals = await mealsRes.json();\n  const tot = meals.reduce((a, m) => ({ cal: a.cal+Number(m.calories||0), pro: a.pro+Number(m.protein||0), car: a.car+Number(m.carbs||0), fat: a.fat+Number(m.fat||0) }), { cal:0, pro:0, car:0, fat:0 });\n\n  // 3. Atualizar gym_stats\n  await fetch(`${SUPA_URL}/rest/v1/gym_stats?user_id=eq.${userId}`, {\n    method: 'PATCH', headers: H,\n    body: JSON.stringify({ calories_consumed: tot.cal, protein: tot.pro, carbs: tot.car, fat: tot.fat })\n  });\n\n  return [{ json: { result: `Refeicao \"${nome}\" registrada!\\n${calorias||0}kcal | P:${proteina||0}g C:${carboidrato||0}g G:${gordura||0}g\\nTotal do dia: ${tot.cal}kcal | P:${tot.pro}g C:${tot.car}g G:${tot.fat}g` } }];\n} catch (err) {\n  return [{ json: { result: `Erro: ${err.message}` } }];\n}"
+      },
+      "id": "code-adicionar-refeicao",
+      "name": "adicionar_refeicao",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 1050]
+    },
+
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "meals",
+        "returnAll": true,
+        "filterType": "string",
+        "filterString": "=user_id=eq.{{ $json.userId }}&date=eq.{{ $now.format('yyyy-MM-dd') }}&order=created_at.asc&select=name,calories,protein,carbs,fat"
+      },
+      "id": "sb-ver-nutricao",
+      "name": "ver_nutricao_hoje",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [950, 1050],
+      "credentials": { "supabaseApi": { "id": "CONFIGURE_CREDENTIAL", "name": "Supabase" } }
+    },
+
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "saved_foods",
+        "returnAll": false,
+        "limit": 15,
+        "filterType": "string",
+        "filterString": "=user_id=eq.{{ $json.userId }}&name=ilike.*{{ $json.busca || '' }}*&order=name.asc&select=id,name,calories,protein,carbs,fat"
+      },
+      "id": "sb-buscar-alimento",
+      "name": "buscar_alimento_salvo",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1200, 1050],
+      "credentials": { "supabaseApi": { "id": "CONFIGURE_CREDENTIAL", "name": "Supabase" } }
+    },
+
+    {
+      "parameters": {
+        "operation": "create",
+        "tableId": "calendar_events",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldName": "user_id", "fieldValue": "={{ $json.userId }}" },
+            { "fieldName": "title", "fieldValue": "={{ $json.titulo }}" },
+            { "fieldName": "start_time", "fieldValue": "={{ $json.dataInicio }}" },
+            { "fieldName": "end_time", "fieldValue": "={{ $json.dataFim || '' }}" },
+            { "fieldName": "category", "fieldValue": "={{ $json.categoria || 'Personal' }}" },
+            { "fieldName": "location", "fieldValue": "={{ $json.local || '' }}" }
+          ]
+        }
+      },
+      "id": "sb-criar-evento",
+      "name": "adicionar_evento",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [200, 1300],
+      "credentials": { "supabaseApi": { "id": "CONFIGURE_CREDENTIAL", "name": "Supabase" } }
+    },
+
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "calendar_events",
+        "returnAll": false,
+        "limit": 10,
+        "filterType": "string",
+        "filterString": "=user_id=eq.{{ $json.userId }}&start_time=gte.{{ $now.toISO() }}&order=start_time.asc&select=id,title,start_time,end_time,category,location"
+      },
+      "id": "sb-listar-eventos",
+      "name": "ver_proximos_eventos",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [450, 1300],
+      "credentials": { "supabaseApi": { "id": "CONFIGURE_CREDENTIAL", "name": "Supabase" } }
+    },
+
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "projects",
+        "returnAll": false,
+        "limit": 15,
+        "filterType": "string",
+        "filterString": "=user_id=eq.{{ $json.userId }}&status=eq.{{ $json.status_filtro || 'Active' }}&order=last_edited.desc&select=id,name,description,status,tags,last_edited"
+      },
+      "id": "sb-listar-projetos",
+      "name": "listar_projetos",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [700, 1300],
+      "credentials": { "supabaseApi": { "id": "CONFIGURE_CREDENTIAL", "name": "Supabase" } }
+    },
+
+    {
+      "parameters": {
+        "operation": "create",
+        "tableId": "notes",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldName": "user_id", "fieldValue": "={{ $json.userId }}" },
+            { "fieldName": "title", "fieldValue": "={{ $json.titulo || 'Nota rapida' }}" },
+            { "fieldName": "content", "fieldValue": "={{ $json.conteudo }}" },
+            { "fieldName": "category", "fieldValue": "={{ $json.categoria || 'general' }}" }
+          ]
+        }
+      },
+      "id": "sb-criar-nota",
+      "name": "adicionar_nota",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [950, 1300],
+      "credentials": { "supabaseApi": { "id": "CONFIGURE_CREDENTIAL", "name": "Supabase" } }
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// VER RESUMO DIARIO - Dashboard completo\nconst SUPA_URL = process.env.SUPABASE_URL || 'https://SEU-PROJETO.supabase.co';\nconst SUPA_KEY = process.env.SUPABASE_KEY || 'SUA_SERVICE_ROLE_KEY';\nconst HG = { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` };\n\ntry {\n  const userId = $input.first().json.userId;\n  const today = new Date().toISOString().split('T')[0];\n  const now = new Date().toISOString();\n\n  const [tasksRes, habitsRes, mealsRes, eventsRes, billsRes] = await Promise.all([\n    fetch(`${SUPA_URL}/rest/v1/tasks?user_id=eq.${userId}&status=eq.Pending&select=id,title,priority&order=created_at.desc&limit=5`, { headers: HG }),\n    fetch(`${SUPA_URL}/rest/v1/habits?user_id=eq.${userId}&select=name,completed_today,streak`, { headers: HG }),\n    fetch(`${SUPA_URL}/rest/v1/meals?user_id=eq.${userId}&date=eq.${today}&select=calories,protein`, { headers: HG }),\n    fetch(`${SUPA_URL}/rest/v1/calendar_events?user_id=eq.${userId}&start_time=gte.${now}&select=title,start_time&order=start_time.asc&limit=3`, { headers: HG }),\n    fetch(`${SUPA_URL}/rest/v1/bills?user_id=eq.${userId}&status=neq.paid&due_date=lte.${today}&select=description,amount`, { headers: HG })\n  ]);\n\n  const tasks = await tasksRes.json();\n  const habits = await habitsRes.json();\n  const meals = await mealsRes.json();\n  const events = await eventsRes.json();\n  const bills = await billsRes.json();\n\n  let r = `Resumo do dia (${today}):\\n`;\n  r += `\\nTAREFAS: ${tasks.length} pendente(s)`;\n  tasks.slice(0,3).forEach(t => { r += `\\n  - [${t.priority}] ${t.title}`; });\n\n  const done = habits.filter(h => h.completed_today).length;\n  r += `\\n\\nHABITOS: ${done}/${habits.length} feito(s)`;\n  habits.filter(h => !h.completed_today).slice(0,3).forEach(h => { r += `\\n  - ${h.name} (pendente)`; });\n\n  const cal = meals.reduce((s, m) => s + Number(m.calories||0), 0);\n  const pro = meals.reduce((s, m) => s + Number(m.protein||0), 0);\n  r += `\\n\\nNUTRICAO: ${cal}kcal | P:${pro}g (${meals.length} refeicoes)`;\n\n  r += `\\n\\nAGENDA: ${events.length} proximo(s)`;\n  events.forEach(e => { r += `\\n  - ${e.title} (${new Date(e.start_time).toLocaleString('pt-BR')})`; });\n\n  if (bills.length > 0) {\n    const venc = bills.reduce((s, b) => s + Number(b.amount||0), 0);\n    r += `\\n\\nCONTAS VENCIDAS: ${bills.length} (R$ ${venc.toFixed(2)})`;\n  }\n\n  return [{ json: { result: r } }];\n} catch (err) {\n  return [{ json: { result: `Erro ao gerar resumo: ${err.message}` } }];\n}"
+      },
+      "id": "code-resumo-diario",
+      "name": "ver_resumo_diario",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 1300]
+    }
+  ],
+
+  "connections": {
+    "adicionar_tarefa": {
+      "ai_tool": [
+        [{ "node": "MCP Server Trigger", "type": "ai_tool", "index": 0 }]
+      ]
+    },
+    "listar_tarefas": {
+      "ai_tool": [
+        [{ "node": "MCP Server Trigger", "type": "ai_tool", "index": 0 }]
+      ]
+    },
+    "concluir_tarefa": {
+      "ai_tool": [
+        [{ "node": "MCP Server Trigger", "type": "ai_tool", "index": 0 }]
+      ]
+    },
+    "editar_tarefa": {
+      "ai_tool": [
+        [{ "node": "MCP Server Trigger", "type": "ai_tool", "index": 0 }]
+      ]
+    },
+    "deletar_tarefa": {
+      "ai_tool": [
+        [{ "node": "MCP Server Trigger", "type": "ai_tool", "index": 0 }]
+      ]
+    },
+    "listar_habitos": {
+      "ai_tool": [
+        [{ "node": "MCP Server Trigger", "type": "ai_tool", "index": 0 }]
+      ]
+    },
+    "registrar_habito": {
+      "ai_tool": [
+        [{ "node": "MCP Server Trigger", "type": "ai_tool", "index": 0 }]
+      ]
+    },
+    "adicionar_habito": {
+      "ai_tool": [
+        [{ "node": "MCP Server Trigger", "type": "ai_tool", "index": 0 }]
+      ]
+    },
+    "adicionar_transacao": {
+      "ai_tool": [
+        [{ "node": "MCP Server Trigger", "type": "ai_tool", "index": 0 }]
+      ]
+    },
+    "ver_resumo_financeiro": {
+      "ai_tool": [
+        [{ "node": "MCP Server Trigger", "type": "ai_tool", "index": 0 }]
+      ]
+    },
+    "ver_contas_a_pagar": {
+      "ai_tool": [
+        [{ "node": "MCP Server Trigger", "type": "ai_tool", "index": 0 }]
+      ]
+    },
+    "adicionar_conta": {
+      "ai_tool": [
+        [{ "node": "MCP Server Trigger", "type": "ai_tool", "index": 0 }]
+      ]
+    },
+    "pagar_conta": {
+      "ai_tool": [
+        [{ "node": "MCP Server Trigger", "type": "ai_tool", "index": 0 }]
+      ]
+    },
+    "ver_status_academia": {
+      "ai_tool": [
+        [{ "node": "MCP Server Trigger", "type": "ai_tool", "index": 0 }]
+      ]
+    },
+    "atualizar_peso": {
+      "ai_tool": [
+        [{ "node": "MCP Server Trigger", "type": "ai_tool", "index": 0 }]
+      ]
+    },
+    "adicionar_refeicao": {
+      "ai_tool": [
+        [{ "node": "MCP Server Trigger", "type": "ai_tool", "index": 0 }]
+      ]
+    },
+    "ver_nutricao_hoje": {
+      "ai_tool": [
+        [{ "node": "MCP Server Trigger", "type": "ai_tool", "index": 0 }]
+      ]
+    },
+    "buscar_alimento_salvo": {
+      "ai_tool": [
+        [{ "node": "MCP Server Trigger", "type": "ai_tool", "index": 0 }]
+      ]
+    },
+    "adicionar_evento": {
+      "ai_tool": [
+        [{ "node": "MCP Server Trigger", "type": "ai_tool", "index": 0 }]
+      ]
+    },
+    "ver_proximos_eventos": {
+      "ai_tool": [
+        [{ "node": "MCP Server Trigger", "type": "ai_tool", "index": 0 }]
+      ]
+    },
+    "listar_projetos": {
+      "ai_tool": [
+        [{ "node": "MCP Server Trigger", "type": "ai_tool", "index": 0 }]
+      ]
+    },
+    "adicionar_nota": {
+      "ai_tool": [
+        [{ "node": "MCP Server Trigger", "type": "ai_tool", "index": 0 }]
+      ]
+    },
+    "ver_resumo_diario": {
+      "ai_tool": [
+        [{ "node": "MCP Server Trigger", "type": "ai_tool", "index": 0 }]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

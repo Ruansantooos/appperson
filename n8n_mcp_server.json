@@ -1,0 +1,201 @@
+{
+  "name": "MCP Server - Assistente Pessoal",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "mcp-trigger",
+      "name": "MCP Server Trigger",
+      "type": "@n8n/n8n-nodes-langchain.mcpTrigger",
+      "typeVersion": 1,
+      "position": [600, 0],
+      "webhookId": "mcp-personal-assistant"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            { "outputKey": "adicionar_tarefa" },
+            { "outputKey": "listar_tarefas" },
+            { "outputKey": "concluir_tarefa" },
+            { "outputKey": "adicionar_refeicao" },
+            { "outputKey": "ver_nutricao_hoje" },
+            { "outputKey": "adicionar_transacao" },
+            { "outputKey": "ver_resumo_financeiro" },
+            { "outputKey": "listar_habitos" },
+            { "outputKey": "registrar_habito" },
+            { "outputKey": "ver_status_academia" },
+            { "outputKey": "atualizar_peso" },
+            { "outputKey": "adicionar_evento" },
+            { "outputKey": "ver_proximos_eventos" }
+          ]
+        },
+        "dataType": "string",
+        "value": "={{ $json.toolName }}"
+      },
+      "id": "switch-tool",
+      "name": "Roteador de Tools",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [600, 200]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// ADICIONAR TAREFA\n// ALTERE: SUPABASE_URL e SUPABASE_KEY\nconst SUPA_URL = 'https://SEU-PROJETO.supabase.co';\nconst SUPA_KEY = 'SUA_SERVICE_ROLE_KEY';\n\nconst { userId, titulo, prioridade, categoria } = $input.first().json.parameters;\n\nconst res = await fetch(`${SUPA_URL}/rest/v1/tasks`, {\n  method: 'POST',\n  headers: {\n    'apikey': SUPA_KEY,\n    'Authorization': `Bearer ${SUPA_KEY}`,\n    'Content-Type': 'application/json',\n    'Prefer': 'return=representation'\n  },\n  body: JSON.stringify({\n    user_id: userId,\n    title: titulo,\n    priority: prioridade || 'Medium',\n    status: 'Pending',\n    category: categoria || 'Personal'\n  })\n});\n\nconst data = await res.json();\nif (!res.ok) return [{ json: { result: 'Erro ao criar tarefa.' } }];\nreturn [{ json: { result: `Tarefa criada: \"${data[0].title}\" | Prioridade: ${data[0].priority} | Categoria: ${data[0].category}` } }];"
+      },
+      "id": "tool-add-task",
+      "name": "Adicionar Tarefa",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [0, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "// LISTAR TAREFAS\nconst SUPA_URL = 'https://SEU-PROJETO.supabase.co';\nconst SUPA_KEY = 'SUA_SERVICE_ROLE_KEY';\n\nconst { userId } = $input.first().json.parameters;\n\nconst res = await fetch(\n  `${SUPA_URL}/rest/v1/tasks?user_id=eq.${userId}&status=eq.Pending&select=id,title,priority,category,due_date&order=created_at.desc&limit=20`,\n  { headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` } }\n);\n\nconst data = await res.json();\nif (!res.ok) return [{ json: { result: 'Erro ao buscar tarefas.' } }];\nif (data.length === 0) return [{ json: { result: 'Nenhuma tarefa pendente.' } }];\n\nlet result = `${data.length} tarefa(s) pendente(s):\\n`;\ndata.forEach((t, i) => {\n  result += `${i+1}. [${t.priority}] ${t.title} (${t.category})${t.due_date ? ' - Vence: ' + t.due_date : ''} | ID: ${t.id}\\n`;\n});\nreturn [{ json: { result } }];"
+      },
+      "id": "tool-list-tasks",
+      "name": "Listar Tarefas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [200, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "// CONCLUIR TAREFA\nconst SUPA_URL = 'https://SEU-PROJETO.supabase.co';\nconst SUPA_KEY = 'SUA_SERVICE_ROLE_KEY';\n\nconst { userId, taskId } = $input.first().json.parameters;\n\nconst res = await fetch(\n  `${SUPA_URL}/rest/v1/tasks?id=eq.${taskId}&user_id=eq.${userId}`,\n  {\n    method: 'PATCH',\n    headers: {\n      'apikey': SUPA_KEY,\n      'Authorization': `Bearer ${SUPA_KEY}`,\n      'Content-Type': 'application/json',\n      'Prefer': 'return=representation'\n    },\n    body: JSON.stringify({ status: 'Completed' })\n  }\n);\n\nconst data = await res.json();\nif (!res.ok || data.length === 0) return [{ json: { result: 'Erro ao concluir tarefa. Verifique o ID.' } }];\nreturn [{ json: { result: `Tarefa \"${data[0].title}\" concluida com sucesso!` } }];"
+      },
+      "id": "tool-complete-task",
+      "name": "Concluir Tarefa",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ADICIONAR REFEICAO + RECALCULAR TOTAIS\nconst SUPA_URL = 'https://SEU-PROJETO.supabase.co';\nconst SUPA_KEY = 'SUA_SERVICE_ROLE_KEY';\nconst headers = { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };\n\nconst { userId, nome, calorias, proteina, carboidrato, gordura } = $input.first().json.parameters;\nconst today = new Date().toISOString().split('T')[0];\n\n// 1. Inserir refeicao\nconst res = await fetch(`${SUPA_URL}/rest/v1/meals`, {\n  method: 'POST', headers,\n  body: JSON.stringify({ user_id: userId, name: nome, calories: Number(calorias)||0, protein: Number(proteina)||0, carbs: Number(carboidrato)||0, fat: Number(gordura)||0, date: today })\n});\nif (!res.ok) return [{ json: { result: 'Erro ao registrar refeicao.' } }];\n\n// 2. Recalcular totais\nconst mealsRes = await fetch(`${SUPA_URL}/rest/v1/meals?user_id=eq.${userId}&date=eq.${today}&select=calories,protein,carbs,fat`, { headers });\nconst meals = await mealsRes.json();\nconst tot = meals.reduce((a, m) => ({ cal: a.cal+Number(m.calories||0), pro: a.pro+Number(m.protein||0), car: a.car+Number(m.carbs||0), fat: a.fat+Number(m.fat||0) }), { cal:0, pro:0, car:0, fat:0 });\n\n// 3. Atualizar gym_stats\nawait fetch(`${SUPA_URL}/rest/v1/gym_stats?user_id=eq.${userId}`, { method: 'PATCH', headers, body: JSON.stringify({ calories_consumed: tot.cal, protein: tot.pro, carbs: tot.car, fat: tot.fat }) });\n\nreturn [{ json: { result: `Refeicao \"${nome}\" registrada!\\n${calorias}kcal | P:${proteina}g C:${carboidrato}g G:${gordura}g\\n\\nTotal do dia: ${tot.cal}kcal | P:${tot.pro}g C:${tot.car}g G:${tot.fat}g` } }];"
+      },
+      "id": "tool-add-meal",
+      "name": "Adicionar Refeicao",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [600, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "// VER NUTRICAO HOJE\nconst SUPA_URL = 'https://SEU-PROJETO.supabase.co';\nconst SUPA_KEY = 'SUA_SERVICE_ROLE_KEY';\nconst headers = { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` };\n\nconst { userId } = $input.first().json.parameters;\nconst today = new Date().toISOString().split('T')[0];\n\nconst mealsRes = await fetch(`${SUPA_URL}/rest/v1/meals?user_id=eq.${userId}&date=eq.${today}&select=name,calories,protein,carbs,fat&order=created_at.asc`, { headers });\nconst meals = await mealsRes.json();\n\nconst statsRes = await fetch(`${SUPA_URL}/rest/v1/gym_stats?user_id=eq.${userId}&select=target_calories`, { headers });\nconst stats = await statsRes.json();\nconst meta = stats[0]?.target_calories || 2000;\n\nif (meals.length === 0) return [{ json: { result: `Nenhuma refeicao registrada hoje. Meta: ${meta}kcal.` } }];\n\nconst tot = meals.reduce((a, m) => ({ cal: a.cal+Number(m.calories||0), pro: a.pro+Number(m.protein||0), car: a.car+Number(m.carbs||0), fat: a.fat+Number(m.fat||0) }), { cal:0, pro:0, car:0, fat:0 });\n\nlet result = `Nutricao de hoje (${meals.length} refeicoes):\\n\\n`;\nmeals.forEach((m, i) => { result += `${i+1}. ${m.name} - ${m.calories}kcal (P:${m.protein}g C:${m.carbs}g G:${m.fat}g)\\n`; });\nresult += `\\nTotal: ${tot.cal}kcal | P:${tot.pro}g C:${tot.car}g G:${tot.fat}g`;\nresult += `\\nMeta: ${meta}kcal | Restante: ${meta - tot.cal}kcal`;\n\nreturn [{ json: { result } }];"
+      },
+      "id": "tool-view-nutrition",
+      "name": "Ver Nutricao",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [800, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ADICIONAR TRANSACAO\nconst SUPA_URL = 'https://SEU-PROJETO.supabase.co';\nconst SUPA_KEY = 'SUA_SERVICE_ROLE_KEY';\n\nconst { userId, descricao, valor, tipo, categoria } = $input.first().json.parameters;\n\nconst res = await fetch(`${SUPA_URL}/rest/v1/transactions`, {\n  method: 'POST',\n  headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },\n  body: JSON.stringify({ user_id: userId, description: descricao, amount: Number(valor), type: tipo || 'expense', category: categoria || 'Others', finance_scope: 'pf' })\n});\n\nconst data = await res.json();\nif (!res.ok) return [{ json: { result: 'Erro ao registrar transacao.' } }];\nconst t = data[0];\nreturn [{ json: { result: `${t.type==='income'?'Receita':'Despesa'} registrada: ${t.description}\\nValor: R$ ${Number(t.amount).toFixed(2)} | Categoria: ${t.category}` } }];"
+      },
+      "id": "tool-add-transaction",
+      "name": "Adicionar Transacao",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "// VER RESUMO FINANCEIRO\nconst SUPA_URL = 'https://SEU-PROJETO.supabase.co';\nconst SUPA_KEY = 'SUA_SERVICE_ROLE_KEY';\nconst headers = { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` };\n\nconst { userId } = $input.first().json.parameters;\nconst now = new Date();\nconst firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];\nconst lastDay = new Date(now.getFullYear(), now.getMonth()+1, 0).toISOString().split('T')[0];\n\nconst res = await fetch(`${SUPA_URL}/rest/v1/transactions?user_id=eq.${userId}&date=gte.${firstDay}&date=lte.${lastDay}&finance_scope=eq.pf&select=description,amount,type,category,date&order=date.desc&limit=30`, { headers });\nconst data = await res.json();\nif (!res.ok) return [{ json: { result: 'Erro ao buscar transacoes.' } }];\n\nlet receitas = 0, despesas = 0;\ndata.forEach(t => { if (t.type==='income') receitas+=Number(t.amount); else despesas+=Number(t.amount); });\n\nlet result = `Resumo financeiro do mes:\\nReceitas: R$ ${receitas.toFixed(2)}\\nDespesas: R$ ${despesas.toFixed(2)}\\nSaldo: R$ ${(receitas-despesas).toFixed(2)}\\n`;\nif (data.length > 0) {\n  result += `\\nUltimas transacoes:\\n`;\n  data.slice(0,10).forEach(t => { result += `${t.type==='income'?'+':'-'} R$ ${Number(t.amount).toFixed(2)} - ${t.description} (${t.category})\\n`; });\n}\nreturn [{ json: { result } }];"
+      },
+      "id": "tool-view-finance",
+      "name": "Ver Financas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "// LISTAR HABITOS\nconst SUPA_URL = 'https://SEU-PROJETO.supabase.co';\nconst SUPA_KEY = 'SUA_SERVICE_ROLE_KEY';\n\nconst { userId } = $input.first().json.parameters;\n\nconst res = await fetch(`${SUPA_URL}/rest/v1/habits?user_id=eq.${userId}&select=id,name,streak,best_streak,target,completed_today&order=name.asc`, { headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` } });\nconst data = await res.json();\nif (!res.ok) return [{ json: { result: 'Erro ao buscar habitos.' } }];\nif (data.length === 0) return [{ json: { result: 'Nenhum habito cadastrado.' } }];\n\nlet result = `${data.length} habito(s):\\n\\n`;\ndata.forEach((h, i) => {\n  result += `${i+1}. ${h.name}\\n   Streak: ${h.streak} dias | Melhor: ${h.best_streak} | ${h.completed_today?'Feito hoje':'Pendente'}\\n   ID: ${h.id}\\n\\n`;\n});\nreturn [{ json: { result } }];"
+      },
+      "id": "tool-list-habits",
+      "name": "Listar Habitos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [0, 800]
+    },
+    {
+      "parameters": {
+        "jsCode": "// REGISTRAR HABITO (CHECK-IN)\nconst SUPA_URL = 'https://SEU-PROJETO.supabase.co';\nconst SUPA_KEY = 'SUA_SERVICE_ROLE_KEY';\nconst headers = { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };\n\nconst { userId, habitId } = $input.first().json.parameters;\nconst today = new Date().toISOString().split('T')[0];\n\n// 1. Inserir log\nconst logRes = await fetch(`${SUPA_URL}/rest/v1/habit_logs`, {\n  method: 'POST',\n  headers: { ...headers, 'Prefer': 'return=representation,resolution=merge-duplicates' },\n  body: JSON.stringify({ habit_id: habitId, user_id: userId, date: today, completed: true })\n});\nif (!logRes.ok) return [{ json: { result: 'Erro ao registrar habito.' } }];\n\n// 2. Buscar e atualizar streak\nconst habitRes = await fetch(`${SUPA_URL}/rest/v1/habits?id=eq.${habitId}&select=name,streak,best_streak`, { headers });\nconst habit = (await habitRes.json())[0];\nconst newStreak = (habit?.streak||0) + 1;\nconst newBest = Math.max(newStreak, habit?.best_streak||0);\n\nawait fetch(`${SUPA_URL}/rest/v1/habits?id=eq.${habitId}`, {\n  method: 'PATCH', headers,\n  body: JSON.stringify({ completed_today: true, streak: newStreak, best_streak: newBest })\n});\n\nreturn [{ json: { result: `Habito \"${habit.name}\" registrado! Streak: ${newStreak} dias | Melhor: ${newBest} dias` } }];"
+      },
+      "id": "tool-checkin-habit",
+      "name": "Registrar Habito",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [200, 800]
+    },
+    {
+      "parameters": {
+        "jsCode": "// VER STATUS ACADEMIA\nconst SUPA_URL = 'https://SEU-PROJETO.supabase.co';\nconst SUPA_KEY = 'SUA_SERVICE_ROLE_KEY';\n\nconst { userId } = $input.first().json.parameters;\n\nconst res = await fetch(`${SUPA_URL}/rest/v1/gym_stats?user_id=eq.${userId}&select=*`, { headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` } });\nconst data = await res.json();\nif (!res.ok || data.length===0) return [{ json: { result: 'Nenhum dado de academia encontrado.' } }];\n\nconst s = data[0];\nconst restante = (s.target_calories||2000) - (s.calories_consumed||0);\n\nlet result = `Status Academia:\\nPeso: ${s.weight||0}kg | Meta: ${s.target_weight||0}kg\\nGordura: ${s.body_fat||0}% | Massa: ${s.muscle_mass||0}kg\\n\\nNutricao hoje:\\nCalorias: ${s.calories_consumed||0}/${s.target_calories||2000}kcal (faltam ${restante})\\nProteina: ${s.protein||0}g | Carbo: ${s.carbs||0}g | Gordura: ${s.fat||0}g`;\nreturn [{ json: { result } }];"
+      },
+      "id": "tool-view-gym",
+      "name": "Ver Academia",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 800]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ATUALIZAR PESO + HISTORICO\nconst SUPA_URL = 'https://SEU-PROJETO.supabase.co';\nconst SUPA_KEY = 'SUA_SERVICE_ROLE_KEY';\nconst headers = { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };\n\nconst { userId, peso } = $input.first().json.parameters;\n\nawait fetch(`${SUPA_URL}/rest/v1/gym_stats?user_id=eq.${userId}`, {\n  method: 'PATCH', headers, body: JSON.stringify({ weight: Number(peso) })\n});\n\nawait fetch(`${SUPA_URL}/rest/v1/weight_history`, {\n  method: 'POST', headers, body: JSON.stringify({ user_id: userId, weight: Number(peso) })\n});\n\nreturn [{ json: { result: `Peso atualizado para ${peso}kg e registrado no historico!` } }];"
+      },
+      "id": "tool-update-weight",
+      "name": "Atualizar Peso",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [600, 800]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ADICIONAR EVENTO\nconst SUPA_URL = 'https://SEU-PROJETO.supabase.co';\nconst SUPA_KEY = 'SUA_SERVICE_ROLE_KEY';\n\nconst { userId, titulo, dataInicio, dataFim, categoria } = $input.first().json.parameters;\n\nconst res = await fetch(`${SUPA_URL}/rest/v1/calendar_events`, {\n  method: 'POST',\n  headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },\n  body: JSON.stringify({ user_id: userId, title: titulo, start_time: dataInicio, end_time: dataFim, category: categoria || 'Personal' })\n});\n\nconst data = await res.json();\nif (!res.ok) return [{ json: { result: 'Erro ao criar evento.' } }];\nreturn [{ json: { result: `Evento \"${titulo}\" agendado para ${new Date(dataInicio).toLocaleString('pt-BR')}!` } }];"
+      },
+      "id": "tool-add-event",
+      "name": "Adicionar Evento",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [800, 800]
+    },
+    {
+      "parameters": {
+        "jsCode": "// VER PROXIMOS EVENTOS\nconst SUPA_URL = 'https://SEU-PROJETO.supabase.co';\nconst SUPA_KEY = 'SUA_SERVICE_ROLE_KEY';\n\nconst { userId } = $input.first().json.parameters;\nconst now = new Date().toISOString();\n\nconst res = await fetch(`${SUPA_URL}/rest/v1/calendar_events?user_id=eq.${userId}&start_time=gte.${now}&select=title,start_time,end_time,category,location&order=start_time.asc&limit=10`, { headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` } });\nconst data = await res.json();\nif (!res.ok) return [{ json: { result: 'Erro ao buscar eventos.' } }];\nif (data.length===0) return [{ json: { result: 'Nenhum evento futuro agendado.' } }];\n\nlet result = `Proximos ${data.length} evento(s):\\n\\n`;\ndata.forEach((e, i) => {\n  const start = new Date(e.start_time);\n  result += `${i+1}. ${e.title}\\n   ${start.toLocaleDateString('pt-BR')} as ${start.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} | ${e.category}${e.location?' | '+e.location:''}\\n\\n`;\n});\nreturn [{ json: { result } }];"
+      },
+      "id": "tool-list-events",
+      "name": "Ver Eventos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, 800]
+    }
+  ],
+  "connections": {
+    "MCP Server Trigger": {
+      "main": [
+        [{ "node": "Roteador de Tools", "type": "main", "index": 0 }]
+      ]
+    },
+    "Roteador de Tools": {
+      "main": [
+        [{ "node": "Adicionar Tarefa", "type": "main", "index": 0 }],
+        [{ "node": "Listar Tarefas", "type": "main", "index": 0 }],
+        [{ "node": "Concluir Tarefa", "type": "main", "index": 0 }],
+        [{ "node": "Adicionar Refeicao", "type": "main", "index": 0 }],
+        [{ "node": "Ver Nutricao", "type": "main", "index": 0 }],
+        [{ "node": "Adicionar Transacao", "type": "main", "index": 0 }],
+        [{ "node": "Ver Financas", "type": "main", "index": 0 }],
+        [{ "node": "Listar Habitos", "type": "main", "index": 0 }],
+        [{ "node": "Registrar Habito", "type": "main", "index": 0 }],
+        [{ "node": "Ver Academia", "type": "main", "index": 0 }],
+        [{ "node": "Atualizar Peso", "type": "main", "index": 0 }],
+        [{ "node": "Adicionar Evento", "type": "main", "index": 0 }],
+        [{ "node": "Ver Eventos", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

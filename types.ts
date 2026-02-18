@@ -125,6 +125,28 @@ export interface Nutrition {
   fat: number;
 }
 
+export interface Meal {
+  id: string;
+  user_id: string;
+  name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  date: string;
+  created_at?: string;
+}
+
+export interface SavedFood {
+  id: string;
+  user_id: string;
+  name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
 
 export interface Supplement {
   id: string;
@@ -207,4 +229,23 @@ export interface Tax {
   status: 'pending' | 'paid' | 'overdue';
   recurrence: 'once' | 'monthly' | 'quarterly' | 'yearly';
   created_at?: string;
+}
+
+export interface WorkoutExerciseLog {
+  exerciseId: string;
+  name: string;
+  targetSets: string;
+  targetReps: string;
+  weight: string;
+  completed: boolean;
+}
+
+export interface WorkoutSession {
+  workoutId: string;
+  workoutName: string;
+  muscleGroup: string;
+  startedAt: string;
+  finishedAt: string;
+  durationSeconds: number;
+  exercises: WorkoutExerciseLog[];
 }

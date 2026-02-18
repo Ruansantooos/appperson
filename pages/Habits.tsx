@@ -225,7 +225,7 @@ const HabitsPage: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {habits.length === 0 ? (
-          <p className="text-white/40 col-span-2 text-center py-10">Nenhum hábito encontrado.</p>
+          <p className="opacity-40 col-span-2 text-center py-10">Nenhum hábito encontrado.</p>
         ) : habits.map(habit => (
           <Card key={habit.id} className="p-8 group relative overflow-visible">
             <div className="flex justify-between items-start mb-10">
@@ -288,7 +288,7 @@ const HabitsPage: React.FC = () => {
             </div>
 
             {/* History visualization grid */}
-            <div className="mt-8 border-t border-white/5 pt-6">
+            <div className="mt-8 border-t border-[var(--card-border)] pt-6">
               <div className="flex flex-wrap gap-1.5">
                 {Array.from({ length: 28 }).map((_, i) => {
                   const date = new Date();
@@ -327,7 +327,7 @@ const HabitsPage: React.FC = () => {
           <Card className="w-full max-w-md p-8 relative">
             <button
               onClick={() => setShowModal(false)}
-              className="absolute top-6 right-6 text-white/40 hover:text-white transition-colors"
+              className="absolute top-6 right-6 opacity-40 hover:opacity-100 transition-all"
             >
               <X size={24} />
             </button>

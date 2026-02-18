@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, CheckSquare, Wallet, Zap, Calendar, Dumbbell } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Wallet, Zap, Dumbbell, Layers } from 'lucide-react';
 
 const MobileNav: React.FC = () => {
   const location = useLocation();
@@ -11,7 +11,8 @@ const MobileNav: React.FC = () => {
     { label: 'Tasks', icon: CheckSquare, path: '/tasks' },
     { label: 'Gym', icon: Dumbbell, path: '/gym' },
     { label: 'Habits', icon: Zap, path: '/habits' },
-    { label: 'Calendar', icon: Calendar, path: '/calendar' },
+    { label: 'Finance', icon: Wallet, path: '/finance' },
+    { label: 'Projects', icon: Layers, path: '/projects' },
   ];
 
   return (

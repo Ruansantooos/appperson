@@ -269,7 +269,7 @@ const ProjectsPageInner: React.FC = () => {
     const newLinks: GraphLink[] = [];
 
     // Root Node
-    newNodes.push({ id: 'root', label: 'Central Saúde', type: 'root', x: 400, y: 300 });
+    newNodes.push({ id: 'root', label: 'Corelys', type: 'root', x: 400, y: 300 });
 
     // Project Nodes
     projectsData.forEach((p, i) => {
@@ -453,21 +453,21 @@ const ProjectsPageInner: React.FC = () => {
       {/* Sidebar de Projetos */}
       <div className="w-full xl:w-80 flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-white/30">Main Maps</h3>
+          <h3 className="text-sm font-bold uppercase tracking-[0.2em] opacity-30">Main Maps</h3>
           <ButtonCircle icon={<Plus size={16} />} className="w-8 h-8" onClick={openCreateModal} />
         </div>
 
         <div className="relative mb-4">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-20" />
           <input
             type="text"
             placeholder="Search projects..."
-            className="w-full h-10 bg-white/5 border border-white/5 rounded-lg pl-10 text-xs text-white placeholder:text-white/20 focus:outline-none focus:border-[#c1ff72]/40"
+            className="w-full h-10 bg-[var(--input-bg)] border border-[var(--card-border)] rounded-lg pl-10 text-xs text-[var(--foreground)] placeholder:[var(--foreground)]/20 focus:outline-none focus:border-[#c1ff72]/40"
           />
         </div>
 
         <div className="space-y-3">
-          {projects.length === 0 ? <p className="text-white/20 text-xs text-center">Nenhum projeto.</p> : projects.map(project => (
+          {projects.length === 0 ? <p className="opacity-20 text-xs text-center">Nenhum projeto.</p> : projects.map(project => (
             <div
               key={project.id}
               className={`p-4 rounded-xl border border-white/5 cursor-pointer transition-all group ${selectedNode === project.id ? 'bg-[#c1ff72]/5 border-[#c1ff72]/30 scale-[1.02]' : 'bg-[#161616] hover:bg-white/[0.03]'}`}
@@ -477,22 +477,22 @@ const ProjectsPageInner: React.FC = () => {
                 <h4 className={`text-sm font-bold ${selectedNode === project.id ? 'text-[#c1ff72]' : 'text-white'}`}>{project.name}</h4>
                 <div className="flex gap-2">
                   <Badge variant={getStatusColor(project.status) as any}>{project.status}</Badge>
-                  <button onClick={(e) => { e.stopPropagation(); openEditModal(project); }} className="text-white/20 hover:text-[#c1ff72]">
+                  <button onClick={(e) => { e.stopPropagation(); openEditModal(project); }} className="opacity-20 hover:text-[#c1ff72] hover:opacity-100 transition-all">
                     <Edit2 size={14} />
                   </button>
-                  <button onClick={(e) => { e.stopPropagation(); handleDelete(project.id); }} className="text-white/20 hover:text-red-400">
+                  <button onClick={(e) => { e.stopPropagation(); handleDelete(project.id); }} className="opacity-20 hover:text-red-400 hover:opacity-100 transition-all">
                     <Trash2 size={14} />
                   </button>
                 </div>
               </div>
-              <p className="text-xs text-white/40 mb-3 line-clamp-2">{project.description}</p>
+              <p className="text-xs opacity-40 mb-3 line-clamp-2">{project.description}</p>
               <div className="flex flex-wrap gap-2 mb-3">
                 {project.tags.map(tag => (
                   <span key={tag} className="text-[9px] font-bold text-blue-400 opacity-60 group-hover:opacity-100">{tag}</span>
                 ))}
               </div>
               <div className="flex items-center justify-between mt-auto">
-                <span className="text-[9px] text-white/20 font-medium uppercase flex items-center gap-1">
+                <span className="text-[9px] opacity-20 font-medium uppercase flex items-center gap-1">
                   <Clock size={10} /> {project.lastEdited}
                 </span>
                 {project.links.length > 0 && (
@@ -506,9 +506,9 @@ const ProjectsPageInner: React.FC = () => {
         </div>
 
         <div className="mt-6 space-y-4">
-          <p className="text-[10px] font-bold text-white/10 uppercase tracking-[0.2em]">Active Keywords</p>
+          <p className="text-[10px] font-bold opacity-10 uppercase tracking-[0.2em]">Active Keywords</p>
           {activeKeywords.map(keyword => (
-            <div key={keyword} className="flex items-center justify-between text-xs text-white/40 hover:text-white cursor-pointer group">
+            <div key={keyword} className="flex items-center justify-between text-xs opacity-40 hover:opacity-100 cursor-pointer group transition-all">
               <span className="flex items-center gap-2"><Hash size={12} className="text-[#c1ff72]" /> [{keyword}]</span>
               <ChevronRight size={12} className="opacity-0 group-hover:opacity-100" />
             </div>
@@ -522,16 +522,16 @@ const ProjectsPageInner: React.FC = () => {
           <div className="absolute top-6 left-6 z-10 pointer-events-none">
             <h3 className="text-xl font-bold tracking-tighter flex items-center gap-3">
               Graph of <span className="text-[#c1ff72]">+Home</span>
-              <Network size={20} className="text-white/10" />
+              <Network size={20} className="text-[var(--foreground)]/10" />
             </h3>
-            <p className="text-[9px] text-white/20 font-bold uppercase tracking-widest mt-1">Simulação de Campo de Força Ativa</p>
+            <p className="text-[9px] opacity-20 font-bold uppercase tracking-widest mt-1">Simulação de Campo de Força Ativa</p>
           </div>
 
           <div className="absolute top-6 right-6 z-10 flex gap-2">
-            <button className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all border border-white/5">
+            <button className="w-10 h-10 rounded-full bg-[var(--foreground)]/5 flex items-center justify-center opacity-40 hover:opacity-100 hover:bg-[var(--foreground)]/10 transition-all border border-[var(--card-border)]">
               <Maximize2 size={16} />
             </button>
-            <button className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all border border-white/5">
+            <button className="w-10 h-10 rounded-full bg-[var(--foreground)]/5 flex items-center justify-center opacity-40 hover:opacity-100 hover:bg-[var(--foreground)]/10 transition-all border border-[var(--card-border)]">
               <MoreHorizontal size={16} />
             </button>
           </div>
@@ -611,14 +611,14 @@ const ProjectsPageInner: React.FC = () => {
             <div className="flex gap-4">
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-white opacity-40"></div>
-                <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest">Inativo</span>
+                <span className="text-[9px] font-bold opacity-20 uppercase tracking-widest">Inativo</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-[#c1ff72]"></div>
-                <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest">Conectado</span>
+                <span className="text-[9px] font-bold opacity-20 uppercase tracking-widest">Conectado</span>
               </div>
             </div>
-            <p className="text-[9px] font-bold text-white/10 uppercase tracking-[0.4em]">Central Saúde Engine v2.0</p>
+            <p className="text-[9px] font-bold opacity-10 uppercase tracking-[0.4em]">Corelys Engine v2.0</p>
           </div>
         </Card>
       </div>
@@ -627,7 +627,7 @@ const ProjectsPageInner: React.FC = () => {
       {showModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="w-full max-w-2xl p-8 bg-[#161616] border border-white/5 rounded-[28px] relative">
-            <button onClick={() => setShowModal(false)} className="absolute top-6 right-6 text-white/40 hover:text-white">
+            <button onClick={() => setShowModal(false)} className="absolute top-6 right-6 opacity-40 hover:opacity-100 transition-all">
               <X size={24} />
             </button>
 
@@ -635,7 +635,7 @@ const ProjectsPageInner: React.FC = () => {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-white/40 mb-2">Nome do Projeto</label>
+                <label className="block text-xs font-bold uppercase tracking-widest opacity-40 mb-2">Nome do Projeto</label>
                 <input
                   type="text"
                   value={formData.name}
@@ -646,7 +646,7 @@ const ProjectsPageInner: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-white/40 mb-2">
+                <label className="block text-xs font-bold uppercase tracking-widest opacity-40 mb-2">
                   Descrição (use [palavra] para criar links)
                 </label>
                 <textarea
@@ -667,7 +667,7 @@ const ProjectsPageInner: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-white/40 mb-2">Status</label>
+                <label className="block text-xs font-bold uppercase tracking-widest opacity-40 mb-2">Status</label>
                 <select
                   value={formData.status}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value as Project['status'] })}
@@ -681,7 +681,7 @@ const ProjectsPageInner: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-white/40 mb-2">Tags</label>
+                <label className="block text-xs font-bold uppercase tracking-widest opacity-40 mb-2">Tags</label>
                 <div className="flex gap-2 mb-2">
                   <input
                     type="text"
