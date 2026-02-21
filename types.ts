@@ -188,7 +188,7 @@ export interface Profile {
   height?: number;
   activityLevel?: string;
   goal?: string;
-  plan?: 'free' | 'premium';
+  plan?: 'free' | 'pro' | 'elite';
   plan_expires_at?: string;
   stripe_customer_id?: string;
   stripe_subscription_id?: string;
@@ -229,6 +229,27 @@ export interface Tax {
   status: 'pending' | 'paid' | 'overdue';
   recurrence: 'once' | 'monthly' | 'quarterly' | 'yearly';
   created_at?: string;
+}
+
+export interface CycleLog {
+  id: string;
+  user_id: string;
+  date: string;
+  flow_intensity: number; // 0-4
+  symptoms: string[];
+  mood: string;
+  energy: number; // 1-5
+  notes: string;
+  created_at?: string;
+}
+
+export interface CycleSettings {
+  id: string;
+  user_id: string;
+  cycle_length: number;
+  period_length: number;
+  last_period_start: string | null;
+  updated_at?: string;
 }
 
 export interface WorkoutExerciseLog {

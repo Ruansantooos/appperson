@@ -1,19 +1,23 @@
 
 import React from 'react';
 import { Card, Button, Input, Badge } from '../components/ui/LayoutComponents';
-import { User, Bell, CreditCard, ChevronRight, Camera, LogOut, Loader2 } from 'lucide-react';
+import { User, Bell, CreditCard, ChevronRight, LogOut, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Profile } from '../types';
+import { redirectToCheckout, STRIPE_PRO_LINK, STRIPE_ELITE_LINK } from '../lib/stripe';
 
 const SettingsPage: React.FC = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, refreshProfile } = useAuth();
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState('Perfil');
   const [weight, setWeight] = React.useState<number>(0);
-  const [userPlan, setUserPlan] = React.useState<string>('premium');
+  const [userPlan, setUserPlan] = React.useState<string>('free');
   const [planExpires, setPlanExpires] = React.useState<string | null>(null);
+  const handleCheckout = (link: string) => {
+    redirectToCheckout(link, profile.email || user?.email || '');
+  };
   const [profile, setProfile] = React.useState<Partial<Profile>>({
     fullName: '',
     email: '',
@@ -58,7 +62,7 @@ const SettingsPage: React.FC = () => {
           activityLevel: data.activity_level || '',
           goal: data.goal || ''
         });
-        setUserPlan(data.plan || 'premium');
+        setUserPlan(data.plan || 'free');
         setPlanExpires(data.plan_expires_at || null);
       } else {
         setProfile(prev => ({ ...prev, email: user?.email || '' }));
@@ -126,6 +130,7 @@ const SettingsPage: React.FC = () => {
 
       alert('Configurações salvas com sucesso!');
       await fetchProfile();
+      await refreshProfile();
     } catch (error: any) {
       alert(`Erro ao salvar: ${error.message || 'Erro desconhecido'}`);
     } finally {
@@ -401,56 +406,128 @@ const SettingsPage: React.FC = () => {
             <div className="space-y-6">
               <Card className="p-10">
                 <h3 className="text-2xl font-bold mb-2">Seu Plano</h3>
-                <p className="opacity-40 text-sm mb-10">Gerencie sua assinatura do Corelys.</p>
+                <p className="opacity-40 text-sm mb-8">Escolha o plano ideal ou gerencie sua assinatura.</p>
 
-                <div className="p-8 bg-gradient-to-br from-[#c1ff72]/10 to-[#c1ff72]/5 border border-[#c1ff72]/20 rounded-2xl">
-                  <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <div className="flex items-center gap-3 mb-2">
-                        <h4 className="text-xl font-bold">
-                          {userPlan === 'premium' ? 'Plano Premium' : 'Plano Gratuito'}
-                        </h4>
-                        <Badge variant="success">Ativo</Badge>
+                {/* Plan Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+                  {/* Pro Card */}
+                  <div className={`relative p-6 rounded-2xl border-2 transition-all ${
+                    userPlan === 'pro'
+                      ? 'border-[#c1ff72]/40 bg-[#c1ff72]/5 shadow-[0_0_30px_rgba(193,255,114,0.08)]'
+                      : 'border-white/10 bg-white/[0.02] hover:border-white/20'
+                  }`}>
+                    {userPlan === 'pro' && (
+                      <div className="absolute -top-3 left-4 bg-[#c1ff72] text-black text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                        Seu Plano
                       </div>
-                      <p className="opacity-40 text-sm">
-                        {userPlan === 'premium'
-                          ? 'Acesso completo a todas as funcionalidades'
-                          : 'Acesso a funcionalidades básicas'}
-                      </p>
-                      {planExpires && (
-                        <p className="text-xs opacity-30 mt-1">
-                          Válido até {new Date(planExpires).toLocaleDateString('pt-BR')}
-                        </p>
-                      )}
+                    )}
+                    <div className="mb-4 pt-1">
+                      <h4 className="text-lg font-bold">Pro</h4>
+                      <p className="text-xs opacity-40 mt-1">Dashboard completo</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-3xl font-bold text-[#c1ff72]">
-                        {userPlan === 'premium' ? 'R$ 14,90' : 'R$ 0'}
-                      </p>
-                      <p className="text-xs opacity-30">/mês</p>
+                    <div className="flex items-baseline gap-1 mb-5">
+                      <span className="text-xs opacity-40">R$</span>
+                      <span className="text-3xl font-black">19,99</span>
+                      <span className="text-xs opacity-40">/mês</span>
                     </div>
+                    <div className="space-y-2.5 mb-6">
+                      {[
+                        'Dashboard inteligente',
+                        'Treinos e nutrição',
+                        'Controle financeiro',
+                        'Hábitos com streaks',
+                        'Projetos e tarefas',
+                        'Calendário integrado',
+                        'Relatórios e metas',
+                        'Sem anúncios',
+                      ].map(f => (
+                        <div key={f} className="flex items-center gap-2.5 text-sm">
+                          <div className="w-4 h-4 rounded-full bg-[#c1ff72]/15 flex items-center justify-center shrink-0">
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#c1ff72]" />
+                          </div>
+                          <span className="opacity-50">{f}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {userPlan === 'pro' ? (
+                      <div className="h-11 flex items-center justify-center text-xs text-[#c1ff72] font-bold uppercase tracking-widest">
+                        Plano Atual
+                      </div>
+                    ) : userPlan === 'free' ? (
+                      <Button
+                        className="w-full h-11"
+                        onClick={() => handleCheckout(STRIPE_PRO_LINK)}
+                      >
+                        Assinar Pro
+                      </Button>
+                    ) : (
+                      <div className="h-11 flex items-center justify-center text-xs opacity-30 font-bold uppercase tracking-widest">
+                        —
+                      </div>
+                    )}
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
-                    {[
-                      'Dashboard completo',
-                      'Controle de hábitos',
-                      'Gestão de tarefas',
-                      'Controle financeiro',
-                      'Treinos de academia',
-                      'Suplementos e nutrição',
-                      'Gráficos e relatórios',
-                      'Calendário',
-                    ].map(feature => (
-                      <div key={feature} className="flex items-center gap-3 text-sm">
-                        <div className="w-5 h-5 rounded-full bg-[#c1ff72]/20 flex items-center justify-center">
-                          <div className="w-2 h-2 rounded-full bg-[#c1ff72]" />
-                        </div>
-                        <span className="opacity-60">{feature}</span>
+                  {/* Elite Card */}
+                  <div className={`relative p-6 rounded-2xl border-2 transition-all ${
+                    userPlan === 'elite'
+                      ? 'border-[#c1ff72]/40 bg-[#c1ff72]/5 shadow-[0_0_30px_rgba(193,255,114,0.08)]'
+                      : 'border-[#c1ff72]/20 bg-white/[0.02] hover:border-[#c1ff72]/30'
+                  }`}>
+                    {userPlan === 'elite' ? (
+                      <div className="absolute -top-3 left-4 bg-[#c1ff72] text-black text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                        Seu Plano
                       </div>
-                    ))}
+                    ) : (
+                      <div className="absolute -top-3 right-4 bg-[#c1ff72]/20 text-[#c1ff72] text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                        Mais Popular
+                      </div>
+                    )}
+                    <div className="mb-4 pt-1">
+                      <h4 className="text-lg font-bold">Elite</h4>
+                      <p className="text-xs opacity-40 mt-1">Pro + Assistente WhatsApp</p>
+                    </div>
+                    <div className="flex items-baseline gap-1 mb-5">
+                      <span className="text-xs opacity-40">R$</span>
+                      <span className="text-3xl font-black text-[#c1ff72]">39,99</span>
+                      <span className="text-xs opacity-40">/mês</span>
+                    </div>
+                    <div className="space-y-2.5 mb-6">
+                      {[
+                        'Tudo do plano Pro',
+                        'Assistente via WhatsApp',
+                        'Lembretes personalizados',
+                        'Suporte prioritário VIP',
+                      ].map(f => (
+                        <div key={f} className="flex items-center gap-2.5 text-sm">
+                          <div className="w-4 h-4 rounded-full bg-[#c1ff72]/15 flex items-center justify-center shrink-0">
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#c1ff72]" />
+                          </div>
+                          <span className="opacity-50">{f}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {userPlan === 'elite' ? (
+                      <div className="h-11 flex items-center justify-center text-xs text-[#c1ff72] font-bold uppercase tracking-widest">
+                        Plano Atual
+                      </div>
+                    ) : (
+                      <Button
+                        className="w-full h-11"
+                        onClick={() => handleCheckout(STRIPE_ELITE_LINK)}
+                      >
+                        {userPlan === 'pro' ? 'Upgrade para Elite' : 'Assinar Elite'}
+                      </Button>
+                    )}
                   </div>
                 </div>
+
+                {/* Plan info */}
+                {planExpires && (userPlan === 'pro' || userPlan === 'elite') && (
+                  <div className="text-center text-xs opacity-30">
+                    Próxima cobrança em {new Date(planExpires).toLocaleDateString('pt-BR')}
+                  </div>
+                )}
+                <p className="text-center text-xs opacity-20 mt-2">3 dias grátis para novos assinantes. Cancele quando quiser.</p>
               </Card>
 
               <Card className="p-10">
@@ -462,8 +539,8 @@ const SettingsPage: React.FC = () => {
                   </div>
                   <div className="flex items-center justify-between py-4 border-b border-white/5">
                     <span className="text-sm opacity-40">Plano atual</span>
-                    <Badge variant={userPlan === 'premium' ? 'success' : 'default'}>
-                      {userPlan === 'premium' ? 'Premium' : 'Gratuito'}
+                    <Badge variant={userPlan !== 'free' ? 'success' : 'default'}>
+                      {userPlan === 'elite' ? 'Elite' : userPlan === 'pro' ? 'Pro' : 'Gratuito'}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between py-4 border-b border-white/5">

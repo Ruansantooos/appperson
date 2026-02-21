@@ -10,7 +10,12 @@
       "Bash(npx vite build)",
       "Bash(ls:*)",
       "WebFetch(domain:hsrvivefmeqeigsapzxn.supabase.co)",
-      "Bash(node -e:*)"
+      "Bash(node -e:*)",
+      "Bash(gh repo view:*)",
+      "Bash(npx vite --open)",
+      "Bash(supabase --version:*)",
+      "Bash(npx supabase:*)",
+      "Bash(curl:*)"
     ]
   }
 }

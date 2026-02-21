@@ -112,7 +112,7 @@ const Onboarding: React.FC = () => {
             }
 
             // Success
-            navigate('/');
+            navigate('/dashboard');
         } catch (error) {
             console.error('Onboarding error:', error);
             alert('Erro ao salvar dados. Tente novamente.');

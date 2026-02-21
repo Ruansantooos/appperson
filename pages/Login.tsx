@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Card } from '../components/ui/LayoutComponents';
 import { Lock, Mail, Loader2, AlertCircle } from 'lucide-react';
 import { Logo } from '../components/shared/Logo';
+import { redirectToCheckout, STRIPE_PRO_LINK, STRIPE_ELITE_LINK } from '../lib/stripe';
 
 const Login: React.FC = () => {
+    const [searchParams] = useSearchParams();
+    const planParam = searchParams.get('plan');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -18,12 +21,20 @@ const Login: React.FC = () => {
         setError(null);
 
         try {
-            const { error } = await supabase.auth.signInWithPassword({
+            const { data, error } = await supabase.auth.signInWithPassword({
                 email,
                 password,
             });
             if (error) throw error;
-            navigate('/');
+
+            // If user has a pending plan selection, redirect to checkout
+            if (planParam) {
+                const link = planParam === 'elite' ? STRIPE_ELITE_LINK : STRIPE_PRO_LINK;
+                redirectToCheckout(link, email);
+                return;
+            }
+
+            navigate('/dashboard');
         } catch (err: any) {
             if (err.message === 'Invalid login credentials') {
                 setError('Email ou senha incorretos.');

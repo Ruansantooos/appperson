@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -9,22 +9,31 @@ import {
   CalendarDays,
   Dumbbell,
   Settings,
-  Layers
+  Layers,
+  HeartPulse
 } from 'lucide-react';
 import { Logo } from './Logo';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
+  const { profile } = useAuth();
 
-  const navItems = [
-    { icon: LayoutDashboard, path: '/' },
-    { icon: Wallet, path: '/finance' },
-    { icon: BarChart2, path: '/tasks' },
-    { icon: Layers, path: '/projects' }, // Novo ícone de Projetos
-    { icon: Heart, path: '/habits' },
-    { icon: Dumbbell, path: '/gym' },
-    { icon: CalendarDays, path: '/calendar' },
-  ];
+  const navItems = useMemo(() => {
+    const items = [
+      { icon: LayoutDashboard, path: '/dashboard' },
+      { icon: Wallet, path: '/finance' },
+      { icon: BarChart2, path: '/tasks' },
+      { icon: Layers, path: '/projects' },
+      { icon: Heart, path: '/habits' },
+      { icon: Dumbbell, path: '/gym' },
+      { icon: CalendarDays, path: '/calendar' },
+    ];
+    if (profile?.gender === 'Female') {
+      items.push({ icon: HeartPulse, path: '/cycle' });
+    }
+    return items;
+  }, [profile?.gender]);
 
   return (
     <aside className="hidden lg:flex flex-col w-20 bg-[var(--sidebar-bg)] h-screen sticky top-0 py-8 items-center justify-between border-r border-[var(--card-border)] transition-colors duration-300">

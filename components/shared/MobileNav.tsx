@@ -1,12 +1,14 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, CheckSquare, Wallet, Zap, Dumbbell, Layers } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Wallet, Zap, Dumbbell, Layers, HeartPulse } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 const STORAGE_KEY = 'corelys_active_workout';
 
 const MobileNav: React.FC = () => {
   const location = useLocation();
+  const { profile } = useAuth();
   const [hidden, setHidden] = useState(() => !!localStorage.getItem(STORAGE_KEY));
 
   // Listen for localStorage changes (from same tab via storage event won't fire, so poll)
@@ -21,14 +23,20 @@ const MobileNav: React.FC = () => {
     };
   }, []);
 
-  const navItems = [
-    { label: 'Home', icon: LayoutDashboard, path: '/' },
-    { label: 'Tasks', icon: CheckSquare, path: '/tasks' },
-    { label: 'Gym', icon: Dumbbell, path: '/gym' },
-    { label: 'Habits', icon: Zap, path: '/habits' },
-    { label: 'Finance', icon: Wallet, path: '/finance' },
-    { label: 'Projects', icon: Layers, path: '/projects' },
-  ];
+  const navItems = useMemo(() => {
+    const items = [
+      { label: 'Home', icon: LayoutDashboard, path: '/dashboard' },
+      { label: 'Tasks', icon: CheckSquare, path: '/tasks' },
+      { label: 'Gym', icon: Dumbbell, path: '/gym' },
+      { label: 'Habits', icon: Zap, path: '/habits' },
+      { label: 'Finance', icon: Wallet, path: '/finance' },
+      { label: 'Projects', icon: Layers, path: '/projects' },
+    ];
+    if (profile?.gender === 'Female') {
+      items.push({ label: 'Ciclo', icon: HeartPulse, path: '/cycle' });
+    }
+    return items;
+  }, [profile?.gender]);
 
   if (hidden) return null;
 
