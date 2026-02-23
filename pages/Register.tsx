@@ -83,10 +83,10 @@ const Register: React.FC = () => {
                         </p>
                         <p className="text-[#c1ff72] font-bold mb-6">{email}</p>
                         <p className="text-white/30 text-sm mb-8">
-                            Abra seu email e clique no link para ativar sua conta. Depois faça login para assinar seu plano.
+                            Abra seu email e clique no link para ativar sua conta.{selectedPlan !== 'free' ? ' Depois faça login para assinar seu plano.' : ' Depois faça login para começar a usar.'}
                         </p>
                         <Link
-                            to={`/login?plan=${selectedPlan}`}
+                            to={selectedPlan === 'free' ? '/login' : `/login?plan=${selectedPlan}`}
                             className="inline-block w-full bg-[#c1ff72] hover:bg-[#b0e666] text-black font-bold py-3.5 rounded-xl transition-all text-center"
                         >
                             Ir para Login
@@ -106,8 +106,10 @@ const Register: React.FC = () => {
                     </div>
                     <h1 className="text-3xl font-bold text-white mb-2">Corelys</h1>
                     <p className="opacity-40">
-                        {selectedPlan === 'elite' ? 'Plano Elite — R$ 39,99/mês' : 'Plano Pro — R$ 19,99/mês'}
-                        <span className="block text-[#c1ff72] text-xs mt-1">3 dias grátis para testar</span>
+                        {selectedPlan === 'elite' ? 'Plano Elite — R$ 39,99/mês' : selectedPlan === 'free' ? 'Plano Free — Grátis' : 'Plano Pro — R$ 19,99/mês'}
+                        {selectedPlan !== 'free' && (
+                            <span className="block text-[#c1ff72] text-xs mt-1">3 dias grátis para testar</span>
+                        )}
                     </p>
                 </div>
 

@@ -67,6 +67,15 @@ const LandingPage: React.FC = () => {
     },
   ];
 
+  const freeFeatures = [
+    'Dashboard básico',
+    'Até 3 treinos salvos',
+    'Controle financeiro básico',
+    'Até 5 hábitos',
+    'Até 10 tarefas',
+    'Calendário integrado',
+  ];
+
   const proFeatures = [
     'Dashboard inteligente completo',
     'Treinos e nutrição ilimitados',
@@ -274,7 +283,37 @@ const LandingPage: React.FC = () => {
           </h2>
           <p className="text-white/40 mb-12">Escolha o plano ideal para você. 3 dias grátis em ambos.</p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {/* Free Plan */}
+            <div className="relative bg-[#161616] border border-white/10 rounded-[32px] p-8 text-left">
+              <div className="mb-6">
+                <h3 className="text-xl font-bold mb-1">Free</h3>
+                <p className="text-sm text-white/40">Para começar a organizar sua rotina</p>
+              </div>
+
+              <div className="flex items-baseline gap-1 mb-6">
+                <span className="text-4xl font-black text-white/70">Grátis</span>
+              </div>
+
+              <div className="space-y-3 mb-8">
+                {freeFeatures.map((item, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                      <Check size={12} className="text-white/50" />
+                    </div>
+                    <span className="text-sm text-white/70">{item}</span>
+                  </div>
+                ))}
+              </div>
+
+              <Link
+                to="/register?plan=free"
+                className="block w-full bg-white/10 hover:bg-white/15 text-white font-bold py-4 rounded-2xl text-center transition-all"
+              >
+                Criar Conta Grátis
+              </Link>
+            </div>
+
             {/* Pro Plan */}
             <div className="relative bg-[#161616] border border-white/10 rounded-[32px] p-8 text-left">
               <div className="mb-6">
