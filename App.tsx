@@ -41,11 +41,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // Block access if user has no active plan (free = hasn't paid)
-  if (profile && (!profile.plan || profile.plan === 'free')) {
-    return <Navigate to="/paywall" replace />;
-  }
-
   return children;
 };
 
