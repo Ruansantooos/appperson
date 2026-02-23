@@ -59,7 +59,7 @@ const Login: React.FC = () => {
                     <p className="opacity-40">Entre na sua conta para continuar</p>
                 </div>
 
-                <Card className="p-8 border-[#c1ff72]/10">
+                <Card className="p-8 border-[#c1ff72]/10 !bg-[#161616]">
                     <form onSubmit={handleLogin} className="space-y-6">
                         {error && (
                             <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-500 text-sm">

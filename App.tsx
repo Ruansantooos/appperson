@@ -24,9 +24,10 @@ import GymPage from './pages/Gym';
 import Onboarding from './pages/Onboarding';
 import ProfilePage from './pages/Profile';
 import MenstrualCyclePage from './pages/MenstrualCycle';
+import Paywall from './pages/Paywall';
 
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
 
   if (loading) {
     return (
@@ -38,6 +39,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Block access if user has no active plan (free = hasn't paid)
+  if (profile && (!profile.plan || profile.plan === 'free')) {
+    return <Navigate to="/paywall" replace />;
   }
 
   return children;
@@ -63,7 +69,7 @@ const RootRoute: React.FC = () => {
 
 const AppContent: React.FC = () => {
   const location = useLocation();
-  const isStandalonePage = location.pathname === '/' || location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/onboarding';
+  const isStandalonePage = location.pathname === '/' || location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/onboarding' || location.pathname === '/paywall';
 
   if (isStandalonePage) {
     return (
@@ -72,6 +78,7 @@ const AppContent: React.FC = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+        <Route path="/paywall" element={<Paywall />} />
       </Routes>
     )
   }
