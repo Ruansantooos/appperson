@@ -8,6 +8,8 @@ import HeroMock from "./landing/HeroMock";
 import BentoCards from "./landing/BentoCards";
 import MagneticButton from "./landing/MagneticButton";
 import MarqueeStrip from "./landing/MarqueeStrip";
+import PhoneMockup from "./landing/PhoneMockup";
+import AssistantMockup from "./landing/AssistantMockup";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -48,7 +50,7 @@ const pricing = [
       "Relatórios e metas",
       "Sem anúncios invasivos",
     ],
-    cta: "Começar 3 Dias Grátis",
+    cta: "Inicie sua transformação",
   },
   {
     name: "Elite",
@@ -61,7 +63,7 @@ const pricing = [
       "Lembretes personalizados",
       "Suporte VIP",
     ],
-    cta: "Começar 3 Dias Grátis",
+    cta: "Para quem não tem tempo a perder",
   },
 ];
 
@@ -88,16 +90,19 @@ const testimonials = [
     quote: "Em uma semana, minha rotina parou de brigar comigo. Hoje eu sei exatamente onde focar.",
     name: "Camila Torres",
     role: "Consultora de operações",
+    image: "https://i.pravatar.cc/150?img=5",
   },
   {
     quote: "O painel diário virou minha primeira checagem da manhã. Ganhei tempo sem perder controle.",
     name: "Rafael Moreira",
     role: "Líder de produto",
+    image: "https://i.pravatar.cc/150?img=11",
   },
   {
     quote: "Nada disperso. Tudo integrado. O Corelys virou o meu centro de comando.",
     name: "Bruna Azevedo",
     role: "Gestora de projetos",
+    image: "https://i.pravatar.cc/150?img=9",
   },
 ];
 
@@ -225,11 +230,34 @@ const Hero = memo(function Hero() {
             Corelys coloca sua rotina no trilho em minutos. Você vê o que importa, executa e acompanha o resultado.
           </motion.p>
           <motion.div variants={item} className="flex flex-wrap items-center gap-4">
-            <MagneticButton label="Começar Teste Grátis" href="#/register" />
+            <MagneticButton label="Desbloquear Meus 3 Dias Grátis" href="#/register" />
             <a href="#/login" className="text-sm text-white/60 hover:text-white">Já tenho conta →</a>
           </motion.div>
-          <motion.div variants={item} className="text-xs uppercase tracking-[0.2em] text-white/40">
-            3 dias grátis · sem cartão · cancele quando quiser
+          <motion.div variants={item} className="flex flex-col gap-3">
+            <div className="flex -space-x-3">
+              {[
+                "/avatars/hero_1.png",
+                "/avatars/hero_2.png",
+                "/avatars/hero_3.png",
+                "/avatars/hero_4.png",
+              ].map((img, i) => (
+                <img
+                  key={i}
+                  src={img}
+                  alt={`Avatar ${i}`}
+                  className="h-10 w-10 rounded-full border-2 border-[#0c0c0c] bg-[#141414] object-cover"
+                />
+              ))}
+              <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#0c0c0c] bg-[#141414] text-xs text-white/70">
+                +2k
+              </div>
+            </div>
+            <div className="text-sm text-white/50">
+              <span className="text-[#c1ff72]">⭐⭐⭐⭐⭐</span> Junte-se a operacionais de alta performance.
+            </div>
+            <div className="text-xs uppercase tracking-[0.2em] text-white/40 mt-2">
+              sem cartão · cancele quando quiser
+            </div>
           </motion.div>
         </motion.div>
         <div className="flex justify-center md:justify-end">
@@ -376,15 +404,22 @@ const StepsSection = memo(function StepsSection() {
 const TrustSection = memo(function TrustSection() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-16 md:px-8">
-      <div className="grid gap-8 rounded-[36px] border border-white/6 bg-[#101010] px-6 py-10 md:grid-cols-[1.2fr_1fr] md:px-10">
-        <div>
-          <div className="text-sm uppercase tracking-[0.2em] text-white/40">Confiança</div>
-          <div className="mt-3 text-3xl md:text-4xl font-semibold text-white">Sem risco, sem enrolação</div>
-          <p className="mt-4 text-sm text-white/40">Experimente sem risco. Cancele quando quiser.</p>
+      <div className="grid gap-8 rounded-[36px] border border-[#c1ff72]/20 bg-[#141414] px-6 py-10 md:grid-cols-[1.2fr_1fr] md:px-10 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[#c1ff72]/5 blur-[80px] rounded-full pointer-events-none" />
+        <div className="relative z-10">
+          <div className="text-sm uppercase tracking-[0.2em] text-[#c1ff72]/70 flex items-center gap-2">
+            <ShieldCheck size={16} /> 100% Livre de Risco
+          </div>
+          <div className="mt-3 text-3xl md:text-5xl font-semibold text-white leading-tight">
+            Se sua semana não virar o jogo em 3 dias, a gente não merece você.
+          </div>
+          <p className="mt-6 text-base text-white/40 max-w-md">
+            Experimente o Corelys sem amarras. Você ganha acesso premium imediatamente e se não amar os resultados, é só ignorar. Cancele com 1 clique, sem dor de cabeça.
+          </p>
         </div>
-        <div className="space-y-4">
+        <div className="space-y-4 relative z-10">
           {trustPoints.map((item) => (
-            <div key={item.title} className="rounded-[24px] border border-white/6 bg-[#141414] p-5">
+            <div key={item.title} className="rounded-[24px] border border-white/6 bg-[#0c0c0c] p-5">
               <div className="text-sm font-semibold text-white">{item.title}</div>
               <div className="mt-2 text-sm text-white/40">{item.desc}</div>
             </div>
@@ -404,10 +439,15 @@ const TestimonialsSection = memo(function TestimonialsSection() {
       </div>
       <div className="grid gap-6 md:grid-cols-3">
         {testimonials.map((item) => (
-          <div key={item.name} className="rounded-[28px] border border-white/6 bg-[#141414] p-6">
-            <div className="text-sm text-white/70">{item.quote}</div>
-            <div className="mt-6 text-sm font-semibold text-white">{item.name}</div>
-            <div className="text-xs uppercase tracking-[0.2em] text-white/40">{item.role}</div>
+          <div key={item.name} className="rounded-[28px] border border-white/6 bg-[#141414] p-6 flex flex-col justify-between">
+            <div className="text-sm text-white/70 italic mb-6">"{item.quote}"</div>
+            <div className="flex items-center gap-3">
+              <img src={item.image} alt={item.name} className="h-10 w-10 rounded-full border border-white/10 object-cover" />
+              <div>
+                <div className="text-sm font-semibold text-white">{item.name}</div>
+                <div className="text-xs uppercase tracking-[0.2em] text-white/40">{item.role}</div>
+              </div>
+            </div>
           </div>
         ))}
       </div>
@@ -544,8 +584,49 @@ export default function LandingPage() {
             <div className="text-sm uppercase tracking-[0.2em] text-white/40">Tudo que você precisa.</div>
             <div className="text-3xl md:text-4xl font-semibold text-white">Nada que roube seu tempo.</div>
           </div>
-          <BentoCards />
+          <div className="grid gap-12 lg:grid-cols-[1fr_320px] items-center">
+            <BentoCards />
+            <div className="flex justify-center lg:justify-end">
+              <PhoneMockup />
+            </div>
+          </div>
         </section>
+
+        {/* --- Seção Assistente Pessoal WhatsApp --- */}
+        <section className="mx-auto max-w-7xl px-4 py-16 md:px-8">
+          <div className="grid gap-12 rounded-[40px] border border-white/5 bg-[#0a0a0a] px-6 py-16 md:grid-cols-2 md:items-center md:px-16 overflow-hidden relative">
+            <div className="absolute top-0 right-0 h-[600px] w-[600px] -translate-y-1/2 translate-x-1/2 rounded-full bg-[#25d366] opacity-5 blur-[120px] pointer-events-none" />
+            <div className="space-y-6 relative z-10">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#25D366]/20 bg-[#25D366]/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-[#25D366]">
+                Na palma da sua mão
+              </div>
+              <h2 className="text-4xl font-black text-white md:text-5xl">
+                Não é só um app.<br />É sua assistente.
+              </h2>
+              <p className="text-lg text-white/40 max-w-md">
+                Precisa remarcar um treino? Adicionar um gasto? Criar um lembrete? Mande um WhatsApp. A IA do Corelys organiza tudo no seu dashboard enquanto você continua focado.
+              </p>
+              <ul className="space-y-3 text-sm text-white/70">
+                <li className="flex items-center gap-3">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/5">
+                    <Check size={14} className="text-[#25D366]" />
+                  </div>
+                  Zero fricção de abrir o app
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/5">
+                    <Check size={14} className="text-[#25D366]" />
+                  </div>
+                  Respostas imediatas
+                </li>
+              </ul>
+            </div>
+            <div className="flex justify-center md:justify-end relative z-10">
+              <AssistantMockup />
+            </div>
+          </div>
+        </section>
+
         <StepsSection />
         <TrustSection />
         <TestimonialsSection />
