@@ -1,445 +1,573 @@
-import React, { useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { Logo } from '../components/shared/Logo';
-import {
-  Dumbbell,
-  CheckSquare,
-  Layers,
-  Wallet,
-  Zap,
-  CalendarDays,
-  LayoutDashboard,
-  Check,
-  Shield,
-  Sparkles,
-  ArrowRight,
-  Menu,
-  X,
-  MessageCircle,
-  Crown,
-} from 'lucide-react';
+import React, { memo, useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion, useInView } from "framer-motion";
+import { Check, Lock, ShieldCheck, Sparkle } from "@phosphor-icons/react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { Logo } from "../components/shared/Logo";
+import HeroMock from "./landing/HeroMock";
+import BentoCards from "./landing/BentoCards";
+import MagneticButton from "./landing/MagneticButton";
+import MarqueeStrip from "./landing/MarqueeStrip";
 
-const LandingPage: React.FC = () => {
-  const featuresRef = useRef<HTMLDivElement>(null);
-  const pricingRef = useRef<HTMLDivElement>(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+gsap.registerPlugin(ScrollTrigger);
 
-  const scrollTo = (ref: React.RefObject<HTMLDivElement | null>) => {
-    ref.current?.scrollIntoView({ behavior: 'smooth' });
-    setMobileMenuOpen(false);
-  };
+const stats = [
+  { value: 7, label: "módulos", sub: "em uma única visão" },
+  { value: 3, label: "dias", sub: "para provar valor real" },
+  { value: 100, label: "%", sub: "focado em reduzir ruído" },
+];
 
-  const features = [
-    {
-      icon: Dumbbell,
-      title: 'Treinos & Fitness',
-      description: 'Monte seus treinos, acompanhe cargas, séries e evolução. Seu personal trainer digital.',
-    },
-    {
-      icon: CheckSquare,
-      title: 'Tarefas',
-      description: 'Organize o que precisa ser feito com prioridades, datas e status. Nada escapa.',
-    },
-    {
-      icon: Layers,
-      title: 'Projetos',
-      description: 'Gerencie projetos complexos com etapas, progresso e visão geral clara.',
-    },
-    {
-      icon: Wallet,
-      title: 'Finanças',
-      description: 'Controle receitas, despesas, cartões e contas. Saiba exatamente para onde vai seu dinheiro.',
-    },
-    {
-      icon: Zap,
-      title: 'Hábitos com Streaks',
-      description: 'Construa hábitos que duram. Acompanhe sequências e nunca quebre a corrente.',
-    },
-    {
-      icon: CalendarDays,
-      title: 'Calendário',
-      description: 'Visualize tudo no calendário. Treinos, tarefas, hábitos — tudo em um só lugar.',
-    },
-    {
-      icon: LayoutDashboard,
-      title: 'Dashboard Inteligente',
-      description: 'Visão completa do seu dia, semana e progresso. Dados que te movem para frente.',
-    },
-  ];
+const pricing = [
+  {
+    name: "Free",
+    slug: "free",
+    price: "Grátis",
+    highlight: false,
+    perks: [
+      "Dashboard básico",
+      "Até 3 treinos salvos",
+      "Controle financeiro básico",
+      "Até 5 hábitos",
+      "Até 10 tarefas",
+      "Calendário integrado",
+    ],
+    cta: "Criar Conta Grátis",
+  },
+  {
+    name: "Pro",
+    slug: "pro",
+    price: "R$ 19,99/mês",
+    highlight: false,
+    perks: [
+      "Dashboard inteligente",
+      "Treinos e nutrição ilimitados",
+      "Controle financeiro avançado",
+      "Hábitos ilimitados",
+      "Projetos e tarefas sem limites",
+      "Calendário integrado",
+      "Relatórios e metas",
+      "Sem anúncios invasivos",
+    ],
+    cta: "Começar 3 Dias Grátis",
+  },
+  {
+    name: "Elite",
+    slug: "elite",
+    price: "R$ 39,99/mês",
+    highlight: true,
+    perks: [
+      "Tudo do Pro",
+      "Assistente via WhatsApp",
+      "Lembretes personalizados",
+      "Suporte VIP",
+    ],
+    cta: "Começar 3 Dias Grátis",
+  },
+];
 
-  const freeFeatures = [
-    'Dashboard básico',
-    'Até 3 treinos salvos',
-    'Controle financeiro básico',
-    'Até 5 hábitos',
-    'Até 10 tarefas',
-    'Calendário integrado',
-  ];
+const steps = [
+  {
+    title: "Centralize sua rotina",
+    desc: "Traga tarefas, hábitos e finanças para um único painel com clareza real.",
+    meta: "Setup em 3 minutos",
+  },
+  {
+    title: "Defina o foco do dia",
+    desc: "O Corelys prioriza o que importa agora e reduz o ruído do resto.",
+    meta: "Planejamento em 60 segundos",
+  },
+  {
+    title: "Execute com segurança",
+    desc: "Tudo rastreado, com dados protegidos e progresso visível em tempo real.",
+    meta: "Sem cartão, sem risco",
+  },
+];
 
-  const proFeatures = [
-    'Dashboard inteligente completo',
-    'Treinos e nutrição ilimitados',
-    'Controle financeiro avançado',
-    'Hábitos ilimitados com streaks',
-    'Projetos e tarefas sem limites',
-    'Calendário integrado',
-    'Relatórios e metas personalizadas',
-    'Sem anúncios',
-  ];
+const testimonials = [
+  {
+    quote: "Em uma semana, minha rotina parou de brigar comigo. Hoje eu sei exatamente onde focar.",
+    name: "Camila Torres",
+    role: "Consultora de operações",
+  },
+  {
+    quote: "O painel diário virou minha primeira checagem da manhã. Ganhei tempo sem perder controle.",
+    name: "Rafael Moreira",
+    role: "Líder de produto",
+  },
+  {
+    quote: "Nada disperso. Tudo integrado. O Corelys virou o meu centro de comando.",
+    name: "Bruna Azevedo",
+    role: "Gestora de projetos",
+  },
+];
 
-  const eliteFeatures = [
-    'Tudo do plano Pro',
-    'Assistente via WhatsApp',
-    'Lembretes personalizados',
-    'Suporte prioritário VIP',
-  ];
+const trustPoints = [
+  {
+    title: "Privacidade real",
+    desc: "Seus dados permanecem seus. Criptografia de ponta a ponta e controle total.",
+  },
+  {
+    title: "Tempo protegido",
+    desc: "Configuração rápida, zero burocracia e cancelamento imediato quando você decidir.",
+  },
+  {
+    title: "Transparência completa",
+    desc: "Sem contrato, sem surpresa de cobrança e sem anúncios invasivos.",
+  },
+];
 
+function smoothScrollTo(id: string) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+const GrainOverlay = memo(function GrainOverlay() {
+  return <div className="grain fixed inset-0 pointer-events-none" aria-hidden="true" />;
+});
+
+const HeroBadge = memo(function HeroBadge() {
   return (
-    <div className="min-h-screen bg-[#0c0c0c] text-white overflow-x-hidden">
-      {/* Navbar */}
-      <nav className="bg-[#0c0c0c]/80 backdrop-blur-xl sticky top-0 z-50 border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5">
-            <Logo size={28} />
-            <span className="text-lg font-bold">Corelys</span>
-          </Link>
-
-          {/* Desktop nav */}
-          <div className="hidden md:flex items-center gap-8">
-            <button onClick={() => scrollTo(featuresRef)} className="text-sm text-white/50 hover:text-white transition-colors">
-              Funcionalidades
-            </button>
-            <button onClick={() => scrollTo(pricingRef)} className="text-sm text-white/50 hover:text-white transition-colors">
-              Preços
-            </button>
-            <Link to="/login" className="text-sm text-white/70 hover:text-white transition-colors font-medium">
-              Entrar
-            </Link>
-            <Link
-              to="/register"
-              className="bg-[#c1ff72] hover:bg-[#b0e666] text-black text-sm font-bold px-5 py-2.5 rounded-xl transition-all"
-            >
-              Teste Grátis 3 Dias
-            </Link>
-          </div>
-
-          {/* Mobile nav */}
-          <div className="flex md:hidden items-center gap-3">
-            <Link
-              to="/register"
-              className="bg-[#c1ff72] hover:bg-[#b0e666] text-black text-xs font-bold px-4 py-2 rounded-xl transition-all"
-            >
-              Teste Grátis
-            </Link>
-            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-white/50 p-1">
-              {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile menu dropdown */}
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-[#0c0c0c]/95 backdrop-blur-xl border-t border-white/5 px-4 py-4 space-y-3">
-            <button onClick={() => scrollTo(featuresRef)} className="block w-full text-left text-sm text-white/50 hover:text-white py-2">
-              Funcionalidades
-            </button>
-            <button onClick={() => scrollTo(pricingRef)} className="block w-full text-left text-sm text-white/50 hover:text-white py-2">
-              Preços
-            </button>
-            <Link to="/login" className="block text-sm text-white/70 hover:text-white py-2 font-medium">
-              Entrar
-            </Link>
-          </div>
-        )}
-      </nav>
-
-      {/* Hero */}
-      <section className="relative px-4 pt-20 pb-24 sm:pt-28 sm:pb-32">
-        {/* Glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#c1ff72]/5 rounded-full blur-[120px] pointer-events-none" />
-
-        <div className="relative max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 mb-8">
-            <Sparkles size={14} className="text-[#c1ff72]" />
-            <span className="text-xs text-white/60 font-medium">Usado por quem leva a rotina a sério</span>
-          </div>
-
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black leading-tight mb-6">
-            Pare de sobreviver ao dia.{' '}
-            <span className="text-[#c1ff72]">Comece a dominar ele.</span>
-          </h1>
-
-          <p className="text-lg sm:text-xl text-white/50 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Treinos, finanças, hábitos, tarefas e projetos — tudo organizado em um único app. O Corelys é o sistema que faltava na sua rotina.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
-            <Link
-              to="/register"
-              className="bg-[#c1ff72] hover:bg-[#b0e666] text-black font-bold px-8 py-4 rounded-2xl text-lg transition-all flex items-center gap-2 shadow-[0_0_30px_rgba(193,255,114,0.2)]"
-            >
-              Começar Teste Grátis
-              <ArrowRight size={20} />
-            </Link>
-            <Link
-              to="/login"
-              className="text-white/50 hover:text-white font-medium px-6 py-4 transition-colors"
-            >
-              Já tenho conta
-            </Link>
-          </div>
-
-          <p className="text-sm text-white/30">3 dias grátis. Cancele quando quiser. Sem surpresas.</p>
-        </div>
-      </section>
-
-      {/* Problema → Solução */}
-      <section className="px-4 py-20 sm:py-28">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-bold text-center mb-12 leading-tight">
-            Você já tentou organizar sua vida<br className="hidden sm:block" /> com{' '}
-            <span className="text-[#c1ff72]">5 apps diferentes?</span>
-          </h2>
-
-          <div className="grid sm:grid-cols-2 gap-4 mb-12">
-            {[
-              'Planilha de treino no Google Sheets',
-              'App de finanças que nunca abre',
-              'Lista de tarefas no bloco de notas',
-              'Hábitos anotados no calendário do celular',
-            ].map((problem, i) => (
-              <div key={i} className="bg-white/5 border border-white/5 rounded-2xl p-5 flex items-center gap-4">
-                <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center shrink-0">
-                  <X size={16} className="text-red-400" />
-                </div>
-                <span className="text-white/60 text-sm">{problem}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center">
-            <div className="inline-flex items-center gap-3 bg-[#c1ff72]/10 border border-[#c1ff72]/20 rounded-2xl px-6 py-4">
-              <Check size={20} className="text-[#c1ff72]" />
-              <span className="text-[#c1ff72] font-bold">O Corelys resolve tudo isso em um lugar só.</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Grid */}
-      <section ref={featuresRef} className="px-4 py-20 sm:py-28">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-              Tudo que você precisa.{' '}
-              <span className="text-white/30">Nada que você não precisa.</span>
-            </h2>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {features.map((feature, i) => (
-              <div
-                key={i}
-                className="bg-[#161616] border border-white/5 rounded-[28px] p-8 hover:border-[#c1ff72]/10 transition-all duration-300 group"
-              >
-                <div className="w-12 h-12 bg-[#c1ff72]/10 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-[#c1ff72]/15 transition-colors">
-                  <feature.icon size={22} className="text-[#c1ff72]" />
-                </div>
-                <h3 className="text-lg font-bold mb-2">{feature.title}</h3>
-                <p className="text-sm text-white/40 leading-relaxed">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Stats / Prova Social */}
-      <section className="px-4 py-16">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {[
-              { icon: Layers, value: '7 Módulos', label: 'Tudo integrado em um app' },
-              { icon: Shield, value: '100% Seguro', label: 'Dados criptografados' },
-              { icon: Sparkles, value: 'Design Premium', label: 'Interface que dá prazer de usar' },
-            ].map((stat, i) => (
-              <div key={i} className="text-center bg-[#161616] border border-white/5 rounded-3xl p-8">
-                <div className="w-12 h-12 bg-[#c1ff72]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <stat.icon size={22} className="text-[#c1ff72]" />
-                </div>
-                <div className="text-2xl font-black mb-1">{stat.value}</div>
-                <div className="text-sm text-white/40">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing */}
-      <section ref={pricingRef} className="px-4 py-20 sm:py-28">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4 leading-tight">
-            Um investimento que cabe no bolso e{' '}
-            <span className="text-[#c1ff72]">transforma sua rotina</span>
-          </h2>
-          <p className="text-white/40 mb-12">Escolha o plano ideal para você. 3 dias grátis em ambos.</p>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {/* Free Plan */}
-            <div className="relative bg-[#161616] border border-white/10 rounded-[32px] p-8 text-left">
-              <div className="mb-6">
-                <h3 className="text-xl font-bold mb-1">Free</h3>
-                <p className="text-sm text-white/40">Para começar a organizar sua rotina</p>
-              </div>
-
-              <div className="flex items-baseline gap-1 mb-6">
-                <span className="text-4xl font-black text-white/70">Grátis</span>
-              </div>
-
-              <div className="space-y-3 mb-8">
-                {freeFeatures.map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                      <Check size={12} className="text-white/50" />
-                    </div>
-                    <span className="text-sm text-white/70">{item}</span>
-                  </div>
-                ))}
-              </div>
-
-              <Link
-                to="/register?plan=free"
-                className="block w-full bg-white/10 hover:bg-white/15 text-white font-bold py-4 rounded-2xl text-center transition-all"
-              >
-                Criar Conta Grátis
-              </Link>
-            </div>
-
-            {/* Pro Plan */}
-            <div className="relative bg-[#161616] border border-white/10 rounded-[32px] p-8 text-left">
-              <div className="mb-6">
-                <h3 className="text-xl font-bold mb-1">Pro</h3>
-                <p className="text-sm text-white/40">Para quem quer dominar a rotina</p>
-              </div>
-
-              <div className="flex items-baseline gap-1 mb-6">
-                <span className="text-sm text-white/40">R$</span>
-                <span className="text-4xl font-black">19,99</span>
-                <span className="text-white/40">/mês</span>
-              </div>
-
-              <div className="space-y-3 mb-8">
-                {proFeatures.map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="w-5 h-5 rounded-full bg-[#c1ff72]/15 flex items-center justify-center shrink-0">
-                      <Check size={12} className="text-[#c1ff72]" />
-                    </div>
-                    <span className="text-sm text-white/70">{item}</span>
-                  </div>
-                ))}
-              </div>
-
-              <Link
-                to="/register?plan=pro"
-                className="block w-full bg-white/10 hover:bg-white/15 text-white font-bold py-4 rounded-2xl text-center transition-all"
-              >
-                Começar 3 Dias Grátis
-              </Link>
-            </div>
-
-            {/* Elite Plan */}
-            <div className="relative bg-[#161616] border-2 border-[#c1ff72]/30 rounded-[32px] p-8 text-left shadow-[0_0_60px_rgba(193,255,114,0.08)]">
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#c1ff72] text-black text-xs font-black px-5 py-1.5 rounded-full uppercase tracking-wider flex items-center gap-1.5">
-                <Crown size={12} />
-                Mais Popular
-              </div>
-
-              <div className="mb-6 pt-2">
-                <h3 className="text-xl font-bold mb-1">Elite</h3>
-                <p className="text-sm text-white/40">Para quem quer ir além</p>
-              </div>
-
-              <div className="flex items-baseline gap-1 mb-6">
-                <span className="text-sm text-white/40">R$</span>
-                <span className="text-4xl font-black text-[#c1ff72]">39,99</span>
-                <span className="text-white/40">/mês</span>
-              </div>
-
-              <div className="space-y-3 mb-8">
-                {eliteFeatures.map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="w-5 h-5 rounded-full bg-[#c1ff72]/15 flex items-center justify-center shrink-0">
-                      {item === 'Assistente via WhatsApp' ? (
-                        <MessageCircle size={12} className="text-[#c1ff72]" />
-                      ) : (
-                        <Check size={12} className="text-[#c1ff72]" />
-                      )}
-                    </div>
-                    <span className="text-sm text-white/70">{item}</span>
-                  </div>
-                ))}
-              </div>
-
-              <Link
-                to="/register?plan=elite"
-                className="block w-full bg-[#c1ff72] hover:bg-[#b0e666] text-black font-bold py-4 rounded-2xl text-center text-lg transition-all shadow-[0_0_30px_rgba(193,255,114,0.15)]"
-              >
-                Começar 3 Dias Grátis
-              </Link>
-            </div>
-          </div>
-
-          <p className="text-xs text-white/30 mt-6">Cancele a qualquer momento. Sem compromisso.</p>
-        </div>
-      </section>
-
-      {/* CTA Final */}
-      <section className="px-4 py-20 sm:py-28">
-        <div className="relative max-w-3xl mx-auto text-center">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-[#c1ff72]/5 rounded-full blur-[100px] pointer-events-none" />
-
-          <div className="relative">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-              Sua rotina não vai se organizar sozinha.
-            </h2>
-            <p className="text-lg text-white/40 mb-10">
-              Comece hoje com 3 dias grátis e veja a diferença.
-            </p>
-
-            <div className="flex flex-col items-center gap-4">
-              <Link
-                to="/register"
-                className="bg-[#c1ff72] hover:bg-[#b0e666] text-black font-bold px-8 py-4 rounded-2xl text-lg transition-all flex items-center gap-2 shadow-[0_0_30px_rgba(193,255,114,0.2)]"
-              >
-                Quero Testar Grátis
-                <ArrowRight size={20} />
-              </Link>
-              <Link to="/login" className="text-sm text-white/40 hover:text-white transition-colors">
-                Já tem conta? Fazer login
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-white/5 px-4 py-10">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <Logo size={22} />
-            <span className="text-sm text-white/40">Corelys — Sua rotina, dominada.</span>
-          </div>
-
-          <div className="flex items-center gap-6 text-sm text-white/30">
-            <button onClick={() => scrollTo(featuresRef)} className="hover:text-white transition-colors">Produto</button>
-            <button onClick={() => scrollTo(pricingRef)} className="hover:text-white transition-colors">Preços</button>
-            <a href="mailto:suporte@corelys.online" className="hover:text-white transition-colors">Suporte</a>
-          </div>
-
-          <p className="text-xs text-white/20">© 2026 Corelys</p>
-        </div>
-      </footer>
+    <div className="inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.2em] text-white/60">
+      <span className="pulse-dot h-2 w-2 rounded-full bg-[#c1ff72]" />
+      Para quem precisa de resultado agora
     </div>
   );
-};
+});
 
-export default LandingPage;
+const Navbar = memo(function Navbar() {
+  const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    handleScroll();
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  return (
+    <header className="fixed left-0 right-0 top-6 z-50 flex justify-center">
+      <div
+        className={`flex w-[92%] max-w-[900px] items-center justify-between rounded-full px-6 py-3 transition-all duration-300 ${
+          scrolled
+            ? "border border-white/8 bg-white/5 backdrop-blur-xl"
+            : "border border-transparent bg-transparent"
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <Logo size={28} />
+          <span className="text-sm font-semibold tracking-tight text-white">Corelys</span>
+        </div>
+        <nav className="hidden items-center gap-6 text-xs uppercase tracking-[0.2em] text-white/60 md:flex">
+          <button type="button" onClick={() => smoothScrollTo("features")}>Funcionalidades</button>
+          <button type="button" onClick={() => smoothScrollTo("pricing")}>Preços</button>
+          <a href="#/login">Entrar</a>
+        </nav>
+        <div className="hidden md:block">
+          <MagneticButton label="Teste Grátis 3 Dias" href="#/register" />
+        </div>
+        <button type="button" className="md:hidden" onClick={() => setOpen((prev) => !prev)} aria-label="Menu">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10">
+            <div className="space-y-1">
+              <span className="block h-[2px] w-4 bg-white" />
+              <span className="block h-[2px] w-4 bg-white/60" />
+            </div>
+          </div>
+        </button>
+      </div>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="absolute top-16 w-[92%] max-w-[900px] rounded-[24px] border border-white/10 bg-[#101010] px-6 py-5 backdrop-blur"
+          >
+            <div className="flex flex-col gap-4 text-sm text-white/70">
+              <button type="button" onClick={() => { smoothScrollTo("features"); setOpen(false); }}>Funcionalidades</button>
+              <button type="button" onClick={() => { smoothScrollTo("pricing"); setOpen(false); }}>Preços</button>
+              <a href="#/login">Entrar</a>
+              <MagneticButton label="Teste Grátis 3 Dias" href="#/register" />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </header>
+  );
+});
+
+const Hero = memo(function Hero() {
+  const container = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.12 } },
+  };
+  const item = {
+    hidden: { y: 40, opacity: 0 },
+    show: { y: 0, opacity: 1, transition: { duration: 0.6 } },
+  };
+
+  return (
+    <section className="relative min-h-[100dvh] overflow-hidden pt-28">
+      <div className="absolute inset-0">
+        <div className="absolute left-1/2 top-0 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[#c1ff72]/5 blur-[200px]" />
+      </div>
+      <div className="relative mx-auto grid max-w-7xl items-center gap-16 px-4 py-12 md:grid-cols-[1.1fr_0.9fr] md:px-8">
+        <motion.div variants={container} initial="hidden" animate="show" className="space-y-8">
+          <motion.div variants={item}><HeroBadge /></motion.div>
+          <div className="space-y-2">
+            <motion.h1 variants={item} className="text-6xl font-black tracking-tighter text-[#f5f5f5] md:text-8xl">Pare de sobreviver</motion.h1>
+            <motion.h1 variants={item} className="text-6xl font-black tracking-tighter text-[#f5f5f5] md:text-8xl">ao dia.</motion.h1>
+            <motion.h1 variants={item} className="text-6xl font-black italic tracking-tighter text-[#c1ff72] md:text-8xl">Comece a dominá-lo.</motion.h1>
+          </div>
+          <motion.p variants={item} className="max-w-[45ch] text-lg text-white/40">
+            Corelys coloca sua rotina no trilho em minutos. Você vê o que importa, executa e acompanha o resultado.
+          </motion.p>
+          <motion.div variants={item} className="flex flex-wrap items-center gap-4">
+            <MagneticButton label="Começar Teste Grátis" href="#/register" />
+            <a href="#/login" className="text-sm text-white/60 hover:text-white">Já tenho conta →</a>
+          </motion.div>
+          <motion.div variants={item} className="text-xs uppercase tracking-[0.2em] text-white/40">
+            3 dias grátis · sem cartão · cancele quando quiser
+          </motion.div>
+        </motion.div>
+        <div className="flex justify-center md:justify-end">
+          <HeroMock />
+        </div>
+      </div>
+    </section>
+  );
+});
+
+const StatsSection = memo(function StatsSection() {
+  return (
+    <section className="mx-auto max-w-7xl px-4 py-16 md:px-8">
+      <div className="grid gap-8 border-y border-white/8 py-10 md:grid-cols-3 md:gap-12">
+        {stats.map((stat) => (
+          <StatCounter key={stat.label} value={stat.value} label={stat.label} sub={stat.sub} />
+        ))}
+      </div>
+    </section>
+  );
+});
+
+type StatCounterProps = { value: number; label: string; sub: string };
+
+const StatCounter = memo(function StatCounter({ value, label, sub }: StatCounterProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, amount: 0.6 });
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    if (!inView) return;
+    let raf = 0;
+    const start = performance.now();
+    const duration = 1200;
+    const tick = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1);
+      setCurrent(Math.floor(progress * value));
+      if (progress < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [inView, value]);
+
+  return (
+    <div ref={ref} className="space-y-3 border-white/8 md:border-r md:last:border-r-0">
+      <div className="font-mono text-5xl font-black text-[#c1ff72] md:text-7xl">{current} {label}</div>
+      <div className="text-xs uppercase tracking-[0.3em] text-white/30">{sub}</div>
+    </div>
+  );
+});
+
+const Manifesto = memo(function Manifesto() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const cardOneRef = useRef<HTMLDivElement>(null);
+  const cardTwoRef = useRef<HTMLDivElement>(null);
+  const splitRef = useRef<HTMLDivElement>(null);
+
+  const words = useMemo(() => "Você tem apps de treino. Apps de finanças. Apps de tarefas.".split(" "), []);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const cardOne = cardOneRef.current;
+    const cardTwo = cardTwoRef.current;
+    const split = splitRef.current;
+    if (!container || !cardOne || !cardTwo || !split) return;
+
+    const ctx = gsap.context(() => {
+      gsap.set(cardTwo, { y: 80, opacity: 0 });
+      gsap.timeline({
+        scrollTrigger: { trigger: container, start: "top top", end: "bottom top", scrub: true },
+      })
+        .to(cardOne, { scale: 0.92, opacity: 0.6 })
+        .to(cardTwo, { y: 0, opacity: 1 }, 0.2);
+
+      gsap.fromTo(
+        split.querySelectorAll("span"),
+        { y: 24, opacity: 0 },
+        {
+          y: 0, opacity: 1, stagger: 0.06, duration: 0.6, ease: "power3.out",
+          scrollTrigger: { trigger: split, start: "top 80%" },
+        }
+      );
+    }, container);
+
+    return () => ctx.revert();
+  }, []);
+
+  return (
+    <section ref={containerRef} className="relative py-24">
+      <div className="mx-auto max-w-7xl px-4 md:px-8">
+        <div className="relative h-[110vh]">
+          <div className="sticky top-24 grid gap-6">
+            <div ref={cardOneRef} className="rounded-[36px] border border-white/6 bg-[#0c0c0c] p-10">
+              <div className="text-sm uppercase tracking-[0.3em] text-white/40">Manifesto</div>
+              <div ref={splitRef} className="mt-6 flex flex-wrap gap-x-2 text-3xl md:text-5xl font-semibold text-white/60">
+                {words.map((word, i) => (<span key={`${word}-${i}`} className="inline-block">{word}</span>))}
+              </div>
+              <div className="mt-6 text-5xl font-black text-[#c1ff72] md:text-6xl">Mas eles não se falam.</div>
+            </div>
+            <div ref={cardTwoRef} className="rounded-[36px] border border-white/6 bg-[#141414] p-10">
+              <div className="text-sm uppercase tracking-[0.3em] text-white/40">Corelys</div>
+              <div className="mt-6 text-4xl md:text-6xl font-black text-white">O Corelys é o sistema operacional da sua rotina.</div>
+              <div className="mt-4 text-sm text-white/40">Tudo conectado. Tudo inteligente. Tudo seu.</div>
+              <div className="relative mt-10 h-48">
+                <div className="absolute left-8 top-10 h-28 w-28 rounded-full border border-[#c1ff72]/30 bg-[#c1ff72]/10" />
+                <div className="absolute left-20 top-6 h-28 w-28 rounded-full border border-[#c1ff72]/30 bg-[#c1ff72]/10" />
+                <div className="absolute left-14 top-20 h-28 w-28 rounded-full border border-[#c1ff72]/30 bg-[#c1ff72]/10" />
+                <div className="absolute left-8 top-10 h-28 w-28 flex items-center justify-center text-xs uppercase tracking-[0.2em] text-white/70">Corpo</div>
+                <div className="absolute left-20 top-6 h-28 w-28 flex items-center justify-center text-xs uppercase tracking-[0.2em] text-white/70">Mente</div>
+                <div className="absolute left-14 top-20 h-28 w-28 flex items-center justify-center text-xs uppercase tracking-[0.2em] text-white/70">Finanças</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+});
+
+const StepsSection = memo(function StepsSection() {
+  return (
+    <section className="mx-auto max-w-7xl px-4 py-16 md:px-8">
+      <div className="mb-10">
+        <div className="text-sm uppercase tracking-[0.2em] text-white/40">Como funciona</div>
+        <div className="text-3xl md:text-4xl font-semibold text-white">Ganhe tempo em 3 passos</div>
+      </div>
+      <div className="grid gap-6 md:grid-cols-3">
+        {steps.map((step, index) => (
+          <div key={step.title} className="rounded-[28px] border border-white/6 bg-[#141414] p-6">
+            <div className="flex items-center justify-between">
+              <div className="text-xs uppercase tracking-[0.3em] text-white/40">Passo</div>
+              <div className="font-mono text-lg text-[#c1ff72]">0{index + 1}</div>
+            </div>
+            <div className="mt-4 text-lg font-semibold text-white">{step.title}</div>
+            <div className="mt-2 text-sm text-white/40">{step.desc}</div>
+            <div className="mt-6 text-xs uppercase tracking-[0.2em] text-white/50">{step.meta}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+});
+
+const TrustSection = memo(function TrustSection() {
+  return (
+    <section className="mx-auto max-w-7xl px-4 py-16 md:px-8">
+      <div className="grid gap-8 rounded-[36px] border border-white/6 bg-[#101010] px-6 py-10 md:grid-cols-[1.2fr_1fr] md:px-10">
+        <div>
+          <div className="text-sm uppercase tracking-[0.2em] text-white/40">Confiança</div>
+          <div className="mt-3 text-3xl md:text-4xl font-semibold text-white">Sem risco, sem enrolação</div>
+          <p className="mt-4 text-sm text-white/40">Experimente sem risco. Cancele quando quiser.</p>
+        </div>
+        <div className="space-y-4">
+          {trustPoints.map((item) => (
+            <div key={item.title} className="rounded-[24px] border border-white/6 bg-[#141414] p-5">
+              <div className="text-sm font-semibold text-white">{item.title}</div>
+              <div className="mt-2 text-sm text-white/40">{item.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+});
+
+const TestimonialsSection = memo(function TestimonialsSection() {
+  return (
+    <section className="mx-auto max-w-7xl px-4 py-16 md:px-8">
+      <div className="mb-10">
+        <div className="text-sm uppercase tracking-[0.2em] text-white/40">Prova real</div>
+        <div className="text-3xl md:text-4xl font-semibold text-white">Resultados reais, sem promessa vazia</div>
+      </div>
+      <div className="grid gap-6 md:grid-cols-3">
+        {testimonials.map((item) => (
+          <div key={item.name} className="rounded-[28px] border border-white/6 bg-[#141414] p-6">
+            <div className="text-sm text-white/70">{item.quote}</div>
+            <div className="mt-6 text-sm font-semibold text-white">{item.name}</div>
+            <div className="text-xs uppercase tracking-[0.2em] text-white/40">{item.role}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+});
+
+const PricingSection = memo(function PricingSection() {
+  const container = {
+    hidden: { opacity: 0, y: 40 },
+    show: { opacity: 1, y: 0, transition: { staggerChildren: 0.12 } },
+  };
+  const item = {
+    hidden: { opacity: 0, y: 40 },
+    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 120, damping: 20 } },
+  };
+
+  return (
+    <section id="pricing" className="mx-auto max-w-7xl px-4 py-16 md:px-8">
+      <div className="mb-10">
+        <div className="flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-white/40">
+          <span className="h-[2px] w-8 bg-[#c1ff72]" />
+          Planos
+        </div>
+        <h2 className="mt-4 text-3xl md:text-4xl font-semibold text-white">Escolha seu ritmo</h2>
+      </div>
+      <motion.div variants={container} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }} className="mx-auto grid max-w-[1100px] gap-6 md:grid-cols-3">
+        {pricing.map((plan) => (
+          <motion.div
+            key={plan.name}
+            variants={item}
+            className={plan.highlight
+              ? "relative rounded-[32px] border border-[#c1ff72]/25 bg-[#141414] p-10 backdrop-blur-sm shadow-[0_0_80px_rgba(193,255,114,0.06),inset_0_1px_0_rgba(193,255,114,0.08)]"
+              : "rounded-[32px] border border-white/8 bg-[#141414] p-10"
+            }
+          >
+            {plan.highlight && (
+              <motion.div
+                className="absolute -top-4 left-8 rounded-full border border-[#c1ff72]/40 bg-[#0c0c0c] px-4 py-1 text-xs font-semibold text-[#c1ff72]"
+                animate={{ scale: [1, 1.06, 1] }}
+                transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+              >
+                Mais Popular
+              </motion.div>
+            )}
+            <div className="text-lg font-semibold text-white">{plan.name}</div>
+            <div className="mt-2 font-mono text-2xl text-[#c1ff72]">{plan.price}</div>
+            <div className="mt-6 space-y-3 text-sm text-white/70">
+              {plan.perks.map((perk) => (
+                <div key={perk} className="flex items-start gap-2">
+                  <Check size={18} className="text-[#c1ff72]" />
+                  <span>{perk}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-8">
+              {plan.highlight ? (
+                <MagneticButton label={plan.cta} href={`#/register?plan=${plan.slug}`} />
+              ) : (
+                <a
+                  href={`#/register?plan=${plan.slug}`}
+                  className="block w-full rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white/80 transition-colors hover:bg-white/10 text-center"
+                >
+                  {plan.cta}
+                </a>
+              )}
+            </div>
+          </motion.div>
+        ))}
+      </motion.div>
+      <div className="mt-8 text-center text-sm text-white/40">Sem contrato. Sem letra miúda. Sem pegadinha.</div>
+    </section>
+  );
+});
+
+const FinalCTA = memo(function FinalCTA() {
+  return (
+    <section className="relative min-h-[60vh] overflow-hidden py-20">
+      <div className="mesh absolute inset-0" />
+      <div className="relative mx-auto flex max-w-7xl flex-col items-start gap-6 px-4 md:px-8">
+        <h2 className="text-4xl md:text-6xl font-black text-white">Sua rotina não vai se organizar sozinha.</h2>
+        <p className="text-sm text-white/40">Comece hoje. 3 dias grátis. Sem cartão.</p>
+        <MagneticButton label="Começar Teste Grátis" href="#/register" />
+        <div className="flex flex-wrap items-center gap-6 text-xs uppercase tracking-[0.2em] text-white/50">
+          <span className="inline-flex items-center gap-2"><ShieldCheck size={16} className="text-[#c1ff72]" /> Sem anúncios invasivos</span>
+          <span className="inline-flex items-center gap-2"><Lock size={16} className="text-[#c1ff72]" /> Dados criptografados de ponta a ponta</span>
+          <span className="inline-flex items-center gap-2"><Sparkle size={16} className="text-[#c1ff72]" /> Cancele quando quiser, sem fricção</span>
+        </div>
+      </div>
+    </section>
+  );
+});
+
+const Footer = memo(function Footer() {
+  return (
+    <footer className="rounded-t-[40px] border-t border-white/5 bg-[#0c0c0c]">
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 md:grid-cols-3 md:px-8">
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Logo size={28} />
+            <span className="text-lg font-semibold text-white">Corelys</span>
+          </div>
+          <div className="text-sm text-white/50">Sua rotina, dominada.</div>
+        </div>
+        <div className="space-y-2 text-sm text-white/60">
+          <button type="button" onClick={() => smoothScrollTo("features")}>Funcionalidades</button>
+          <br />
+          <button type="button" onClick={() => smoothScrollTo("pricing")}>Preços</button>
+          <br />
+          <a href="#/login">Entrar</a>
+        </div>
+        <div className="space-y-2 text-sm text-white/50">
+          <div className="flex items-center gap-2">
+            <span className="pulse-dot h-2 w-2 rounded-full bg-[#c1ff72]" />
+            Sistema Operacional: Online
+          </div>
+          <div>&copy; 2026 Corelys — Sua rotina, dominada.</div>
+        </div>
+      </div>
+    </footer>
+  );
+});
+
+export default function LandingPage() {
+  return (
+    <div className="relative min-h-screen bg-[#0c0c0c] text-white">
+      <GrainOverlay />
+      <Navbar />
+      <main>
+        <Hero />
+        <MarqueeStrip />
+        <section id="features" className="mx-auto max-w-7xl px-4 py-16 md:px-8">
+          <div className="mb-10">
+            <div className="text-sm uppercase tracking-[0.2em] text-white/40">Tudo que você precisa.</div>
+            <div className="text-3xl md:text-4xl font-semibold text-white">Nada que roube seu tempo.</div>
+          </div>
+          <BentoCards />
+        </section>
+        <StepsSection />
+        <TrustSection />
+        <TestimonialsSection />
+        <StatsSection />
+        <Manifesto />
+        <PricingSection />
+        <FinalCTA />
+      </main>
+      <Footer />
+
+      <style>{`
+        .grain::before { content: ""; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events: none; z-index: 50; }
+        .pulse-dot { animation: pulse 2s ease-in-out infinite; }
+        .marquee { overflow: hidden; padding: 1.2rem 0; }
+        .marquee-track { display: flex; gap: 2.4rem; align-items: center; width: max-content; animation: marquee 26s linear infinite; }
+        .marquee:hover .marquee-track { animation-duration: 40s; }
+        .marquee-item { display: inline-flex; gap: 1.4rem; align-items: center; color: rgba(255,255,255,0.2); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; font-weight: 700; }
+        .mesh { background-image: radial-gradient(circle at 20% 20%, rgba(193,255,114,0.08), transparent 45%), radial-gradient(circle at 70% 10%, rgba(193,255,114,0.05), transparent 40%), radial-gradient(circle at 40% 80%, rgba(193,255,114,0.06), transparent 45%); animation: meshShift 18s ease-in-out infinite; }
+        @keyframes meshShift { 0% { background-position: 0% 0%; } 50% { background-position: 100% 60%; } 100% { background-position: 0% 0%; } }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.4; } 50% { transform: scale(1.5); opacity: 1; } }
+      `}</style>
+    </div>
+  );
+}
