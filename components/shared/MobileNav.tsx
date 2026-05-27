@@ -39,9 +39,8 @@ const MobileNav: React.FC = () => {
   }, [profile?.gender]);
 
   if (hidden) return null;
-
   return (
-    <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] h-16 bg-[var(--sidebar-bg)]/90 backdrop-blur-xl border border-[var(--card-border)] rounded-[24px] flex items-center justify-around px-2 z-50 shadow-2xl transition-colors duration-300">
+    <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] h-16 bg-[var(--sidebar-bg)] backdrop-blur-xl border border-[var(--card-border)] rounded-[24px] flex items-center justify-around px-2 z-50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06),0_10px_30px_rgba(0,0,0,0.3)] transition-colors duration-300">
       {navItems.map((item) => {
         const isActive = location.pathname === item.path;
         return (

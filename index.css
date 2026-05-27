@@ -1,50 +1,75 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #0c0c0c;
-  --card-bg: #f8f8f8;
-  --card-border: rgba(0, 0, 0, 0.05);
-  --input-bg: rgba(0, 0, 0, 0.03);
-  --sidebar-bg: #ffffff;
-  --header-bg: rgba(255, 255, 255, 0.8);
+  --background: #f3f6f5;
+  --foreground: #0e1e1a;
+  --card-bg: rgba(255, 255, 255, 0.65);
+  --card-border: rgba(14, 30, 26, 0.06);
+  --input-bg: rgba(14, 30, 26, 0.03);
+  --sidebar-bg: rgba(255, 255, 255, 0.7);
+  --header-bg: rgba(243, 246, 245, 0.6);
 }
 
 .dark {
-  --background: #0c0c0c;
-  --foreground: #ffffff;
-  --card-bg: #161616;
-  --card-border: rgba(255, 255, 255, 0.05);
-  --input-bg: rgba(255, 255, 255, 0.05);
-  --sidebar-bg: #111111;
-  --header-bg: rgba(12, 12, 12, 0.8);
+  --background: #051411;
+  --foreground: #f3f6f5;
+  --card-bg: rgba(10, 28, 22, 0.55);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --input-bg: rgba(255, 255, 255, 0.04);
+  --sidebar-bg: rgba(5, 20, 17, 0.65);
+  --header-bg: rgba(5, 20, 17, 0.5);
 }
 
 body {
   font-family: 'Inter', sans-serif;
   background-color: var(--background);
+  background-image: 
+    radial-gradient(circle at 80% 20%, rgba(193, 255, 114, 0.1) 0%, transparent 40%),
+    radial-gradient(circle at 10% 80%, rgba(249, 115, 22, 0.04) 0%, transparent 35%),
+    linear-gradient(135deg, #fbfdfc 0%, #edf3f0 100%);
+  background-attachment: fixed;
   color: var(--foreground);
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.dark body {
+  background-color: var(--background);
+  background-image: 
+    radial-gradient(circle at 80% 20%, rgba(249, 115, 22, 0.14) 0%, transparent 45%),
+    radial-gradient(circle at 20% 80%, rgba(193, 255, 114, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 90% 90%, rgba(249, 115, 22, 0.1) 0%, transparent 35%),
+    linear-gradient(135deg, #04100d 0%, #0d2820 100%);
+  background-attachment: fixed;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: -0.01em;
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--background);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #888;
+  background: rgba(0, 0, 0, 0.12);
   border-radius: 10px;
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: #333;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }

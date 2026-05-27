@@ -4,7 +4,7 @@ import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Card } from '../components/ui/LayoutComponents';
 import { Lock, Mail, Loader2, AlertCircle } from 'lucide-react';
 import { Logo } from '../components/shared/Logo';
-import { redirectToCheckout, STRIPE_PRO_LINK, STRIPE_ELITE_LINK } from '../lib/stripe';
+import { redirectToCheckout, getPlan } from '../lib/stripe';
 
 const Login: React.FC = () => {
     const [searchParams] = useSearchParams();
@@ -29,9 +29,11 @@ const Login: React.FC = () => {
 
             // If user has a pending plan selection, redirect to checkout
             if (planParam) {
-                const link = planParam === 'elite' ? STRIPE_ELITE_LINK : STRIPE_PRO_LINK;
-                redirectToCheckout(link, email);
-                return;
+                const plan = getPlan(planParam === 'casal' ? 'casal' : 'individual');
+                if (plan) {
+                    redirectToCheckout(plan.link, email);
+                    return;
+                }
             }
 
             navigate('/dashboard');

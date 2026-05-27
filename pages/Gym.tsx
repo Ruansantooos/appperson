@@ -25,6 +25,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Supplement, Workout, GymStats, Meal, SavedFood, WorkoutSession } from '../types';
 import ActiveWorkout, { getPersistedWorkout } from '../components/gym/ActiveWorkout';
 import WorkoutSummaryCard from '../components/gym/WorkoutSummaryCard';
+import { toLocalDateStr } from '../lib/date';
 
 const DEFAULT_GYM_STATS: GymStats = {
   weight: 0,
@@ -170,7 +171,7 @@ const GymPage: React.FC = () => {
     }
   };
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = toLocalDateStr();
 
   const fetchMeals = async () => {
     const { data } = await supabase

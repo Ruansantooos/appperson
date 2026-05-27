@@ -1,15 +1,24 @@
 
 import React from 'react';
 import { Card, Button, Input, Badge } from '../components/ui/LayoutComponents';
-import { User, Bell, CreditCard, ChevronRight, LogOut, Loader2 } from 'lucide-react';
+import { User, Bell, CreditCard, ChevronRight, LogOut, Loader2, Users, Copy, Link2, Link2Off } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Profile } from '../types';
-import { redirectToCheckout, STRIPE_PRO_LINK, STRIPE_ELITE_LINK } from '../lib/stripe';
+import { redirectToCheckout, PLANS } from '../lib/stripe';
+import { getMyCoupleCode, linkCoupleByCode, unlinkPartner, fetchPartnerInfo } from '../lib/couple';
 
 const SettingsPage: React.FC = () => {
-  const { user, signOut, refreshProfile } = useAuth();
+  const { user, profile: authProfile, signOut, refreshProfile } = useAuth();
   const [loading, setLoading] = React.useState(true);
+
+  // ===== Modo casal (vínculo por código) =====
+  const [partnerInfo, setPartnerInfo] = React.useState<{ full_name?: string; email?: string } | null>(null);
+  const [myCode, setMyCode] = React.useState('');
+  const [enterCode, setEnterCode] = React.useState('');
+  const [codeCopied, setCodeCopied] = React.useState(false);
+  const [coupleBusy, setCoupleBusy] = React.useState(false);
+  const [coupleMsg, setCoupleMsg] = React.useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [saving, setSaving] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState('Perfil');
   const [weight, setWeight] = React.useState<number>(0);
@@ -40,6 +49,61 @@ const SettingsPage: React.FC = () => {
       fetchProfile();
     }
   }, [user]);
+
+  const loadCoupleData = React.useCallback(async () => {
+    if (!user) return;
+    const partnerId = authProfile?.partnerId;
+    if (partnerId) {
+      const { data } = await fetchPartnerInfo(partnerId);
+      setPartnerInfo(data || null);
+    } else {
+      setPartnerInfo(null);
+      // Gera/recupera o código de vínculo do usuário para compartilhar.
+      const { data: code } = await getMyCoupleCode();
+      if (typeof code === 'string') setMyCode(code);
+    }
+  }, [user, authProfile?.partnerId]);
+
+  React.useEffect(() => { loadCoupleData(); }, [loadCoupleData]);
+
+  const handleCopyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(myCode);
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 2000);
+    } catch { /* clipboard indisponível */ }
+  };
+
+  const handleLink = async () => {
+    const code = enterCode.trim().toUpperCase();
+    setCoupleMsg(null);
+    if (code.length < 4) {
+      setCoupleMsg({ type: 'err', text: 'Digite o código do seu parceiro.' });
+      return;
+    }
+    setCoupleBusy(true);
+    const { error } = await linkCoupleByCode(code);
+    setCoupleBusy(false);
+    if (error) {
+      setCoupleMsg({ type: 'err', text: error.message || 'Não foi possível vincular.' });
+    } else {
+      setEnterCode('');
+      setCoupleMsg({ type: 'ok', text: 'Vinculado com sucesso! 🎉' });
+      await refreshProfile();
+      await loadCoupleData();
+    }
+  };
+
+  const handleUnlink = async () => {
+    if (!confirm('Desvincular do parceiro? Vocês deixarão de ver os dados um do outro.')) return;
+    setCoupleBusy(true);
+    const { error } = await unlinkPartner();
+    setCoupleBusy(false);
+    if (!error) {
+      await refreshProfile();
+      await loadCoupleData();
+    }
+  };
 
   const fetchProfile = async () => {
     try {
@@ -165,6 +229,7 @@ const SettingsPage: React.FC = () => {
 
   const tabs = [
     { label: 'Perfil', icon: User },
+    { label: 'Casal', icon: Users },
     { label: 'Notificações', icon: Bell },
     { label: 'Faturamento', icon: CreditCard },
   ];
@@ -363,6 +428,97 @@ const SettingsPage: React.FC = () => {
             </>
           )}
 
+          {/* ===== CASAL TAB ===== */}
+          {activeTab === 'Casal' && (
+            <Card className="p-10">
+              <div className="flex items-center gap-3 mb-2">
+                <Users size={24} className="text-[#c1ff72]" />
+                <h3 className="text-2xl font-bold">Modo Casal</h3>
+              </div>
+              <p className="opacity-50 text-sm mb-8 max-w-xl">
+                Conecte sua conta à do seu parceiro(a) para compartilhar <strong>finanças, tarefas e agenda</strong>.
+                Saúde, treino e ciclo continuam privados de cada um.
+              </p>
+
+              {coupleMsg && (
+                <div className={`mb-6 px-4 py-3 rounded-xl text-sm font-medium ${coupleMsg.type === 'ok' ? 'bg-[#c1ff72]/10 text-[#9bdb52]' : 'bg-red-500/10 text-red-400'}`}>
+                  {coupleMsg.text}
+                </div>
+              )}
+
+              {authProfile?.partnerId ? (
+                /* --- Vinculado --- */
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl bg-[var(--foreground)]/[0.03] border border-[var(--card-border)]">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-[#c1ff72] text-black flex items-center justify-center text-xl font-bold">
+                      {(partnerInfo?.full_name || partnerInfo?.email || '?').charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-widest opacity-40 font-bold">Conectado com</p>
+                      <p className="font-bold text-lg">{partnerInfo?.full_name || partnerInfo?.email || 'Parceiro(a)'}</p>
+                      {partnerInfo?.email && <p className="opacity-50 text-sm">{partnerInfo.email}</p>}
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleUnlink}
+                    disabled={coupleBusy}
+                    className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-widest text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-40"
+                  >
+                    {coupleBusy ? <Loader2 size={16} className="animate-spin" /> : <Link2Off size={16} />} Desvincular
+                  </button>
+                </div>
+              ) : (
+                /* --- Não vinculado: vínculo por código --- */
+                <div className="space-y-8">
+                  {/* Meu código (para compartilhar) */}
+                  <div>
+                    <p className="text-xs uppercase tracking-widest opacity-40 font-bold mb-3">Seu código de vínculo</p>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 px-5 py-4 rounded-2xl bg-[#c1ff72]/[0.06] border border-[#c1ff72]/20 font-mono text-2xl font-bold tracking-[0.3em] text-[#c1ff72] text-center select-all">
+                        {myCode || '••••••'}
+                      </div>
+                      <button
+                        onClick={handleCopyCode}
+                        disabled={!myCode}
+                        className="flex items-center gap-2 px-5 py-4 rounded-2xl bg-[var(--foreground)]/5 border border-[var(--card-border)] text-xs font-bold uppercase tracking-widest hover:bg-[var(--foreground)]/10 transition disabled:opacity-40"
+                      >
+                        <Copy size={16} /> {codeCopied ? 'Copiado!' : 'Copiar'}
+                      </button>
+                    </div>
+                    <p className="opacity-40 text-xs mt-2">Envie esse código para seu parceiro(a). Ele cria a conta Corelys e digita o código abaixo.</p>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 h-px bg-[var(--card-border)]" />
+                    <span className="text-xs uppercase tracking-widest opacity-30 font-bold">ou</span>
+                    <div className="flex-1 h-px bg-[var(--card-border)]" />
+                  </div>
+
+                  {/* Inserir código do parceiro */}
+                  <div>
+                    <p className="text-xs uppercase tracking-widest opacity-40 font-bold mb-3">Tenho o código do meu parceiro(a)</p>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <div className="flex-1 flex items-center gap-3 px-4 rounded-xl bg-[var(--input-bg)] border border-[var(--card-border)]">
+                        <Link2 size={16} className="opacity-40" />
+                        <input
+                          type="text"
+                          value={enterCode}
+                          onChange={(e) => setEnterCode(e.target.value.toUpperCase())}
+                          placeholder="Ex: K7H2QM"
+                          maxLength={10}
+                          className="flex-1 bg-transparent py-3 text-sm outline-none font-mono tracking-[0.2em] uppercase"
+                        />
+                      </div>
+                      <Button onClick={handleLink} disabled={coupleBusy}>
+                        {coupleBusy ? <Loader2 size={16} className="animate-spin" /> : 'Vincular'}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </Card>
+          )}
+
           {/* ===== NOTIFICAÇÕES TAB ===== */}
           {activeTab === 'Notificações' && (
             <Card className="p-10">
@@ -410,119 +566,59 @@ const SettingsPage: React.FC = () => {
 
                 {/* Plan Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
-                  {/* Pro Card */}
-                  <div className={`relative p-6 rounded-2xl border-2 transition-all ${
-                    userPlan === 'pro'
-                      ? 'border-[#c1ff72]/40 bg-[#c1ff72]/5 shadow-[0_0_30px_rgba(193,255,114,0.08)]'
-                      : 'border-white/10 bg-white/[0.02] hover:border-white/20'
-                  }`}>
-                    {userPlan === 'pro' && (
-                      <div className="absolute -top-3 left-4 bg-[#c1ff72] text-black text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
-                        Seu Plano
-                      </div>
-                    )}
-                    <div className="mb-4 pt-1">
-                      <h4 className="text-lg font-bold">Pro</h4>
-                      <p className="text-xs opacity-40 mt-1">Dashboard completo</p>
-                    </div>
-                    <div className="flex items-baseline gap-1 mb-5">
-                      <span className="text-xs opacity-40">R$</span>
-                      <span className="text-3xl font-black">19,99</span>
-                      <span className="text-xs opacity-40">/mês</span>
-                    </div>
-                    <div className="space-y-2.5 mb-6">
-                      {[
-                        'Dashboard inteligente',
-                        'Treinos e nutrição',
-                        'Controle financeiro',
-                        'Hábitos com streaks',
-                        'Projetos e tarefas',
-                        'Calendário integrado',
-                        'Relatórios e metas',
-                        'Sem anúncios',
-                      ].map(f => (
-                        <div key={f} className="flex items-center gap-2.5 text-sm">
-                          <div className="w-4 h-4 rounded-full bg-[#c1ff72]/15 flex items-center justify-center shrink-0">
-                            <div className="w-1.5 h-1.5 rounded-full bg-[#c1ff72]" />
+                  {PLANS.map(plan => {
+                    const isCurrent = userPlan === plan.id;
+                    return (
+                      <div key={plan.id} className={`relative p-6 rounded-2xl border-2 transition-all ${
+                        isCurrent
+                          ? 'border-[#c1ff72]/40 bg-[#c1ff72]/5 shadow-[0_0_30px_rgba(193,255,114,0.08)]'
+                          : plan.highlight
+                            ? 'border-[#c1ff72]/20 bg-white/[0.02] hover:border-[#c1ff72]/30'
+                            : 'border-white/10 bg-white/[0.02] hover:border-white/20'
+                      }`}>
+                        {isCurrent ? (
+                          <div className="absolute -top-3 left-4 bg-[#c1ff72] text-black text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                            Seu Plano
                           </div>
-                          <span className="opacity-50">{f}</span>
-                        </div>
-                      ))}
-                    </div>
-                    {userPlan === 'pro' ? (
-                      <div className="h-11 flex items-center justify-center text-xs text-[#c1ff72] font-bold uppercase tracking-widest">
-                        Plano Atual
-                      </div>
-                    ) : userPlan === 'free' ? (
-                      <Button
-                        className="w-full h-11"
-                        onClick={() => handleCheckout(STRIPE_PRO_LINK)}
-                      >
-                        Assinar Pro
-                      </Button>
-                    ) : (
-                      <div className="h-11 flex items-center justify-center text-xs opacity-30 font-bold uppercase tracking-widest">
-                        —
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Elite Card */}
-                  <div className={`relative p-6 rounded-2xl border-2 transition-all ${
-                    userPlan === 'elite'
-                      ? 'border-[#c1ff72]/40 bg-[#c1ff72]/5 shadow-[0_0_30px_rgba(193,255,114,0.08)]'
-                      : 'border-[#c1ff72]/20 bg-white/[0.02] hover:border-[#c1ff72]/30'
-                  }`}>
-                    {userPlan === 'elite' ? (
-                      <div className="absolute -top-3 left-4 bg-[#c1ff72] text-black text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
-                        Seu Plano
-                      </div>
-                    ) : (
-                      <div className="absolute -top-3 right-4 bg-[#c1ff72]/20 text-[#c1ff72] text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
-                        Mais Popular
-                      </div>
-                    )}
-                    <div className="mb-4 pt-1">
-                      <h4 className="text-lg font-bold">Elite</h4>
-                      <p className="text-xs opacity-40 mt-1">Pro + Assistente WhatsApp</p>
-                    </div>
-                    <div className="flex items-baseline gap-1 mb-5">
-                      <span className="text-xs opacity-40">R$</span>
-                      <span className="text-3xl font-black text-[#c1ff72]">39,99</span>
-                      <span className="text-xs opacity-40">/mês</span>
-                    </div>
-                    <div className="space-y-2.5 mb-6">
-                      {[
-                        'Tudo do plano Pro',
-                        'Assistente via WhatsApp',
-                        'Lembretes personalizados',
-                        'Suporte prioritário VIP',
-                      ].map(f => (
-                        <div key={f} className="flex items-center gap-2.5 text-sm">
-                          <div className="w-4 h-4 rounded-full bg-[#c1ff72]/15 flex items-center justify-center shrink-0">
-                            <div className="w-1.5 h-1.5 rounded-full bg-[#c1ff72]" />
+                        ) : plan.highlight && (
+                          <div className="absolute -top-3 right-4 bg-[#c1ff72]/20 text-[#c1ff72] text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                            Mais Popular
                           </div>
-                          <span className="opacity-50">{f}</span>
+                        )}
+                        <div className="mb-4 pt-1">
+                          <h4 className="text-lg font-bold">{plan.name}</h4>
+                          <p className="text-xs opacity-40 mt-1">{plan.tagline}</p>
                         </div>
-                      ))}
-                    </div>
-                    {userPlan === 'elite' ? (
-                      <div className="h-11 flex items-center justify-center text-xs text-[#c1ff72] font-bold uppercase tracking-widest">
-                        Plano Atual
+                        <div className="mb-5">
+                          <div className="text-3xl font-black text-[#c1ff72]">{plan.priceLabel}</div>
+                          <div className="text-xs opacity-40 mt-1">{plan.priceSub}</div>
+                        </div>
+                        <div className="space-y-2.5 mb-6">
+                          {plan.perks.map(f => (
+                            <div key={f} className="flex items-center gap-2.5 text-sm">
+                              <div className="w-4 h-4 rounded-full bg-[#c1ff72]/15 flex items-center justify-center shrink-0">
+                                <div className="w-1.5 h-1.5 rounded-full bg-[#c1ff72]" />
+                              </div>
+                              <span className="opacity-50">{f}</span>
+                            </div>
+                          ))}
+                        </div>
+                        {isCurrent ? (
+                          <div className="h-11 flex items-center justify-center text-xs text-[#c1ff72] font-bold uppercase tracking-widest">
+                            Plano Atual
+                          </div>
+                        ) : (
+                          <Button className="w-full h-11" onClick={() => handleCheckout(plan.link)}>
+                            Assinar {plan.name}
+                          </Button>
+                        )}
                       </div>
-                    ) : (
-                      <Button
-                        className="w-full h-11"
-                        onClick={() => handleCheckout(STRIPE_ELITE_LINK)}
-                      >
-                        {userPlan === 'pro' ? 'Upgrade para Elite' : 'Assinar Elite'}
-                      </Button>
-                    )}
-                  </div>
+                    );
+                  })}
                 </div>
 
                 {/* Plan info */}
-                {planExpires && (userPlan === 'pro' || userPlan === 'elite') && (
+                {planExpires && userPlan !== 'free' && (
                   <div className="text-center text-xs opacity-30">
                     Próxima cobrança em {new Date(planExpires).toLocaleDateString('pt-BR')}
                   </div>
@@ -540,7 +636,7 @@ const SettingsPage: React.FC = () => {
                   <div className="flex items-center justify-between py-4 border-b border-white/5">
                     <span className="text-sm opacity-40">Plano atual</span>
                     <Badge variant={userPlan !== 'free' ? 'success' : 'default'}>
-                      {userPlan === 'elite' ? 'Elite' : userPlan === 'pro' ? 'Pro' : 'Gratuito'}
+                      {userPlan === 'casal' ? 'Casal' : userPlan === 'individual' ? 'Individual' : 'Sem assinatura'}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between py-4 border-b border-white/5">

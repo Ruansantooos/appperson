@@ -6,9 +6,10 @@ import { Plus, Search, Filter, MoreVertical, MoreHorizontal, Calendar, CheckCirc
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Task } from '../types';
+import { circleIds } from '../lib/couple';
 
 const TasksPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('All');
@@ -32,7 +33,7 @@ const TasksPage: React.FC = () => {
   useEffect(() => {
     if (!user) return;
     fetchTasks();
-  }, [user]);
+  }, [user, profile?.partnerId]);
 
   const fetchTasks = async () => {
     setLoading(true);
@@ -40,7 +41,7 @@ const TasksPage: React.FC = () => {
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .eq('user_id', user.id)
+        .in('user_id', circleIds(user.id, profile?.partnerId))
         .order('created_at', { ascending: false });
 
       if (data) {

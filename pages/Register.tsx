@@ -4,11 +4,10 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Card } from '../components/ui/LayoutComponents';
 import { Lock, Mail, Loader2, AlertCircle, CheckCircle, User } from 'lucide-react';
 import { Logo } from '../components/shared/Logo';
-import { redirectToCheckout, STRIPE_PRO_LINK, STRIPE_ELITE_LINK } from '../lib/stripe';
 
 const Register: React.FC = () => {
     const [searchParams] = useSearchParams();
-    const selectedPlan = searchParams.get('plan') || 'pro';
+    const selectedPlan = searchParams.get('plan') || 'individual';
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -48,11 +47,12 @@ const Register: React.FC = () => {
 
             // Create initial profile
             if (data.user) {
+                // Não enviamos `plan` aqui: a coluna tem DEFAULT 'free' no banco e
+                // o plano só pode ser alterado pelo webhook do Stripe (service_role).
                 await supabase.from('profiles').upsert({
                     id: data.user.id,
                     email: email,
                     full_name: name,
-                    plan: 'free',
                     updated_at: new Date().toISOString()
                 });
             }
@@ -106,10 +106,8 @@ const Register: React.FC = () => {
                     </div>
                     <h1 className="text-3xl font-bold text-white mb-2">Corelys</h1>
                     <p className="opacity-40">
-                        {selectedPlan === 'elite' ? 'Plano Elite — R$ 39,99/mês' : selectedPlan === 'free' ? 'Plano Free — Grátis' : 'Plano Pro — R$ 19,99/mês'}
-                        {selectedPlan !== 'free' && (
-                            <span className="block text-[#c1ff72] text-xs mt-1">3 dias grátis para testar</span>
-                        )}
+                        {selectedPlan === 'casal' ? 'Plano Casal' : 'Plano Individual — 12x R$ 29,90'}
+                        <span className="block text-[#c1ff72] text-xs mt-1">3 dias grátis para testar</span>
                     </p>
                 </div>
 

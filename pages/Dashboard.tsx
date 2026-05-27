@@ -27,8 +27,8 @@ import {
   PieChart, Pie, Cell, AreaChart, Area
 } from 'recharts';
 import { WeightEntry } from '../types';
-
-const getToday = () => new Date().toISOString().split('T')[0];
+import { getToday, toLocalDateStr } from '../lib/date';
+import { circleIds } from '../lib/couple';
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -52,7 +52,7 @@ interface TodayWorkout {
 }
 
 const Dashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [userName, setUserName] = useState('');
   const [gymStats, setGymStats] = useState<GymStats>({ weight: 0, targetWeight: 0, bodyFat: 0, muscleMass: 0, caloriesConsumed: 0, targetCalories: 2000, protein: 0, carbs: 0, fat: 0 });
   const [habits, setHabits] = useState<Habit[]>([]);
@@ -94,12 +94,12 @@ const Dashboard: React.FC = () => {
           supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
           supabase.from('gym_stats').select('*').eq('user_id', user.id).maybeSingle(),
           supabase.from('habits').select('*').eq('user_id', user.id),
-          supabase.from('transactions').select('*').eq('user_id', user.id).order('date', { ascending: false }),
+          supabase.from('transactions').select('*').in('user_id', circleIds(user.id, profile?.partnerId)).order('date', { ascending: false }),
           supabase.from('supplements').select('*').eq('user_id', user.id),
           supabase.from('workouts').select('*, workout_exercises(*)').eq('user_id', user.id),
-          supabase.from('tasks').select('*').eq('user_id', user.id).in('status', ['Pending', 'pending']),
+          supabase.from('tasks').select('*').in('user_id', circleIds(user.id, profile?.partnerId)).in('status', ['Pending', 'pending']),
           supabase.from('weight_history').select('*').eq('user_id', user.id).order('date', { ascending: true }),
-          supabase.from('bills').select('*').eq('user_id', user.id).order('due_date', { ascending: true }),
+          supabase.from('bills').select('*').in('user_id', circleIds(user.id, profile?.partnerId)).order('due_date', { ascending: true }),
           supabase.from('projects').select('id, name').eq('user_id', user.id),
         ]);
 
@@ -166,7 +166,7 @@ const Dashboard: React.FC = () => {
       }
     };
     fetchData();
-  }, [user]);
+  }, [user, profile?.partnerId]);
 
   const toggleHabit = async (habitId: string) => {
     const habit = habits.find(h => h.id === habitId);
@@ -220,15 +220,15 @@ const Dashboard: React.FC = () => {
   };
 
   const { sunday: weekStart, saturday: weekEnd } = getWeekBounds();
-  const weekStartStr = weekStart.toISOString().split('T')[0];
-  const weekEndStr = weekEnd.toISOString().split('T')[0];
+  const weekStartStr = toLocalDateStr(weekStart);
+  const weekEndStr = toLocalDateStr(weekEnd);
 
   // Weekly spending chart data (Sun-Sat)
   const dayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
   const weeklySpending = dayLabels.map((label, i) => {
     const d = new Date(weekStart);
     d.setDate(weekStart.getDate() + i);
-    const dateStr = d.toISOString().split('T')[0];
+    const dateStr = toLocalDateStr(d);
     const gasto = transactions
       .filter(t => t.type === 'expense' && t.date === dateStr)
       .reduce((acc, t) => acc + Number(t.amount), 0);

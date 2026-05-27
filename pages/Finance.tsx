@@ -33,6 +33,9 @@ import {
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Transaction, FinanceCard, Bill, Invoice, Receivable, Tax } from '../types';
+import { toLocalDateStr } from '../lib/date';
+import { exportTransactionsCSV, exportFinancePDF } from '../lib/export';
+import { circleIds } from '../lib/couple';
 
 const COLORS = ['#d8b4a6', '#8fb0bc', '#c1ff72', '#e6a06e', '#ffffff'];
 
@@ -48,12 +51,14 @@ const CATEGORIES_PF = ['Food', 'Work', 'Housing', 'Shopping', 'Entertainment', '
 const CATEGORIES_PJ = ['Fornecedores', 'Folha de Pagamento', 'Marketing', 'Infraestrutura', 'Impostos', 'Pró-labore', 'Serviços', 'Vendas', 'Others'];
 
 const FinancePage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [cards, setCards] = useState<FinanceCard[]>([]);
   const [bills, setBills] = useState<Bill[]>([]);
   const [loading, setLoading] = useState(true);
   const [financeScope, setFinanceScope] = useState<'pf' | 'pj'>('pf');
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
 
   // PJ-specific state
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -68,7 +73,7 @@ const FinancePage: React.FC = () => {
     amount: '',
     category: CATEGORIES_PF[0],
     type: 'expense' as 'income' | 'expense',
-    date: new Date().toISOString().split('T')[0],
+    date: toLocalDateStr(),
     card_id: '',
     project_id: '',
     classification: 'Despesa' as 'Custo' | 'Despesa' | 'Investimento' | 'Outros'
@@ -106,7 +111,7 @@ const FinancePage: React.FC = () => {
     amount: '',
     type: 'emitida' as 'emitida' | 'recebida',
     status: 'pendente' as 'emitida' | 'pendente' | 'cancelada',
-    issue_date: new Date().toISOString().split('T')[0],
+    issue_date: toLocalDateStr(),
     client_name: ''
   });
   const [submittingInvoice, setSubmittingInvoice] = useState(false);
@@ -145,12 +150,12 @@ const FinancePage: React.FC = () => {
     fetchCards();
     fetchBills();
     fetchProjects();
+    fetchReceivables();
     if (financeScope === 'pj') {
       fetchInvoices();
-      fetchReceivables();
       fetchTaxes();
     }
-  }, [user, financeScope]);
+  }, [user, financeScope, profile?.partnerId]);
 
   const fetchProjects = async () => {
     try {
@@ -170,7 +175,7 @@ const FinancePage: React.FC = () => {
       const { data } = await supabase
         .from('transactions')
         .select('*')
-        .eq('user_id', user.id)
+        .in('user_id', circleIds(user.id, profile?.partnerId))
         .or(`finance_scope.eq.${financeScope},finance_scope.is.null`)
         .order('date', { ascending: false });
 
@@ -187,7 +192,7 @@ const FinancePage: React.FC = () => {
       const { data } = await supabase
         .from('cards')
         .select('*')
-        .eq('user_id', user.id)
+        .in('user_id', circleIds(user.id, profile?.partnerId))
         .or(`finance_scope.eq.${financeScope},finance_scope.is.null`)
         .order('created_at', { ascending: false });
 
@@ -202,7 +207,7 @@ const FinancePage: React.FC = () => {
       const { data } = await supabase
         .from('bills')
         .select('*')
-        .eq('user_id', user.id)
+        .in('user_id', circleIds(user.id, profile?.partnerId))
         .eq('finance_scope', financeScope)
         .order('due_date', { ascending: true });
 
@@ -228,12 +233,19 @@ const FinancePage: React.FC = () => {
 
   const fetchReceivables = async () => {
     try {
-      const { data } = await supabase
+      const query = supabase
         .from('receivables')
         .select('*')
-        .eq('user_id', user.id)
-        .order('due_date', { ascending: true });
+        .eq('user_id', user.id);
 
+      if (financeScope === 'pj') {
+        query.or(`finance_scope.eq.pj,finance_scope.is.null`);
+      } else {
+        query.eq('finance_scope', 'pf');
+      }
+
+      const { data, error } = await query.order('due_date', { ascending: true });
+      if (error) throw error;
       if (data) setReceivables(data);
     } catch (error) {
       console.error('Error fetching receivables:', error);
@@ -289,7 +301,7 @@ const FinancePage: React.FC = () => {
         amount: '',
         category: CATEGORIES[0],
         type: 'expense',
-        date: new Date().toISOString().split('T')[0],
+        date: toLocalDateStr(),
         card_id: '',
         project_id: '',
         classification: 'Despesa'
@@ -403,7 +415,7 @@ const FinancePage: React.FC = () => {
       setNewInvoice({
         invoice_number: '', description: '', amount: '',
         type: 'emitida', status: 'pendente',
-        issue_date: new Date().toISOString().split('T')[0], client_name: ''
+        issue_date: toLocalDateStr(), client_name: ''
       });
       setIsInvoiceModalOpen(false);
       fetchInvoices();
@@ -426,7 +438,8 @@ const FinancePage: React.FC = () => {
         description: newReceivable.description,
         amount: parseFloat(newReceivable.amount),
         due_date: newReceivable.due_date,
-        status: 'pending'
+        status: 'pending',
+        finance_scope: financeScope
       }]);
 
       if (error) throw error;
@@ -487,7 +500,7 @@ const FinancePage: React.FC = () => {
         amount: bill.amount,
         category: bill.category,
         type: 'expense',
-        date: new Date().toISOString().split('T')[0],
+        date: toLocalDateStr(),
         finance_scope: bill.finance_scope
       };
 
@@ -549,15 +562,18 @@ const FinancePage: React.FC = () => {
         .eq('id', rec.id);
       if (updateError) throw updateError;
 
-      // Auto-create income transaction
+      const targetScope = rec.finance_scope || 'pj';
+      const targetCategory = targetScope === 'pj' ? 'Vendas' : 'Income';
+
+      // Auto-create income transaction with correct scope and category
       const { error: txError } = await supabase.from('transactions').insert([{
         user_id: user.id,
         description: `Recebido: ${rec.description} (${rec.client_name})`,
         amount: rec.amount,
-        category: 'Vendas',
+        category: targetCategory,
         type: 'income',
-        date: new Date().toISOString().split('T')[0],
-        finance_scope: 'pj'
+        date: toLocalDateStr(),
+        finance_scope: targetScope
       }]);
       if (txError) throw txError;
 
@@ -593,7 +609,7 @@ const FinancePage: React.FC = () => {
         amount: tax.amount,
         category: 'Impostos',
         type: 'expense',
-        date: new Date().toISOString().split('T')[0],
+        date: toLocalDateStr(),
         finance_scope: 'pj'
       }]);
       if (txError) throw txError;
@@ -632,21 +648,21 @@ const FinancePage: React.FC = () => {
 
   const getBillDisplayStatus = (bill: Bill): 'paid' | 'pending' | 'overdue' => {
     if (bill.status === 'paid') return 'paid';
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalDateStr();
     if (bill.due_date < today && bill.status === 'pending') return 'overdue';
     return 'pending';
   };
 
   const getReceivableDisplayStatus = (rec: Receivable): 'received' | 'pending' | 'overdue' => {
     if (rec.status === 'received') return 'received';
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalDateStr();
     if (rec.due_date < today && rec.status === 'pending') return 'overdue';
     return 'pending';
   };
 
   const getTaxDisplayStatus = (tax: Tax): 'paid' | 'pending' | 'overdue' => {
     if (tax.status === 'paid') return 'paid';
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalDateStr();
     if (tax.due_date < today && tax.status === 'pending') return 'overdue';
     return 'pending';
   };
@@ -706,8 +722,8 @@ const FinancePage: React.FC = () => {
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 7);
 
-    const weekStartStr = weekStart.toISOString().split('T')[0];
-    const weekEndStr = weekEnd.toISOString().split('T')[0];
+    const weekStartStr = toLocalDateStr(weekStart);
+    const weekEndStr = toLocalDateStr(weekEnd);
 
     const billsDue = bills
       .filter(b => b.status === 'pending' && b.due_date >= weekStartStr && b.due_date < weekEndStr)
@@ -960,75 +976,7 @@ const FinancePage: React.FC = () => {
                   );
                 })}
               </div>
-            )}
-          </div>
-
-          {/* Contas a Receber */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold flex items-center gap-2">
-                <Users size={20} className="text-[#c1ff72]" />
-                Contas a Receber
-                {pendingReceivablesTotal > 0 && (
-                  <span className="text-sm font-normal opacity-40 ml-2">
-                    R$ {pendingReceivablesTotal.toFixed(2)} pendente
-                  </span>
-                )}
-              </h3>
-              <Button size="sm" onClick={() => setIsReceivableModalOpen(true)}>
-                <Plus size={16} /> Nova Cobrança
-              </Button>
-            </div>
-
-            {receivables.length === 0 ? (
-              <Card className="p-8 text-center bg-[var(--input-bg)]">
-                <Users size={40} className="mx-auto opacity-20 mb-3" />
-                <p className="opacity-40 text-sm">Nenhuma conta a receber cadastrada.</p>
-              </Card>
-            ) : (
-              <div className="space-y-3">
-                {receivables.map(rec => {
-                  const displayStatus = getReceivableDisplayStatus(rec);
-                  const config = statusConfig[displayStatus];
-                  return (
-                    <Card key={rec.id} className={`p-4 border ${config.bg} flex items-center justify-between gap-4`}>
-                      <div className="flex items-center gap-4 flex-1 min-w-0">
-                        <div className="shrink-0">{config.icon}</div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-bold text-sm truncate">{rec.description}</p>
-                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${config.badge}`}>
-                              {config.label}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3 mt-1 text-xs opacity-40">
-                            <span>{rec.client_name}</span>
-                            <span>Vence: {rec.due_date}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        <p className="text-lg font-bold">R$ {Number(rec.amount).toFixed(2)}</p>
-                        {displayStatus !== 'received' && (
-                          <button
-                            onClick={() => handleMarkReceivableReceived(rec)}
-                            className="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider"
-                          >
-                            Receber
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleDeleteReceivable(rec.id)}
-                          className="p-2 rounded-xl bg-[var(--foreground)]/5 hover:bg-red-500/20 opacity-30 hover:opacity-100 transition-all"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
+              )}
           </div>
 
           {/* Controle de Impostos */}
@@ -1281,6 +1229,74 @@ const FinancePage: React.FC = () => {
         )}
       </div>
 
+      {/* Contas a Receber Section */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-bold flex items-center gap-2">
+            <Users size={20} className={financeScope === 'pj' ? 'text-[#8fb0bc]' : 'text-[#c1ff72]'} />
+            Contas a Receber
+            {pendingReceivablesTotal > 0 && (
+              <span className="text-sm font-normal opacity-40 ml-2">
+                R$ {pendingReceivablesTotal.toFixed(2)} pendente
+              </span>
+            )}
+          </h3>
+          <Button size="sm" onClick={() => setIsReceivableModalOpen(true)}>
+            <Plus size={16} /> Nova Cobrança
+          </Button>
+        </div>
+
+        {receivables.length === 0 ? (
+          <Card className="p-8 text-center bg-[var(--input-bg)]">
+            <Users size={40} className="mx-auto opacity-20 mb-3" />
+            <p className="opacity-40 text-sm">Nenhuma conta a receber cadastrada.</p>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {receivables.map(rec => {
+              const displayStatus = getReceivableDisplayStatus(rec);
+              const config = statusConfig[displayStatus];
+              return (
+                <Card key={rec.id} className={`p-4 border ${config.bg} flex items-center justify-between gap-4`}>
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className="shrink-0">{config.icon}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-bold text-sm truncate">{rec.description}</p>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${config.badge}`}>
+                          {config.label}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 mt-1 text-xs opacity-40">
+                        <span>{rec.client_name}</span>
+                        <span>Vence: {rec.due_date}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <p className="text-lg font-bold">R$ {Number(rec.amount).toFixed(2)}</p>
+                    {displayStatus !== 'received' && (
+                      <button
+                        onClick={() => handleMarkReceivableReceived(rec)}
+                        className="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider"
+                      >
+                        Receber
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleDeleteReceivable(rec.id)}
+                      className="p-2 rounded-xl bg-[var(--foreground)]/5 hover:bg-red-500/20 opacity-30 hover:opacity-100 transition-all"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* Charts + Transactions */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-4">
@@ -1317,10 +1333,48 @@ const FinancePage: React.FC = () => {
           <Card className="p-8">
             <div className="flex justify-between items-center mb-10">
               <h3 className="text-xl font-bold">Transações Recentes</h3>
-              <div className="flex gap-2">
-                <button className="bg-white/5 border border-white/10 px-6 py-2 rounded-full text-xs font-bold flex items-center gap-2 hover:bg-white/10 transition-colors">
-                  <Download size={14} /> Exportar
+              <div className="relative">
+                <button
+                  onClick={() => setExportMenuOpen(o => !o)}
+                  disabled={transactions.length === 0 || exportingPdf}
+                  className="bg-[var(--foreground)]/5 border border-[var(--card-border)] px-6 py-2 rounded-full text-xs font-bold flex items-center gap-2 hover:bg-[var(--foreground)]/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {exportingPdf ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                  Exportar
                 </button>
+                {exportMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setExportMenuOpen(false)} />
+                    <div className="absolute right-0 mt-2 w-44 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl shadow-xl z-20 overflow-hidden">
+                      <button
+                        onClick={() => {
+                          exportTransactionsCSV({ scope: financeScope, transactions, totalBalance, incomeMonth, expenseMonth, categoryData, getCardName });
+                          setExportMenuOpen(false);
+                        }}
+                        className="w-full text-left px-4 py-3 text-xs font-bold hover:bg-[var(--foreground)]/5 transition-colors flex items-center gap-2"
+                      >
+                        <FileText size={14} /> Planilha (CSV)
+                      </button>
+                      <button
+                        onClick={async () => {
+                          setExportMenuOpen(false);
+                          setExportingPdf(true);
+                          try {
+                            await exportFinancePDF({ scope: financeScope, transactions, totalBalance, incomeMonth, expenseMonth, categoryData, getCardName });
+                          } catch (e) {
+                            console.error('Erro ao gerar PDF:', e);
+                            alert('Não foi possível gerar o PDF.');
+                          } finally {
+                            setExportingPdf(false);
+                          }
+                        }}
+                        className="w-full text-left px-4 py-3 text-xs font-bold hover:bg-[var(--foreground)]/5 transition-colors flex items-center gap-2 border-t border-[var(--card-border)]"
+                      >
+                        <Download size={14} /> Relatório (PDF)
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
             <div className="overflow-x-auto">
@@ -1714,28 +1768,28 @@ const FinancePage: React.FC = () => {
         </div>
       )}
 
-      {/* New Receivable Modal (PJ) */}
+      {/* New Receivable Modal */}
       {isReceivableModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md p-6 border-[#c1ff72]/20 relative">
+          <Card className={`w-full max-w-md p-6 border ${financeScope === 'pj' ? 'border-[#8fb0bc]/20' : 'border-[#c1ff72]/20'} relative`}>
             <button onClick={() => setIsReceivableModalOpen(false)} className="absolute top-4 right-4 opacity-40 hover:opacity-100 transition-all">
               <X size={20} />
             </button>
             <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-              <Users size={20} className="text-[#c1ff72]" /> Nova Conta a Receber
+              <Users size={20} className={financeScope === 'pj' ? 'text-[#8fb0bc]' : 'text-[#c1ff72]'} /> Nova Conta a Receber
             </h3>
             <form onSubmit={handleCreateReceivable} className="space-y-4">
               <div>
-                <label className={labelClass}>Cliente</label>
+                <label className={labelClass}>{financeScope === 'pj' ? 'Cliente' : 'Origem / Pagador'}</label>
                 <input type="text" value={newReceivable.client_name}
                   onChange={e => setNewReceivable({ ...newReceivable, client_name: e.target.value })}
-                  className={inputClass} placeholder="Nome do cliente" required />
+                  className={inputClass} placeholder={financeScope === 'pj' ? 'Nome do cliente' : 'Ex: Empresa X, Amigo...'} required />
               </div>
               <div>
                 <label className={labelClass}>Descrição</label>
                 <input type="text" value={newReceivable.description}
                   onChange={e => setNewReceivable({ ...newReceivable, description: e.target.value })}
-                  className={inputClass} placeholder="Ex: Projeto website, Consultoria..." required />
+                  className={inputClass} placeholder={financeScope === 'pj' ? 'Ex: Projeto website, Consultoria...' : 'Ex: Reembolso, Venda de item...'} required />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -1752,7 +1806,9 @@ const FinancePage: React.FC = () => {
                 </div>
               </div>
               <button type="submit" disabled={submittingReceivable}
-                className="w-full bg-[#c1ff72] text-black font-bold py-4 rounded-xl mt-4 hover:bg-[#b0e666] transition-colors flex items-center justify-center gap-2">
+                className={`w-full text-black font-bold py-4 rounded-xl mt-4 transition-colors flex items-center justify-center gap-2 ${
+                  financeScope === 'pj' ? 'bg-[#8fb0bc] hover:bg-[#7da0ac]' : 'bg-[#c1ff72] hover:bg-[#b0e666]'
+                }`}>
                 {submittingReceivable ? <Loader2 size={18} className="animate-spin" /> : <><Users size={18} /> Adicionar Cobrança</>}
               </button>
             </form>

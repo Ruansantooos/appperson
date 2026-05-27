@@ -15,7 +15,21 @@
       "Bash(npx vite --open)",
       "Bash(supabase --version:*)",
       "Bash(npx supabase:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npm install)",
+      "Bash(npm run build:*)",
+      "Bash(git config:*)",
+      "Bash(npx vercel:*)",
+      "Bash(printf:*)",
+      "Bash(git checkout:*)",
+      "Bash(npm install:*)",
+      "Bash(git clone:*)",
+      "Bash(start:*)",
+      "WebFetch(domain:localhost)",
+      "Bash(netstat:*)",
+      "Bash(wmic process:*)",
+      "Bash(tasklist:*)",
+      "Bash(claude plugin install:*)"
     ]
   }
 }

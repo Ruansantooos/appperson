@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { CycleLog, CycleSettings } from '../types';
 import { X, Droplets, Save, ChevronLeft, ChevronRight, Activity, Calendar as CalendarIcon, Settings2, Info } from 'lucide-react';
+import { toLocalDateStr } from '../lib/date';
 
 // --- Constants ---
 const SYMPTOMS = ['Cólica', 'Dor de cabeça', 'Inchaço', 'Sensibilidade', 'Acne', 'Fadiga', 'Insônia', 'Náusea'];
@@ -52,8 +53,7 @@ function addDays(date: Date, days: number): Date {
 
 function formatDate(date: Date): string {
   if (!date) return '';
-  const d = new Date(date);
-  return d.toISOString().split('T')[0];
+  return toLocalDateStr(new Date(date));
 }
 
 function parseLocalDate(str: string): Date {

@@ -34,15 +34,14 @@ const Sidebar: React.FC = () => {
     }
     return items;
   }, [profile?.gender]);
-
   return (
-    <aside className="hidden lg:flex flex-col w-20 bg-[var(--sidebar-bg)] h-screen sticky top-0 py-8 items-center justify-between border-r border-[var(--card-border)] transition-colors duration-300">
+    <aside className="hidden lg:flex flex-col w-20 bg-[var(--sidebar-bg)] h-screen sticky top-0 py-8 items-center justify-between border-r border-[var(--card-border)] backdrop-blur-xl transition-all duration-300">
       <div className="flex flex-col items-center gap-10">
         <div className="w-12 h-12 bg-[#c1ff72]/5 rounded-xl flex items-center justify-center mb-4">
           <Logo size={28} />
         </div>
 
-        <nav className="flex flex-col gap-6 bg-[var(--input-bg)] p-3 rounded-[32px] border border-[var(--card-border)]">
+        <nav className="flex flex-col gap-6 bg-[var(--input-bg)] p-3 rounded-[32px] border border-[var(--card-border)] backdrop-blur-md">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (

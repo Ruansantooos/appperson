@@ -1,43 +1,13 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Logo } from '../components/shared/Logo';
-import { redirectToCheckout, STRIPE_PRO_LINK, STRIPE_ELITE_LINK } from '../lib/stripe';
+import { redirectToCheckout, PLANS } from '../lib/stripe';
 import { Check, Crown, LogOut } from 'lucide-react';
 
 const Paywall: React.FC = () => {
     const { user, signOut } = useAuth();
     const email = user?.email || '';
-
-    const plans = [
-        {
-            name: 'Pro',
-            price: 'R$ 19,99/mês',
-            highlight: false,
-            link: STRIPE_PRO_LINK,
-            perks: [
-                'Dashboard inteligente',
-                'Treinos e nutrição ilimitados',
-                'Controle financeiro avançado',
-                'Hábitos ilimitados',
-                'Projetos e tarefas sem limites',
-                'Calendário integrado',
-                'Relatórios e metas',
-                'Sem anúncios',
-            ],
-        },
-        {
-            name: 'Elite',
-            price: 'R$ 39,99/mês',
-            highlight: true,
-            link: STRIPE_ELITE_LINK,
-            perks: [
-                'Tudo do Pro',
-                'Assistente via WhatsApp',
-                'Lembretes personalizados',
-                'Suporte VIP',
-            ],
-        },
-    ];
+    const plans = PLANS;
 
     return (
         <div className="flex min-h-screen bg-[#0c0c0c] items-center justify-center p-4">
@@ -70,7 +40,9 @@ const Paywall: React.FC = () => {
                                 </div>
                             )}
                             <div className="text-lg font-semibold text-white">{plan.name}</div>
-                            <div className="mt-2 font-mono text-2xl text-[#c1ff72]">{plan.price}</div>
+                            <div className="text-xs text-white/40 mt-0.5">{plan.tagline}</div>
+                            <div className="mt-3 font-mono text-2xl text-[#c1ff72]">{plan.priceLabel}</div>
+                            <div className="text-xs text-white/40 mt-1">{plan.priceSub}</div>
                             <div className="mt-6 space-y-3 text-sm text-white/70">
                                 {plan.perks.map((perk) => (
                                     <div key={perk} className="flex items-start gap-2">

@@ -23,17 +23,17 @@ const pricing = [
   {
     name: "Free",
     slug: "free",
-    price: "Grátis",
+    price: "R$ 0,00",
     highlight: false,
     perks: [
-      "Dashboard básico",
-      "Até 3 treinos salvos",
-      "Controle financeiro básico",
-      "Até 5 hábitos",
-      "Até 10 tarefas",
-      "Calendário integrado",
+      "Um gostinho da plataforma",
+      "❌ Zero integração com IA pelo WhatsApp",
+      "❌ Zero acesso a relatórios de performance",
+      "Limite de apenas 2 tarefas ativas",
+      "Limite de apenas 1 hábito rastreável",
+      "Funções financeiras e de calendário bloqueadas",
     ],
-    cta: "Criar Conta Grátis",
+    cta: "Testar a versão limitada",
   },
   {
     name: "Pro",
@@ -56,7 +56,7 @@ const pricing = [
     name: "Elite",
     slug: "elite",
     price: "R$ 39,99/mês",
-    highlight: true,
+    highlight: false,
     perks: [
       "Tudo do Pro",
       "Assistente via WhatsApp",
@@ -64,6 +64,19 @@ const pricing = [
       "Suporte VIP",
     ],
     cta: "Para quem não tem tempo a perder",
+  },
+  {
+    name: "Fundador",
+    slug: "lifetime",
+    price: "R$ 79,00",
+    highlight: true,
+    perks: [
+      "Acesso vitalício a TODAS as features do plano Elite",
+      "O fim das assinaturas: você nunca mais vai pagar mensalidade",
+      "Todas as atualizações futuras e novas integrações da plataforma",
+      "⚠️ Vagas estritamente limitadas",
+    ],
+    cta: "Quero garantir meu Acesso Vitalício agora",
   },
 ];
 
@@ -227,7 +240,7 @@ const Hero = memo(function Hero() {
             <motion.h1 variants={item} className="text-6xl font-black italic tracking-tighter text-[#c1ff72] md:text-8xl">Comece a dominá-lo.</motion.h1>
           </div>
           <motion.p variants={item} className="max-w-[45ch] text-lg text-white/40">
-            Corelys coloca sua rotina no trilho em minutos. Você vê o que importa, executa e acompanha o resultado.
+            Chega de perder tempo pulando entre 5 aplicativos diferentes. O Corelys é o único hub que você precisa para dominar suas tarefas, finanças, treinos e hábitos. Centralize o caos da rotina em um só lugar.
           </motion.p>
           <motion.div variants={item} className="flex flex-wrap items-center gap-4">
             <MagneticButton label="Desbloquear Meus 3 Dias Grátis" href="#/register" />
@@ -474,7 +487,7 @@ const PricingSection = memo(function PricingSection() {
         </div>
         <h2 className="mt-4 text-3xl md:text-4xl font-semibold text-white">Escolha seu ritmo</h2>
       </div>
-      <motion.div variants={container} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }} className="mx-auto grid max-w-[1100px] gap-6 md:grid-cols-3">
+      <motion.div variants={container} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }} className="mx-auto grid max-w-[1200px] gap-6 md:grid-cols-2 lg:grid-cols-4">
         {pricing.map((plan) => (
           <motion.div
             key={plan.name}

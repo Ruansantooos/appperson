@@ -41,3 +41,17 @@ build/
 out/
 
 .vercel
+
+# Arquivos de trabalho / dumps de API (scratch — não versionar)
+response*.json
+activate*.json
+*_response.json
+git_history_index.txt
+old_index.html
+imagem
+print/
+
+# Scripts e workflows com segredos (service_role key embutida) — NUNCA versionar
+fix_tools.js
+workflow_assistente_corelys.json
+workflow_api_payload.json

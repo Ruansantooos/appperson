@@ -5,6 +5,7 @@ import { Plus, Zap, Award, Flame, Check, MoreHorizontal, ArrowUpRight, Edit2, Tr
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Habit } from '../types';
+import { toLocalDateStr, daysAgo } from '../lib/date';
 
 const HabitsPage: React.FC = () => {
   const { user } = useAuth();
@@ -43,14 +44,11 @@ const HabitsPage: React.FC = () => {
         setHabits(mappedHabits);
 
         // Fetch logs for history visualization (last 28 days)
-        const twentyEightDaysAgo = new Date();
-        twentyEightDaysAgo.setDate(twentyEightDaysAgo.getDate() - 28);
-
         const { data: logsData } = await supabase
           .from('habit_logs')
           .select('habit_id, date')
           .eq('user_id', user.id)
-          .gte('date', twentyEightDaysAgo.toISOString().split('T')[0]);
+          .gte('date', daysAgo(28));
 
         if (logsData) {
           const logsMap: Record<string, string[]> = {};
@@ -69,7 +67,7 @@ const HabitsPage: React.FC = () => {
   };
 
   const toggleHabit = async (id: string, completed: boolean) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalDateStr();
 
     // Optimistic update
     setHabits(prev => prev.map(h => h.id === id ? {
@@ -293,7 +291,7 @@ const HabitsPage: React.FC = () => {
                 {Array.from({ length: 28 }).map((_, i) => {
                   const date = new Date();
                   date.setDate(date.getDate() - (27 - i));
-                  const dateStr = date.toISOString().split('T')[0];
+                  const dateStr = toLocalDateStr(date);
                   const isLogged = habitLogs[habit.id]?.includes(dateStr);
 
                   return (

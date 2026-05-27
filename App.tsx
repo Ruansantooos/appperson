@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { HashRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Sidebar from './components/shared/Sidebar';
 import Header from './components/shared/Header';
@@ -8,23 +8,29 @@ import ErrorBoundary from './components/shared/ErrorBoundary';
 // Auth
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import LandingPage from './pages/LandingPage';
 
-// Pages
-import Dashboard from './pages/Dashboard';
-import TasksPage from './pages/Tasks';
-import ProjectsPage from './pages/Projects';
-import FinancePage from './pages/Finance';
-import HabitsPage from './pages/Habits';
-import CalendarPage from './pages/Calendar';
-import SettingsPage from './pages/Settings';
-import GymPage from './pages/Gym';
-import Onboarding from './pages/Onboarding';
-import ProfilePage from './pages/Profile';
-import MenstrualCyclePage from './pages/MenstrualCycle';
-import Paywall from './pages/Paywall';
+// Pages — carregadas sob demanda (code splitting) para reduzir o bundle inicial
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const TasksPage = lazy(() => import('./pages/Tasks'));
+const ProjectsPage = lazy(() => import('./pages/Projects'));
+const FinancePage = lazy(() => import('./pages/Finance'));
+const HabitsPage = lazy(() => import('./pages/Habits'));
+const CalendarPage = lazy(() => import('./pages/Calendar'));
+const SettingsPage = lazy(() => import('./pages/Settings'));
+const GymPage = lazy(() => import('./pages/Gym'));
+const Onboarding = lazy(() => import('./pages/Onboarding'));
+const ProfilePage = lazy(() => import('./pages/Profile'));
+const MenstrualCyclePage = lazy(() => import('./pages/MenstrualCycle'));
+const Paywall = lazy(() => import('./pages/Paywall'));
+
+const PageLoader: React.FC = () => (
+  <div className="min-h-screen bg-[var(--background)] flex items-center justify-center text-[#c1ff72]">
+    Loading...
+  </div>
+);
 
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
   const { user, profile, loading } = useAuth();
@@ -68,13 +74,15 @@ const AppContent: React.FC = () => {
 
   if (isStandalonePage) {
     return (
-      <Routes>
-        <Route path="/" element={<RootRoute />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
-        <Route path="/paywall" element={<Paywall />} />
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/" element={<RootRoute />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+          <Route path="/paywall" element={<Paywall />} />
+        </Routes>
+      </Suspense>
     )
   }
 
@@ -87,6 +95,7 @@ const AppContent: React.FC = () => {
 
         <div className="flex-1 px-4 lg:px-10 max-w-[1600px] w-full mx-auto pt-2 pb-24 lg:pb-10">
           <ErrorBoundary pageName="App">
+            <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/dashboard" element={<ProtectedRoute><ErrorBoundary pageName="Dashboard"><Dashboard /></ErrorBoundary></ProtectedRoute>} />
               <Route path="/tasks" element={<ProtectedRoute><ErrorBoundary pageName="Tasks"><TasksPage /></ErrorBoundary></ProtectedRoute>} />
@@ -100,6 +109,7 @@ const AppContent: React.FC = () => {
               <Route path="/cycle" element={<ProtectedRoute><ErrorBoundary pageName="MenstrualCycle"><MenstrualCyclePage /></ErrorBoundary></ProtectedRoute>} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
+            </Suspense>
           </ErrorBoundary>
         </div>
       </main>

@@ -3,14 +3,14 @@ import React from 'react';
 
 export const Card: React.FC<{ children: React.ReactNode; className?: string; variant?: 'dark' | 'peach' | 'blue' | 'orange' }> = ({ children, className, variant = 'dark' }) => {
   const variants = {
-    dark: "bg-[var(--card-bg)] border border-[var(--card-border)]",
-    peach: "bg-[#d8b4a6] text-[#1a1a1a]",
-    blue: "bg-[#8fb0bc] text-[#1a1a1a]",
-    orange: "bg-[#e6a06e] text-[#1a1a1a]",
+    dark: "bg-[var(--card-bg)] border border-[var(--card-border)] backdrop-blur-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.06),0_8px_32px_rgba(0,0,0,0.15)]",
+    peach: "bg-[#d8b4a6]/20 text-[#5c3e32] dark:text-[#f3d7ce] border border-[#d8b4a6]/45 dark:border-[#d8b4a6]/25 backdrop-blur-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.06),0_8px_32px_rgba(0,0,0,0.12)]",
+    blue: "bg-[#8fb0bc]/20 text-[#2c4752] dark:text-[#cde5ee] border border-[#8fb0bc]/45 dark:border-[#8fb0bc]/25 backdrop-blur-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.06),0_8px_32px_rgba(0,0,0,0.12)]",
+    orange: "bg-[#e6a06e]/20 text-[#6b4224] dark:text-[#ffd6b8] border border-[#e6a06e]/45 dark:border-[#e6a06e]/25 backdrop-blur-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.06),0_8px_32px_rgba(0,0,0,0.12)]",
   };
 
   return (
-    <div className={`${variants[variant]} rounded-[28px] overflow-hidden transition-all ${className}`}>
+    <div className={`${variants[variant]} rounded-[28px] overflow-hidden transition-all duration-300 hover:shadow-lg ${className}`}>
       {children}
     </div>
   );
@@ -19,7 +19,7 @@ export const Card: React.FC<{ children: React.ReactNode; className?: string; var
 export const ButtonCircle: React.FC<{ icon: React.ReactNode; className?: string; onClick?: () => void }> = ({ icon, className, onClick }) => (
   <button
     onClick={onClick}
-    className={`w-10 h-10 rounded-full bg-[#c1ff72] text-black flex items-center justify-center hover:scale-105 transition-transform active:scale-95 ${className}`}
+    className={`w-10 h-10 rounded-full bg-[#c1ff72] text-black flex items-center justify-center hover:scale-105 hover:shadow-[0_0_15px_rgba(193,255,114,0.4)] transition-all active:scale-95 ${className}`}
   >
     {icon}
   </button>
@@ -35,9 +35,9 @@ export const Button: React.FC<{
   disabled?: boolean;
 }> = ({ children, className, variant = 'primary', size = 'md', onClick, disabled }) => {
   const variants = {
-    primary: "bg-[#c1ff72] text-black hover:bg-[#b0f061]",
+    primary: "bg-[#c1ff72] text-black hover:bg-[#b0f061] hover:shadow-[0_0_20px_rgba(193,255,114,0.4)]",
     secondary: "bg-purple-600 text-white hover:bg-purple-700 shadow-purple-500/20",
-    outline: "bg-transparent border border-[var(--card-border)] text-[var(--foreground)] hover:bg-[var(--input-bg)]",
+    outline: "bg-transparent border border-[var(--card-border)] text-[var(--foreground)] hover:bg-[var(--input-bg)] hover:border-[var(--foreground)]/25",
     danger: "bg-red-600 text-white hover:bg-red-700",
   };
 
@@ -61,7 +61,7 @@ export const Button: React.FC<{
 // Added missing Input component used by Tasks and Settings pages
 export const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = ({ className, ...props }) => (
   <input
-    className={`w-full px-4 py-2 bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl text-[var(--foreground)] placeholder:text-[var(--foreground)]/20 focus:ring-2 focus:ring-[#c1ff72] focus:outline-none transition-all ${className}`}
+    className={`w-full px-4 py-2.5 bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl text-[var(--foreground)] placeholder:text-[var(--foreground)]/30 focus:ring-2 focus:ring-[#c1ff72]/50 focus:border-[#c1ff72]/50 focus:outline-none transition-all backdrop-blur-md ${className}`}
     {...props}
   />
 );

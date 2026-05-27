@@ -3,6 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Task, CalendarEvent } from '../types';
+import { circleIds } from '../lib/couple';
 import { Card, Button, Badge, ButtonCircle } from '../components/ui/LayoutComponents';
 import {
   ChevronLeft,
@@ -22,7 +23,7 @@ import {
 // No mock-data imports needed
 
 const CalendarPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date()); // Use current date
   const [selectedDay, setSelectedDay] = useState<number>(currentDate.getDate());
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -54,13 +55,13 @@ const CalendarPage: React.FC = () => {
     if (!user) return;
     fetchTasks();
     fetchEvents();
-  }, [user]);
+  }, [user, profile?.partnerId]);
 
   const fetchTasks = async () => {
     const { data } = await supabase
       .from('tasks')
       .select('*')
-      .eq('user_id', user.id);
+      .in('user_id', circleIds(user.id, profile?.partnerId));
     if (data) {
       const mappedTasks = data.map((t: any) => ({
         ...t,
@@ -75,7 +76,7 @@ const CalendarPage: React.FC = () => {
     const { data } = await supabase
       .from('calendar_events')
       .select('*')
-      .eq('user_id', user.id);
+      .in('user_id', circleIds(user.id, profile?.partnerId));
 
     if (data) {
       const mappedEvents = data.map((e: any) => ({

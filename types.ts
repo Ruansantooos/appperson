@@ -188,10 +188,11 @@ export interface Profile {
   height?: number;
   activityLevel?: string;
   goal?: string;
-  plan?: 'free' | 'pro' | 'elite';
+  plan?: 'free' | 'individual' | 'casal'; // 'free' = sem assinatura (trial/paywall)
   plan_expires_at?: string;
   stripe_customer_id?: string;
   stripe_subscription_id?: string;
+  partnerId?: string | null;
 }
 
 // PJ Types
@@ -217,6 +218,7 @@ export interface Receivable {
   due_date: string;
   status: 'pending' | 'received' | 'overdue';
   created_at?: string;
+  finance_scope?: 'pf' | 'pj';
 }
 
 export interface Tax {

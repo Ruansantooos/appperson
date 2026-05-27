@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, Settings } from 'lucide-react';
 
 const Header: React.FC = () => {
   const location = useLocation();
@@ -28,9 +28,18 @@ const Header: React.FC = () => {
         <h2 className="text-[10px] font-bold text-[#c1ff72] uppercase tracking-[0.3em] mb-1 opacity-50">Corelys / {getPageTitle(location.pathname)}</h2>
         <h1 className="text-xl lg:text-2xl font-bold tracking-tight">Visão Geral</h1>
       </div>
+      {/* Mobile: engrenagem de configurações */}
+      <Link
+        to="/settings"
+        className="lg:hidden p-2.5 rounded-xl bg-[var(--input-bg)] border border-[var(--card-border)] text-[#c1ff72] hover:scale-105 transition-all"
+        aria-label="Configurações"
+      >
+        <Settings size={20} />
+      </Link>
+      {/* Desktop: alternar tema claro/escuro */}
       <button
         onClick={toggleTheme}
-        className="p-2.5 rounded-xl bg-[var(--input-bg)] border border-[var(--card-border)] text-[var(--foreground)] hover:scale-105 transition-all text-[#c1ff72]"
+        className="hidden lg:flex p-2.5 rounded-xl bg-[var(--input-bg)] border border-[var(--card-border)] text-[var(--foreground)] hover:scale-105 transition-all text-[#c1ff72]"
       >
         {theme === 'light' ? <Moon size={20} fill="currentColor" /> : <Sun size={20} fill="currentColor" />}
       </button>
