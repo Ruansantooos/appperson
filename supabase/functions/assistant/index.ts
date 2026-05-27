@@ -44,6 +44,44 @@ function dayBoundsISO(now: Date): [string, string] {
   const e = new Date(now); e.setHours(23, 59, 59, 999);
   return [s.toISOString(), e.toISOString()];
 }
+const parseCleanAmount = (val: string | number): number => {
+  if (typeof val === 'number') return val;
+  if (!val) return 0;
+  
+  let str = String(val).trim();
+  
+  if (!str.includes('.') && !str.includes(',')) {
+    return parseFloat(str) || 0;
+  }
+  
+  if (str.includes('.') && str.includes(',')) {
+    const dotIdx = str.indexOf('.');
+    const commaIdx = str.indexOf(',');
+    if (commaIdx > dotIdx) {
+      str = str.replace(/\./g, '').replace(',', '.');
+    } else {
+      str = str.replace(/,/g, '');
+    }
+    return parseFloat(str) || 0;
+  }
+  
+  if (str.includes(',') && !str.includes('.')) {
+    str = str.replace(',', '.');
+    return parseFloat(str) || 0;
+  }
+  
+  if (str.includes('.') && !str.includes(',')) {
+    const parts = str.split('.');
+    const lastPart = parts[parts.length - 1];
+    if (lastPart.length === 3) {
+      str = str.replace(/\./g, '');
+    }
+    return parseFloat(str) || 0;
+  }
+  
+  return parseFloat(str) || 0;
+};
+
 const fmtD = (iso: string) => new Date(iso).toLocaleDateString('pt-BR');
 const fmtT = (iso: string) =>
   new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -339,7 +377,7 @@ const TOOLS: Tool[] = [
       escopo: str('pf ou pj'), data: str('Data YYYY-MM-DD'),
     }, ['descricao', 'valor']),
     handler: async (i, sb, userId, ctx) => {
-      const amt = Math.abs(parseFloat(i.valor));
+      const amt = Math.abs(parseCleanAmount(i.valor));
       const { error } = await sb.from('transactions').insert({
         user_id: userId, description: i.descricao, amount: amt, type: 'expense',
         category: i.categoria || 'Outros', finance_scope: i.escopo || 'pf', date: i.data || ctx.today,
@@ -356,7 +394,7 @@ const TOOLS: Tool[] = [
       escopo: str('pf ou pj'), data: str('Data YYYY-MM-DD'),
     }, ['descricao', 'valor']),
     handler: async (i, sb, userId, ctx) => {
-      const amt = Math.abs(parseFloat(i.valor));
+      const amt = Math.abs(parseCleanAmount(i.valor));
       const { error } = await sb.from('transactions').insert({
         user_id: userId, description: i.descricao, amount: amt, type: 'income',
         category: i.categoria || 'Outros', finance_scope: i.escopo || 'pf', date: i.data || ctx.today,

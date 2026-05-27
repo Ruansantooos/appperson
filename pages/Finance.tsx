@@ -50,6 +50,44 @@ const CARD_GRADIENTS = [
 const CATEGORIES_PF = ['Food', 'Work', 'Housing', 'Shopping', 'Entertainment', 'Transport', 'Utilities', 'Health', 'Education', 'Income', 'Others'];
 const CATEGORIES_PJ = ['Fornecedores', 'Folha de Pagamento', 'Marketing', 'Infraestrutura', 'Impostos', 'Pró-labore', 'Serviços', 'Vendas', 'Others'];
 
+const parseCleanAmount = (val: string | number): number => {
+  if (typeof val === 'number') return val;
+  if (!val) return 0;
+  
+  let str = val.trim();
+  
+  if (!str.includes('.') && !str.includes(',')) {
+    return parseFloat(str) || 0;
+  }
+  
+  if (str.includes('.') && str.includes(',')) {
+    const dotIdx = str.indexOf('.');
+    const commaIdx = str.indexOf(',');
+    if (commaIdx > dotIdx) {
+      str = str.replace(/\./g, '').replace(',', '.');
+    } else {
+      str = str.replace(/,/g, '');
+    }
+    return parseFloat(str) || 0;
+  }
+  
+  if (str.includes(',') && !str.includes('.')) {
+    str = str.replace(',', '.');
+    return parseFloat(str) || 0;
+  }
+  
+  if (str.includes('.') && !str.includes(',')) {
+    const parts = str.split('.');
+    const lastPart = parts[parts.length - 1];
+    if (lastPart.length === 3) {
+      str = str.replace(/\./g, '');
+    }
+    return parseFloat(str) || 0;
+  }
+  
+  return parseFloat(str) || 0;
+};
+
 const FinancePage: React.FC = () => {
   const { user, profile } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -276,7 +314,7 @@ const FinancePage: React.FC = () => {
       const insertData: any = {
         user_id: user.id,
         description: newTransaction.description,
-        amount: parseFloat(newTransaction.amount),
+        amount: parseCleanAmount(newTransaction.amount),
         category: newTransaction.category,
         type: newTransaction.type,
         date: newTransaction.date,
@@ -328,7 +366,7 @@ const FinancePage: React.FC = () => {
           last_four_digits: newCard.last_four_digits,
           expiration_date: newCard.expiration_date,
           card_type: newCard.card_type,
-          card_limit: parseFloat(newCard.card_limit) || 0,
+          card_limit: parseCleanAmount(newCard.card_limit) || 0,
           finance_scope: financeScope
         }
       ]);
@@ -360,7 +398,7 @@ const FinancePage: React.FC = () => {
       const insertData: any = {
         user_id: user.id,
         description: newBill.description,
-        amount: parseFloat(newBill.amount),
+        amount: parseCleanAmount(newBill.amount),
         due_date: newBill.due_date,
         recurrence: newBill.recurrence,
         category: newBill.category,
@@ -403,7 +441,7 @@ const FinancePage: React.FC = () => {
         user_id: user.id,
         invoice_number: newInvoice.invoice_number,
         description: newInvoice.description,
-        amount: parseFloat(newInvoice.amount),
+        amount: parseCleanAmount(newInvoice.amount),
         type: newInvoice.type,
         status: newInvoice.status,
         issue_date: newInvoice.issue_date,
@@ -436,7 +474,7 @@ const FinancePage: React.FC = () => {
         user_id: user.id,
         client_name: newReceivable.client_name,
         description: newReceivable.description,
-        amount: parseFloat(newReceivable.amount),
+        amount: parseCleanAmount(newReceivable.amount),
         due_date: newReceivable.due_date,
         status: 'pending',
         finance_scope: financeScope
@@ -464,7 +502,7 @@ const FinancePage: React.FC = () => {
         user_id: user.id,
         tax_name: newTax.tax_name,
         description: newTax.description || null,
-        amount: parseFloat(newTax.amount),
+        amount: parseCleanAmount(newTax.amount),
         due_date: newTax.due_date,
         recurrence: newTax.recurrence,
         status: 'pending'
