@@ -40,8 +40,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 goal: data.goal,
                 plan: data.plan,
                 plan_expires_at: data.plan_expires_at,
-                stripe_customer_id: data.stripe_customer_id,
-                stripe_subscription_id: data.stripe_subscription_id,
                 partnerId: data.partner_id ?? null,
             });
         }

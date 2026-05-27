@@ -4,7 +4,7 @@ import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Card } from '../components/ui/LayoutComponents';
 import { Lock, Mail, Loader2, AlertCircle } from 'lucide-react';
 import { Logo } from '../components/shared/Logo';
-import { redirectToCheckout, getPlan } from '../lib/stripe';
+import { redirectToCheckout, getPlan } from '../lib/ticto';
 
 const Login: React.FC = () => {
     const [searchParams] = useSearchParams();
@@ -29,7 +29,7 @@ const Login: React.FC = () => {
 
             // If user has a pending plan selection, redirect to checkout
             if (planParam) {
-                const plan = getPlan(planParam === 'casal' ? 'casal' : 'individual');
+                const plan = getPlan('individual');
                 if (plan) {
                     redirectToCheckout(plan.link, email);
                     return;

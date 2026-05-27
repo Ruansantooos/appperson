@@ -1,15 +1,17 @@
 
 import React from 'react';
 import { Card, Button, Input, Badge } from '../components/ui/LayoutComponents';
-import { User, Bell, CreditCard, ChevronRight, LogOut, Loader2, Users, Copy, Link2, Link2Off } from 'lucide-react';
+import { User, Bell, CreditCard, ChevronRight, LogOut, Loader2, Users, Copy, Link2, Link2Off, Sun, Moon, Palette } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { Profile } from '../types';
-import { redirectToCheckout, PLANS } from '../lib/stripe';
+import { redirectToCheckout, PLANS } from '../lib/ticto';
 import { getMyCoupleCode, linkCoupleByCode, unlinkPartner, fetchPartnerInfo } from '../lib/couple';
 
 const SettingsPage: React.FC = () => {
   const { user, profile: authProfile, signOut, refreshProfile } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [loading, setLoading] = React.useState(true);
 
   // ===== Modo casal (vínculo por código) =====
@@ -230,6 +232,7 @@ const SettingsPage: React.FC = () => {
   const tabs = [
     { label: 'Perfil', icon: User },
     { label: 'Casal', icon: Users },
+    { label: 'Aparência', icon: Palette },
     { label: 'Notificações', icon: Bell },
     { label: 'Faturamento', icon: CreditCard },
   ];
@@ -554,6 +557,88 @@ const SettingsPage: React.FC = () => {
               </div>
 
               <p className="text-xs opacity-20 mt-8">As notificações serão enviadas por email para {profile.email || user?.email}.</p>
+            </Card>
+          )}
+
+          {/* ===== APARÊNCIA TAB ===== */}
+          {activeTab === 'Aparência' && (
+            <Card className="p-10">
+              <h3 className="text-2xl font-bold mb-2">Aparência</h3>
+              <p className="opacity-40 text-sm mb-10">Escolha o tema visual do aplicativo.</p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {/* Opção Tema Claro */}
+                <button
+                  onClick={() => setTheme('light')}
+                  className={`relative overflow-hidden p-6 rounded-2xl border-2 text-left transition-all group cursor-pointer ${
+                    theme === 'light'
+                      ? 'border-[#c1ff72] bg-[#c1ff72]/5 shadow-[0_0_20px_rgba(193,255,114,0.15)] text-white'
+                      : 'border-white/5 bg-white/[0.01] hover:border-white/20'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`p-3 rounded-xl ${theme === 'light' ? 'bg-[#c1ff72] text-black' : 'bg-white/5 text-white/40'}`}>
+                      <Sun size={24} />
+                    </div>
+                    {theme === 'light' && (
+                      <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-[#c1ff72] text-black uppercase tracking-wider">
+                        Ativo
+                      </span>
+                    )}
+                  </div>
+                  <h4 className="font-bold text-lg mb-1">Tema Claro</h4>
+                  <p className="text-xs opacity-40 leading-relaxed">
+                    Visual leve e clean, ideal para ambientes bem iluminados.
+                  </p>
+                  
+                  {/* Visual mockup representation */}
+                  <div className="mt-6 h-24 rounded-xl bg-[#f3f6f5] border border-black/5 p-3 flex flex-col gap-2 overflow-hidden shadow-inner">
+                    <div className="h-3 w-16 bg-[#0e1e1a]/20 rounded-full" />
+                    <div className="h-6 rounded-lg bg-white/70 border border-black/5 flex items-center px-2">
+                      <div className="h-1.5 w-8 bg-black/10 rounded-full" />
+                    </div>
+                    <div className="h-6 rounded-lg bg-white/70 border border-black/5 flex items-center px-2">
+                      <div className="h-1.5 w-12 bg-black/10 rounded-full" />
+                    </div>
+                  </div>
+                </button>
+
+                {/* Opção Tema Escuro */}
+                <button
+                  onClick={() => setTheme('dark')}
+                  className={`relative overflow-hidden p-6 rounded-2xl border-2 text-left transition-all group cursor-pointer ${
+                    theme === 'dark'
+                      ? 'border-[#c1ff72] bg-[#c1ff72]/5 shadow-[0_0_20px_rgba(193,255,114,0.15)] text-white'
+                      : 'border-white/5 bg-white/[0.01] hover:border-white/20'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`p-3 rounded-xl ${theme === 'dark' ? 'bg-[#c1ff72] text-black' : 'bg-white/5 text-white/40'}`}>
+                      <Moon size={24} />
+                    </div>
+                    {theme === 'dark' && (
+                      <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-[#c1ff72] text-black uppercase tracking-wider">
+                        Ativo
+                      </span>
+                    )}
+                  </div>
+                  <h4 className="font-bold text-lg mb-1">Tema Escuro</h4>
+                  <p className="text-xs opacity-40 leading-relaxed">
+                    Visual escuro e elegante, perfeito para ambientes com pouca luz e economia de bateria.
+                  </p>
+
+                  {/* Visual mockup representation */}
+                  <div className="mt-6 h-24 rounded-xl bg-[#051411] border border-white/5 p-3 flex flex-col gap-2 overflow-hidden shadow-inner">
+                    <div className="h-3 w-16 bg-[#f3f6f5]/20 rounded-full" />
+                    <div className="h-6 rounded-lg bg-[#102c16]/55 border border-white/5 flex items-center px-2">
+                      <div className="h-1.5 w-8 bg-white/10 rounded-full" />
+                    </div>
+                    <div className="h-6 rounded-lg bg-[#102c16]/55 border border-white/5 flex items-center px-2">
+                      <div className="h-1.5 w-12 bg-white/10 rounded-full" />
+                    </div>
+                  </div>
+                </button>
+              </div>
             </Card>
           )}
 

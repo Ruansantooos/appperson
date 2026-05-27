@@ -48,7 +48,7 @@ const Register: React.FC = () => {
             // Create initial profile
             if (data.user) {
                 // Não enviamos `plan` aqui: a coluna tem DEFAULT 'free' no banco e
-                // o plano só pode ser alterado pelo webhook do Stripe (service_role).
+                // o plano só pode ser alterado pelo webhook da Ticto (service_role).
                 await supabase.from('profiles').upsert({
                     id: data.user.id,
                     email: email,

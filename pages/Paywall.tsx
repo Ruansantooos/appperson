@@ -1,8 +1,8 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Logo } from '../components/shared/Logo';
-import { redirectToCheckout, PLANS } from '../lib/stripe';
-import { Check, Crown, LogOut } from 'lucide-react';
+import { redirectToCheckout, PLANS } from '../lib/ticto';
+import { Check, LogOut } from 'lucide-react';
 
 const Paywall: React.FC = () => {
     const { user, signOut } = useAuth();
@@ -24,21 +24,12 @@ const Paywall: React.FC = () => {
                     </p>
                 </div>
 
-                <div className="grid gap-6 md:grid-cols-2">
+                <div className="grid gap-6 max-w-md mx-auto">
                     {plans.map((plan) => (
                         <div
                             key={plan.name}
-                            className={
-                                plan.highlight
-                                    ? 'relative rounded-2xl border border-[#c1ff72]/25 bg-[#161616] p-8'
-                                    : 'rounded-2xl border border-white/8 bg-[#161616] p-8'
-                            }
+                            className="relative rounded-2xl border border-[#c1ff72]/25 bg-[#161616] p-8"
                         >
-                            {plan.highlight && (
-                                <div className="absolute -top-3 left-6 rounded-full border border-[#c1ff72]/40 bg-[#0c0c0c] px-3 py-1 text-xs font-semibold text-[#c1ff72] flex items-center gap-1">
-                                    <Crown size={12} /> Mais Popular
-                                </div>
-                            )}
                             <div className="text-lg font-semibold text-white">{plan.name}</div>
                             <div className="text-xs text-white/40 mt-0.5">{plan.tagline}</div>
                             <div className="mt-3 font-mono text-2xl text-[#c1ff72]">{plan.priceLabel}</div>

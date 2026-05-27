@@ -190,8 +190,6 @@ export interface Profile {
   goal?: string;
   plan?: 'free' | 'individual' | 'casal'; // 'free' = sem assinatura (trial/paywall)
   plan_expires_at?: string;
-  stripe_customer_id?: string;
-  stripe_subscription_id?: string;
   partnerId?: string | null;
 }
 
