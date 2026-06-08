@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, Button, Input, Badge } from '../components/ui/LayoutComponents';
-import { User, Bell, CreditCard, ChevronRight, LogOut, Loader2, Users, Copy, Link2, Link2Off, Sun, Moon, Palette } from 'lucide-react';
+import { User, Bell, CreditCard, ChevronRight, LogOut, Loader2, Users, Copy, Link2, Link2Off, Sun, Moon, Palette, Menu } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -45,6 +45,42 @@ const SettingsPage: React.FC = () => {
     finance: false,
     gym: true,
   });
+
+  // ===== Estado do Menu Lateral =====
+  const getInitialSidebarItems = React.useCallback(() => {
+    const key = user?.id ? `corelys_sidebar_${user.id}` : 'corelys_sidebar_default';
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      try {
+        return JSON.parse(stored) as string[];
+      } catch (e) {}
+    }
+    return ['/dashboard', '/finance', '/calendar'];
+  }, [user?.id]);
+
+  const [sidebarItems, setSidebarItems] = React.useState<string[]>(getInitialSidebarItems);
+
+  // Recarregar os itens se o usuário mudar
+  React.useEffect(() => {
+    if (user) {
+      setSidebarItems(getInitialSidebarItems());
+    }
+  }, [user, getInitialSidebarItems]);
+
+  const handleToggleSidebarItem = (path: string) => {
+    if (path === '/dashboard') return; // Dashboard é obrigatório
+    
+    setSidebarItems(prev => {
+      const updated = prev.includes(path)
+        ? prev.filter(p => p !== path)
+        : [...prev, path];
+      
+      const key = user?.id ? `corelys_sidebar_${user.id}` : 'corelys_sidebar_default';
+      localStorage.setItem(key, JSON.stringify(updated));
+      window.dispatchEvent(new Event('sidebar-changed'));
+      return updated;
+    });
+  };
 
   React.useEffect(() => {
     if (user) {
@@ -233,6 +269,7 @@ const SettingsPage: React.FC = () => {
     { label: 'Perfil', icon: User },
     { label: 'Casal', icon: Users },
     { label: 'Aparência', icon: Palette },
+    { label: 'Menu Lateral', icon: Menu },
     { label: 'Notificações', icon: Bell },
     { label: 'Faturamento', icon: CreditCard },
   ];
@@ -638,6 +675,64 @@ const SettingsPage: React.FC = () => {
                     </div>
                   </div>
                 </button>
+              </div>
+            </Card>
+          )}
+
+          {/* ===== MENU LATERAL TAB ===== */}
+          {activeTab === 'Menu Lateral' && (
+            <Card className="p-10">
+              <div className="flex items-center gap-3 mb-2">
+                <Menu size={24} className="text-[#c1ff72]" />
+                <h3 className="text-2xl font-bold">Personalizar Menu Lateral</h3>
+              </div>
+              <p className="opacity-50 text-sm mb-10">
+                Ative ou desative os módulos visíveis no menu lateral e na barra de navegação móvel.
+              </p>
+
+              <div className="space-y-4">
+                {[
+                  { path: '/dashboard', label: 'Dashboard', desc: 'Painel principal com visão geral da rotina', required: true },
+                  { path: '/finance', label: 'Financeiro', desc: 'Controle de saldo, cartões e faturas' },
+                  { path: '/calendar', label: 'Calendário / Agenda', desc: 'Visualização de compromissos e tarefas agendadas' },
+                  { path: '/tasks', label: 'Tarefas', desc: 'Gerenciador de tarefas e checklists de afazeres' },
+                  { path: '/projects', label: 'Projetos', desc: 'Painel de conexões e organização de projetos' },
+                  { path: '/habits', label: 'Hábitos', desc: 'Rastreador de metas e hábitos diários' },
+                  { path: '/gym', label: 'Treino / Academia', desc: 'Ficha de exercícios e controle de peso/nutrição' },
+                  ...(authProfile?.gender === 'Female' 
+                    ? [{ path: '/cycle', label: 'Ciclo Feminino', desc: 'Monitoramento do ciclo menstrual e sintomas' }] 
+                    : [])
+                ].map(item => {
+                  const isChecked = sidebarItems.includes(item.path);
+                  return (
+                    <div key={item.path} className="flex items-center justify-between p-6 bg-white/[0.02] border border-white/5 rounded-2xl transition-all hover:bg-white/[0.04]">
+                      <div>
+                        <div className="flex items-center gap-3">
+                          <h4 className="font-bold text-sm">{item.label}</h4>
+                          {item.required && (
+                            <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-[#c1ff72]/20 text-[#c1ff72] uppercase tracking-wider">
+                              Obrigatório
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs opacity-30 mt-1">{item.desc}</p>
+                      </div>
+                      <button
+                        disabled={item.required}
+                        onClick={() => handleToggleSidebarItem(item.path)}
+                        className={`w-14 h-8 rounded-full transition-all relative ${isChecked
+                          ? 'bg-[#c1ff72] cursor-pointer'
+                          : 'bg-white/10 cursor-pointer'
+                          } ${item.required ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        <div className={`w-6 h-6 bg-white rounded-full absolute top-1 transition-all shadow-md ${isChecked
+                          ? 'left-7'
+                          : 'left-1'
+                          }`} />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </Card>
           )}

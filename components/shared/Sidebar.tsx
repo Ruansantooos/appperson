@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -19,6 +19,35 @@ const Sidebar: React.FC = () => {
   const location = useLocation();
   const { profile } = useAuth();
 
+  const getActivePaths = () => {
+    const key = profile?.id ? `corelys_sidebar_${profile.id}` : 'corelys_sidebar_default';
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      try {
+        return JSON.parse(stored) as string[];
+      } catch (e) {
+        // fail silently
+      }
+    }
+    return ['/dashboard', '/finance', '/calendar'];
+  };
+
+  const [activePaths, setActivePaths] = useState<string[]>(getActivePaths);
+
+  useEffect(() => {
+    setActivePaths(getActivePaths());
+  }, [profile?.id]);
+
+  useEffect(() => {
+    const handleChanged = () => {
+      setActivePaths(getActivePaths());
+    };
+    window.addEventListener('sidebar-changed', handleChanged);
+    return () => {
+      window.removeEventListener('sidebar-changed', handleChanged);
+    };
+  }, [profile?.id]);
+
   const navItems = useMemo(() => {
     const items = [
       { icon: LayoutDashboard, path: '/dashboard' },
@@ -32,8 +61,8 @@ const Sidebar: React.FC = () => {
     if (profile?.gender === 'Female') {
       items.push({ icon: HeartPulse, path: '/cycle' });
     }
-    return items;
-  }, [profile?.gender]);
+    return items.filter(item => item.path === '/dashboard' || activePaths.includes(item.path));
+  }, [profile?.gender, activePaths]);
   return (
     <aside className="hidden lg:flex flex-col w-20 bg-[var(--sidebar-bg)] h-screen sticky top-0 py-8 items-center justify-between border-r border-[var(--card-border)] backdrop-blur-xl transition-all duration-300">
       <div className="flex flex-col items-center gap-10">

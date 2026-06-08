@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, CheckSquare, Wallet, Zap, Dumbbell, Layers, HeartPulse } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Wallet, Zap, Dumbbell, Layers, HeartPulse, CalendarDays } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 const STORAGE_KEY = 'corelys_active_workout';
@@ -23,20 +23,50 @@ const MobileNav: React.FC = () => {
     };
   }, []);
 
+  const getActivePaths = () => {
+    const key = profile?.id ? `corelys_sidebar_${profile.id}` : 'corelys_sidebar_default';
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      try {
+        return JSON.parse(stored) as string[];
+      } catch (e) {
+        // fail silently
+      }
+    }
+    return ['/dashboard', '/finance', '/calendar'];
+  };
+
+  const [activePaths, setActivePaths] = useState<string[]>(getActivePaths);
+
+  useEffect(() => {
+    setActivePaths(getActivePaths());
+  }, [profile?.id]);
+
+  useEffect(() => {
+    const handleChanged = () => {
+      setActivePaths(getActivePaths());
+    };
+    window.addEventListener('sidebar-changed', handleChanged);
+    return () => {
+      window.removeEventListener('sidebar-changed', handleChanged);
+    };
+  }, [profile?.id]);
+
   const navItems = useMemo(() => {
     const items = [
       { label: 'Home', icon: LayoutDashboard, path: '/dashboard' },
+      { label: 'Finance', icon: Wallet, path: '/finance' },
+      { label: 'Agenda', icon: CalendarDays, path: '/calendar' },
       { label: 'Tasks', icon: CheckSquare, path: '/tasks' },
       { label: 'Gym', icon: Dumbbell, path: '/gym' },
       { label: 'Habits', icon: Zap, path: '/habits' },
-      { label: 'Finance', icon: Wallet, path: '/finance' },
       { label: 'Projects', icon: Layers, path: '/projects' },
     ];
     if (profile?.gender === 'Female') {
       items.push({ label: 'Ciclo', icon: HeartPulse, path: '/cycle' });
     }
-    return items;
-  }, [profile?.gender]);
+    return items.filter(item => item.path === '/dashboard' || activePaths.includes(item.path));
+  }, [profile?.gender, activePaths]);
 
   if (hidden) return null;
   return (
