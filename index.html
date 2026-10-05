@@ -290,6 +290,41 @@ tfoot td{font-weight:700;background:var(--surface-2)}
 .trow svg{width:12px;height:12px;vertical-align:-1px}
 .tdir{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
 .trow.in .tdir{background:var(--ok-soft);color:var(--ok)}
+.whoami{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--muted)}
+.whoami select{border:1px solid var(--line);border-radius:999px;padding:7px 10px;background:var(--surface);font-size:12.5px;font-weight:600;color:var(--ink);max-width:190px}
+@media (max-width:700px){.whoami{font-size:0}.whoami select{max-width:150px}}
+.bell{position:relative}.bellb{position:absolute;top:-4px;right:-4px;margin:0}
+.covbanner{background:var(--accent-soft);color:var(--ink);border-radius:16px;padding:12px 16px;margin-bottom:16px;font-size:13.5px}
+.covbanner.aus{background:var(--warn-soft)}
+.covbanner.ro{background:var(--surface-2)}
+.covwrap{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;max-width:980px}
+.covwrap>*{min-width:0}
+.np-editar .seg{display:none}
+.sec-t{font:700 16px var(--f-display);margin:0 0 10px}
+.covcard{border:1px solid var(--line);border-radius:18px;padding:14px 16px;display:grid;gap:8px;margin-bottom:10px;background:var(--surface)}
+.covcard.pendente{border-color:var(--warn)}.covcard.ativa{border-color:var(--accent)}
+.covform{display:grid;gap:14px;border-color:var(--accent)}
+.covsteps{display:grid;gap:14px}
+.covsteps>div{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start}
+.covsteps>div>*:not(.cstep){grid-column:2}
+.cstep{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700;grid-row:span 3}
+.covchecks{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px}
+.covchk{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:9px 11px;font-size:13px;cursor:pointer}
+.covchk:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.covchk input{accent-color:var(--accent)}
+.trace{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px 18px;flex:1}
+.trace div{display:grid;gap:1px;min-width:0}
+.trace span{font-size:11px;color:var(--muted);font-weight:600}
+.trace b{font-size:13.5px}
+.trace i{font-style:normal;font-size:11.5px;color:var(--muted)}
+.trace .wide{grid-column:1/-1}
+.logby{color:var(--muted);font-size:12px}
+.kc-cob{font-size:11px;font-weight:700;color:var(--accent)}.kc-cob.ro{color:var(--muted)}.kc-cob.gray{color:var(--muted);font-weight:600}
+.np-editar [data-act="urg"],.np-editar [data-act="it-add"],.np-editar [data-act="it-del"],
+.np-cotar [data-act="send"],.np-cotar [data-act="pull"],.np-cotar [data-act="attach-quote"],.np-cotar [data-act="reply-open"],.np-cotar [data-act="qedit"],.np-cotar [data-act="pick-all"],.np-cotar [data-act="pick-none"],
+.np-negociar [data-act="apply-sug"],.np-negociar [data-act="approve"],
+.np-acompanhar [data-act="attach-po"],.np-acompanhar [data-act="archive"]{display:none!important}
+.np-editar [data-chg^="it-"],.np-cotar [data-chg="pick"],.np-cotar [data-act="cat"],.np-negociar [data-chg^="motivo"],.np-negociar [data-act="pick-win"]{pointer-events:none;opacity:.6}
 .navb{font-size:10.5px;background:var(--urgent);color:#fff;border-radius:999px;padding:0 6px;margin-left:4px}
 .mailapp{display:grid;grid-template-columns:200px minmax(260px,360px) minmax(0,1fr);gap:14px;align-items:start}
 @media (max-width:1100px){.mailapp{grid-template-columns:minmax(0,1fr)}}
@@ -368,17 +403,21 @@ tfoot td{font-weight:700;background:var(--surface-2)}
 <div class="shell">
 <header class="top">
   <div class="brand"><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10l8-6 8 6v10"/><path d="M9 20v-6h6v6"/></svg></span><span><b>COMPRAS DE OBRA</b><span>Temafe · Suprimentos</span></span></div>
-  <nav class="nav" aria-label="Seções">
-    <button data-act="nav" data-v="ger" id="n-ger">Dashboard</button>
-    <button data-act="nav" data-v="mail" id="n-mail">Inbox <b class="navb" id="mail-badge"></b></button>
-    <button data-act="nav" data-v="sol" id="n-sol">Quadro</button>
-    <button data-act="nav" data-v="for" id="n-for">Fornecedores</button>
-
-  </nav>
+  <nav class="nav" aria-label="Seções" id="nav"></nav>
   <div class="top-r">
-    <span class="demo-tag">dados de exemplo</span>
+    <label class="whoami" title="Simula o login de cada pessoa">Entrar como
+      <select id="whoami" data-chg="whoami">
+        <option value="leticia">Letícia · Compradora</option>
+        <option value="fabi">Fabiana · Compradora</option>
+        <option value="gerente">Gerente · Admin</option>
+        <option value="lucas">Lucas Henriques · Engenheiro</option>
+        <option value="ana">Ana Souza · Assistente</option>
+        <option value="paula">Paula Nogueira · Engenheira</option>
+        <option value="marcos">Marcos Tavares · Engenheiro</option>
+      </select></label>
+    <button class="icobtn bell" data-act="bell" title="Notificações" aria-label="Notificações"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><b class="navb bellb" id="bell-badge" hidden></b></button>
     <button class="icobtn" data-act="reset" title="Restaurar dados de exemplo" aria-label="Restaurar dados de exemplo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
-    <span class="avatar" title="Letícia · Compras">LT</span>
+    <span class="avatar" id="me-av">LT</span>
   </div>
 </header>
 <main id="app"></main>
@@ -420,9 +459,9 @@ const SEED_SUPS = [["40 Anos Madeira", "Madeira", "", "40anosmadeira@gmail.com"]
 const sid = n => SEED_SUPS.find(x => x.nome === n).id;
 
 const SEED_OBRAS = [
-  {nome: 'EE Maria Cristina Schmidt Miranda', resp: 'Lucas Henriques', end: 'Rua Ábramo Luchesi, 12 – Jardim Leblon, São Bernardo do Campo – SP, 09781-030'},
-  {nome: 'Residencial Vila Feijó', resp: 'Paula Nogueira', end: 'Rua Dante Pellacani, 300 – Vila Rejente Feijó, São Paulo – SP'},
-  {nome: 'EE Prof. Oswaldo Ortiz', resp: 'Marcos Tavares', end: 'Av. Getúlio Vargas, 1450 – Baeta Neves, São Bernardo do Campo – SP'},
+  {nome: 'EE Maria Cristina Schmidt Miranda', resp: 'Lucas Henriques', compradora: 'leticia', end: 'Rua Ábramo Luchesi, 12 – Jardim Leblon, São Bernardo do Campo – SP, 09781-030'},
+  {nome: 'Residencial Vila Feijó', resp: 'Paula Nogueira', compradora: 'fabi', end: 'Rua Dante Pellacani, 300 – Vila Rejente Feijó, São Paulo – SP'},
+  {nome: 'EE Prof. Oswaldo Ortiz', resp: 'Marcos Tavares', compradora: 'leticia', end: 'Av. Getúlio Vargas, 1450 – Baeta Neves, São Bernardo do Campo – SP'},
 ];
 const ENGS = ['Lucas Henriques', 'Paula Nogueira', 'Marcos Tavares'];
 const MOTIVOS = ['Preço maior', 'Prazo de entrega', 'Não cotou todos os itens', 'Condição de pagamento', 'Frete', 'Não respondeu', 'Outro'];
@@ -508,7 +547,7 @@ function seed() {
   const r95i = [it(40, 'sc', 'Cimento CP-II 50 kg'), it(6, 'm³', 'Areia média lavada'), it(4, 'm³', 'Brita 1')];
   const [h, k, l] = r95i.map(i => i.id);
   const r95 = {
-    id: 95, obra: SEED_OBRAS[0].nome, solicitante: 'Lucas Henriques', criado: ago(9, 8), prazoIdeal: ahead(-5), urgente: false, status: 'finalizado', obs: '', itens: r95i,
+    id: 95, obra: SEED_OBRAS[0].nome, solicitante: 'Ana Souza', solicitanteId: 'ana', criado: ago(9, 8), prazoIdeal: ahead(-5), urgente: false, status: 'finalizado', obs: '', itens: r95i,
     envios: [{supId: sid('Copafer'), em: ago(9, 9)}, {supId: sid('Cimemprimo'), em: ago(9, 9)}, {supId: sid('Performance Areia e Pedra'), em: ago(9, 9)}],
     cotacoes: [
       {supId: sid('Copafer'), recebidoEm: ago(9, 13), arquivo: 'Copafer_orc_95.pdf', prazoDias: 1, pagamento: '28 DDL', frete: 0, precos: {[h]: 36.90, [k]: 142, [l]: 150}, ia: true},
@@ -517,10 +556,10 @@ function seed() {
     ],
     vencedor: {[h]: sid('Copafer'), [k]: sid('Copafer'), [l]: sid('Copafer')},
     motivos: {[sid('Cimemprimo')]: {motivo: 'Não cotou todos os itens', obs: 'Só cimento; pedido separado não compensa'}, [sid('Performance Areia e Pedra')]: {motivo: 'Prazo de entrega', obs: '6 dias, obra precisava em 2'}},
-    aprovadoEm: ago(8, 15), aprovadoPor: 'Letícia',
+    aprovadoEm: ago(8, 15), aprovadoPor: 'Letícia', fechadoPor: 'Letícia',
     docs: [{id: uid(), tipo: 'Pedido de compra', supId: sid('Copafer'), numero: '00091', valor: 2928, arquivo: 'Pedido_00091_Copafer.pdf', em: ago(8, 16)}],
     entrega: {em: ago(7, 10), por: 'Lucas Henriques', completo: true, obs: 'Tudo certo, descarregado no canteiro.'},
-    log: [[ago(9, 8), 'Solicitação criada por Lucas Henriques'], [ago(9, 9), 'Cotação enviada para 3 fornecedores'], [ago(8, 15), 'Compra aprovada por Letícia'], [ago(8, 16), 'Pedido 00091 anexado'], [ago(7, 10), 'Chegada confirmada na obra por Lucas Henriques'], [ago(6, 9), 'Enviado ao financeiro e arquivado']],
+    log: [[ago(9, 8), 'Solicitação criada por Ana Souza (assistente de Lucas Henriques)'], [ago(9, 9), 'Cotação enviada para 3 fornecedores', 'Letícia'], [ago(8, 15), 'Compra aprovada', 'Letícia'], [ago(8, 16), 'Pedido 00091 anexado'], [ago(7, 10), 'Chegada confirmada na obra por Lucas Henriques'], [ago(6, 9), 'Enviado ao financeiro e arquivado']],
   };
 
   const r94i = [it(44, 'pç', 'Telha trapézio 40/980 galvanizada 0,43 mm x 6 m'), it(4, 'pç', 'Cumeeira trapézio 40'), it(300, 'pç', 'Parafuso autobrocante 12x1" com vedação')];
@@ -536,9 +575,22 @@ function seed() {
     log: [[ago(3, 10), 'Solicitação criada por Paula Nogueira'], [ago(3, 11), 'Cotação enviada para 2 fornecedores'], [ago(2, 9), 'Orçamento recebido: Perfil Líder'], [ago(2, 16), 'Orçamento recebido: Top Telha Metálica']],
   };
 
+  const r93i = [it(60, 'br', 'Vergalhão CA-50 10 mm (barra 12 m)'), it(20, 'kg', 'Arame recozido 18')];
+  const [v1, v2] = r93i.map(i => i.id);
+  const r93 = {id: 93, obra: SEED_OBRAS[1].nome, solicitante: 'Paula Nogueira', criado: ago(14, 9), prazoIdeal: ahead(-9), urgente: false, status: 'finalizado', obs: '', itens: r93i,
+    envios: [{supId: sid('Copafer'), em: ago(14, 10)}, {supId: sid('Mateubras'), em: ago(14, 10)}],
+    cotacoes: [{supId: sid('Copafer'), recebidoEm: ago(13, 9), arquivo: 'Copafer_orc_93.pdf', prazoDias: 2, pagamento: '28 DDL', frete: 0, precos: {[v1]: 38.9, [v2]: 14.5}, ia: true}, {supId: sid('Mateubras'), recebidoEm: ago(13, 15), arquivo: 'Mateubras_93.pdf', prazoDias: 1, pagamento: '28 DDL', frete: 0, precos: {[v1]: 41.2, [v2]: 13.9}, ia: true}],
+    vencedor: {[v1]: sid('Copafer'), [v2]: sid('Copafer')}, motivos: {[sid('Mateubras')]: {motivo: 'Preço maior', obs: ''}}, aprovadoEm: ago(12, 11), aprovadoPor: 'Fabiana', fechadoPor: 'Fabiana',
+    docs: [{id: uid(), tipo: 'Pedido de compra', supId: sid('Copafer'), numero: '00088', valor: 2624, arquivo: 'Pedido_00088_Copafer.pdf', em: ago(12, 14)}],
+    entrega: {em: ago(10, 10), por: 'Paula Nogueira', completo: true, obs: ''},
+    log: [[ago(14, 9), 'Solicitação criada por Paula Nogueira'], [ago(14, 10), 'Cotação enviada para 2 fornecedores', 'Fabiana'], [ago(12, 11), 'Compra aprovada', 'Fabiana'], [ago(12, 14), 'Pedido 00088 anexado', 'Fabiana'], [ago(10, 10), 'Chegada confirmada na obra', 'Paula Nogueira'], [ago(9, 9), 'Enviado ao financeiro e arquivado', 'Fabiana']]};
+  const reqs = [r98, r97, r96, r95, r94, r93];
+  reqs.forEach(r => { r.compradora = SEED_OBRAS.find(o => o.nome === r.obra).compradora; if (!r.solicitanteId) r.solicitanteId = uidByName(r.solicitante); });
   const mail = seedMail([r98, r97, r96]);
-  return {v: 7, outlook: {on: false, email: ''}, role: 'gerente', eng: 'Lucas Henriques', tab: 'solicitacoes', filter: 'abertas', q: '', selId: 97, seq: 99, synced: 0,
-    reqs: [r98, r97, r96, r95, r94], sups: S, obras: SEED_OBRAS, mail, ui: {}};
+  mail.forEach(m => { const rr = reqs.find(x => x.id === m.reqId); m.owner = rr ? rr.compradora : 'leticia'; });
+  const coberturas = [{id: 'c' + uid(), de: 'leticia', para: 'fabi', inicio: ahead(-40), fim: ahead(-33), obras: ['EE Maria Cristina Schmidt Miranda', 'EE Prof. Oswaldo Ortiz'], perms: ['ver', 'editar', 'cotar', 'negociar', 'acompanhar'], status: 'encerrada', ativadoPor: 'leticia', aceitoPor: 'fabi', aceitoEm: ago(41, 18), criadoEm: ago(41, 17), encerradoPor: 'Sistema (fim do período)', encerradoEm: ago(33, 23), visto: true}];
+  return {v: 8, me: 'leticia', coberturas, outlook: {}, role: 'gerente', eng: 'Lucas Henriques', tab: 'solicitacoes', filter: 'abertas', q: '', selId: 97, seq: 99, synced: 0,
+    reqs, sups: S, obras: SEED_OBRAS, mail, ui: {}};
 }
 
 /* ===================== e-mail (Outlook) ===================== */
@@ -574,13 +626,15 @@ function reqFromMail(m) {
   const ob = S.obras.find(o => txt.includes(o.nome.toUpperCase())) || S.obras.find(o => txt.includes(o.nome.toUpperCase().split(' ').slice(0, 3).join(' ')));
   const itens = parseItems(m.body.split('\n').filter(l => /^\s*[-•]/.test(l)).join('\n'));
   const id = Math.max(...S.reqs.map(r => r.id)) + 1;
-  const r = {id, obra: ob ? ob.nome : m.subj, solicitante: m.from, criado: m.em, prazoIdeal: ahead(4), urgente: /urgente/i.test(m.subj + m.body), status: 'nova', obs: '', itens, envios: [], cotacoes: [], vencedor: {}, motivos: {}, docs: [], entrega: null, origem: 'email', mailId: m.id,
+  const r = {id, obra: ob ? ob.nome : m.subj, compradora: ob ? ob.compradora : (m.owner || S.me), solicitanteId: uidByName(m.from), solicitante: m.from, criado: m.em, prazoIdeal: ahead(4), urgente: /urgente/i.test(m.subj + m.body), status: 'nova', obs: '', itens, envios: [], cotacoes: [], vencedor: {}, motivos: {}, docs: [], entrega: null, origem: 'email', mailId: m.id,
     log: [[m.em, `E-mail recebido de ${m.from}`], [now(), `Solicitação criada automaticamente pela IA a partir do e-mail (${itens.length} itens)`]]};
   S.reqs.unshift(r); m.tipo = 'pedido'; m.reqId = id;
   return r;
 }
 const MFOLD = [['entrada', 'Caixa de entrada'], ['pedido', 'Pedidos de material'], ['orcamento', 'Orçamentos'], ['outro', 'Outros'], ['enviados', 'Enviados']];
-function mailIn(f) { return S.mail.filter(m => f === 'enviados' ? m.folder === 'enviados' : m.folder === 'entrada' && (f === 'entrada' || m.tipo === f)).sort((a, b) => b.em.localeCompare(a.em)); }
+const OL = () => (S.outlook && S.outlook[S.me]) || {on: false};
+const myMail = () => S.mail.filter(m => me().papel === 'admin' || m.owner === S.me || (m.reqId && access(req_(m.reqId)).via === 'cob'));
+function mailIn(f) { return myMail().filter(m => f === 'enviados' ? m.folder === 'enviados' : m.folder === 'entrada' && (f === 'entrada' || m.tipo === f)).sort((a, b) => b.em.localeCompare(a.em)); }
 function mailTag(m) {
   if (m.tipo === 'pedido') return `<span class="mtag ped">${IC.cart}Pedido de material${m.reqId ? ' · ' + code(m.reqId) : ''}</span>`;
   if (m.tipo === 'orcamento') return `<span class="mtag orc">${IC.clip}Orçamento${m.reqId ? ' · ' + code(m.reqId) : ''}</span>`;
@@ -593,20 +647,20 @@ function vConnect() {
     <div class="logo" style="width:56px;height:56px;border-radius:18px">${IC.mail.replace('<svg', '<svg style="width:28px;height:28px;color:#fff"')}</div>
     <h2>Entrar com o Outlook</h2>
     <p class="muted">Use a conta Microsoft 365 da construtora. O sistema só lê e envia e-mails de compras; a senha fica com a Microsoft.</p>
-    <label class="f" style="text-align:left">E-mail da conta<input class="in" id="ol-email" type="email" value="leticia@temafe.com.br"></label>
+    <label class="f" style="text-align:left">E-mail da conta<input class="in" id="ol-email" type="email" value="${esc(me().email || '')}"></label>
     <button class="btn primary lg" style="justify-content:center" data-act="ol-connect">Entrar com a conta Microsoft</button>
     <ul class="flags" style="text-align:left"><li class="good">Pedidos de material dos engenheiros viram cartões no quadro</li><li class="good">Respostas dos fornecedores são anexadas na solicitação certa</li><li class="good">Etiquetas "Compras" aparecem também no Outlook</li></ul>
     <div class="note" style="text-align:left">No protótipo a conexão é simulada. Na versão final, este botão abre a tela de login da Microsoft e a TI autoriza o acesso uma única vez.</div>
   </div>`;
 }
 function vMail() {
-  if (!S.outlook?.on) return vConnect();
+  if (!OL().on) return vConnect();
   const f = S.ui.mfold || 'entrada';
   const list = mailIn(f);
-  const sel = S.mail.find(m => m.id === S.ui.msel) || list[0];
+  const sel = myMail().find(m => m.id === S.ui.msel) || list[0];
   if (sel && !sel.lido) sel.lido = true;
-  const unread = S.mail.filter(m => m.folder === 'entrada' && !m.lido).length;
-  return `<div class="phead"><div class="t"><h1>Inbox</h1><p><span class="chip st-entregue">Conectado</span> ${esc(S.outlook.email)} · a IA marca pedidos de material e orçamentos e manda cada um para o lugar certo. <button class="linkbtn" data-act="ol-disconnect">Desconectar</button></p></div>
+  const unread = myMail().filter(m => m.folder === 'entrada' && !m.lido).length;
+  return `<div class="phead"><div class="t"><h1>Inbox</h1><p><span class="chip st-entregue">Conectado</span> ${esc(OL().email)} · a IA marca pedidos de material e orçamentos e manda cada um para o lugar certo. <button class="linkbtn" data-act="ol-disconnect">Desconectar</button></p></div>
     <button class="btn primary lg" data-act="mail-sync">${IC.sync} Sincronizar com o Outlook</button></div>
   <div class="mailapp">
     <aside class="mfold">${MFOLD.map(([k, n]) => { const c = k === 'entrada' ? unread : mailIn(k).length; return `<button data-act="mfold" data-v="${k}" aria-pressed="${f === k}">${n}${c ? `<b>${c}</b>` : ''}</button>`; }).join('')}
@@ -640,18 +694,176 @@ function mailRead(m) {
     ${m.anexos.length ? `<div class="row">${m.anexos.map(fileChip).join('')}</div>` : ''}`;
 }
 
+/* ===================== usuários, acesso e cobertura ===================== */
+const USERS = {
+  leticia: {id: 'leticia', nome: 'Letícia', papel: 'compradora', email: 'leticia@temafe.com.br'},
+  fabi: {id: 'fabi', nome: 'Fabiana', papel: 'compradora', email: 'fabiana@temafe.com.br'},
+  gerente: {id: 'gerente', nome: 'Gerente', papel: 'admin', email: 'gerente@temafe.com.br'},
+  lucas: {id: 'lucas', nome: 'Lucas Henriques', papel: 'engenheiro'},
+  paula: {id: 'paula', nome: 'Paula Nogueira', papel: 'engenheiro'},
+  marcos: {id: 'marcos', nome: 'Marcos Tavares', papel: 'engenheiro'},
+  ana: {id: 'ana', nome: 'Ana Souza', papel: 'assistente', eng: 'lucas', obras: ['EE Maria Cristina Schmidt Miranda']},
+};
+const PAPEL = {compradora: 'Compradora', admin: 'Gerente · admin', engenheiro: 'Engenheiro', assistente: 'Assistente'};
+const PERMS = [['ver', 'Visualizar compras'], ['editar', 'Editar compras'], ['cotar', 'Fazer cotações'], ['fornecedores', 'Adicionar fornecedores'], ['negociar', 'Negociar e aprovar'], ['acompanhar', 'Acompanhar pedidos']];
+const ALL = new Set(PERMS.map(p => p[0]));
+const uidByName = n => (Object.values(USERS).find(u => u.nome === n) || {}).id;
+const me = () => USERS[S.me] || USERS.leticia;
+const compradoras = () => Object.values(USERS).filter(u => u.papel === 'compradora');
+const obraCompradora = n => (obra_(n) || {}).compradora;
+const dayStart = d => new Date(d + 'T00:00:00').getTime(), dayEnd = d => new Date(d + 'T23:59:59').getTime();
+function expireCobs() {
+  (S.coberturas || []).forEach(c => { if (c.status === 'ativa' && Date.now() > dayEnd(c.fim)) { c.status = 'encerrada'; c.encerradoPor = 'Sistema (fim do período)'; c.encerradoEm = new Date(dayEnd(c.fim)).toISOString(); } });
+}
+const cobsAtivas = () => (S.coberturas || []).filter(c => c.status === 'ativa' && Date.now() >= dayStart(c.inicio) && Date.now() <= dayEnd(c.fim));
+const cobDe = uid => cobsAtivas().filter(c => c.de === uid);
+const cobPara = uid => cobsAtivas().filter(c => c.para === uid);
+function userStatus(uid) {
+  const a = cobDe(uid); if (a.length) return {txt: 'Ausente · cobertura ativa', cls: 'st-cotacao'};
+  const b = cobPara(uid); if (b.length) return {txt: 'Cobrindo ' + b.map(c => USERS[c.de].nome).join(', '), cls: 'st-nova'};
+  return {txt: 'Disponível', cls: 'st-entregue'};
+}
+/* Regra única de acesso. No sistema real esta mesma regra fica no banco (políticas por linha), não só na tela. */
+function access(r, uid = S.me) {
+  const u = USERS[uid]; if (!u || !r) return {view: false};
+  if (u.papel === 'admin') return {view: true, perms: ALL, via: 'admin'};
+  if (u.papel === 'compradora') {
+    if (r.compradora === uid) return {view: true, perms: ALL, via: 'own'};
+    const c = cobsAtivas().find(c => c.para === uid && c.de === r.compradora && c.obras.includes(r.obra));
+    if (c) {
+      const fechado = stIdx(r.status) >= 3;
+      if (!fechado) return {view: true, perms: new Set(c.perms), via: 'cob', cob: c};
+      if (c.perms.includes('acompanhar') || r.status === 'finalizado') return {view: true, perms: new Set(), via: 'cob', cob: c};
+    }
+    if (r.status === 'finalizado') return {view: true, perms: new Set(), via: 'shared'};
+    return {view: false};
+  }
+  if (u.papel === 'engenheiro') return obraResp(r.obra) === u.nome ? {view: true, perms: new Set(), via: 'eng'} : {view: false};
+  if (u.papel === 'assistente') return u.obras.includes(r.obra) && r.solicitanteId === uid ? {view: true, perms: new Set(), via: 'asst'} : {view: false};
+  return {view: false};
+}
+const visReqs = () => S.reqs.filter(r => access(r).view);
+function visObras() {
+  const u = me();
+  if (u.papel === 'admin') return S.obras;
+  if (u.papel === 'compradora') { const cov = cobPara(u.id).flatMap(c => c.obras); return S.obras.filter(o => o.compradora === u.id || cov.includes(o.nome)); }
+  if (u.papel === 'engenheiro') return S.obras.filter(o => o.resp === u.nome);
+  if (u.papel === 'assistente') return S.obras.filter(o => u.obras.includes(o.nome));
+  return [];
+}
+function actorTag(r) {
+  const a = access(r);
+  return a.via === 'cob' ? `${me().nome} durante cobertura de ${USERS[r.compradora].nome}` : me().nome;
+}
+function solPapel(r) {
+  const u = USERS[r.solicitanteId];
+  if (u && u.papel === 'assistente') return `Assistente de ${USERS[u.eng].nome}`;
+  return obraResp(r.obra) === r.solicitante ? 'Engenheiro responsável' : 'Engenheiro';
+}
+const PERM_ACT = {urg: 'editar', 'it-add': 'editar', 'it-del': 'editar', send: 'cotar', pull: 'cotar', 'attach-quote': 'cotar', 'reply-open': 'cotar', 'reply-save': 'cotar', 'reply-file': 'cotar', qedit: 'cotar', cat: 'cotar', 'pick-all': 'cotar', 'pick-none': 'cotar', 'apply-sug': 'negociar', 'pick-win': 'negociar', approve: 'negociar', 'attach-po': 'acompanhar', archive: 'acompanhar'};
+const PERM_CHG = {'it-qtd': 'editar', 'it-un': 'editar', 'it-desc': 'editar', pick: 'cotar', price: 'cotar', qf: 'cotar', motivo: 'negociar', 'motivo-obs': 'negociar'};
+const PERM_NAME = Object.fromEntries(PERMS);
+function denyMsg(r, p) {
+  const a = access(r);
+  if (!a.view) return 'Sem acesso a esta compra.';
+  if (a.via === 'shared') return `Somente consulta: compra fechada de ${USERS[r.compradora].nome}.`;
+  if (a.via === 'cob' && stIdx(r.status) >= 3) return 'Pedido fechado: quem está cobrindo não pode alterar.';
+  if (a.via === 'cob') return `A cobertura não inclui "${PERM_NAME[p]}".`;
+  return 'Seu perfil não pode alterar esta compra.';
+}
+function permClasses(r) { const a = access(r); return ['editar', 'cotar', 'negociar', 'acompanhar'].filter(p => !a.perms || !a.perms.has(p)).map(p => 'np-' + p).join(' '); }
+
+/* ---------- telas de cobertura ---------- */
+function covForm(de, byAdmin) {
+  const f = S.ui.cf || {};
+  const outras = compradoras().filter(u => u.id !== de);
+  const obras = S.obras.filter(o => o.compradora === de);
+  const para = f.para || outras[0]?.id;
+  const sel = f.obras || obras.map(o => o.nome);
+  const perms = f.perms || ['ver', 'editar', 'cotar', 'negociar', 'acompanhar'];
+  return `<form class="panel covform" id="cov-form" data-de="${de}" data-admin="${byAdmin ? 1 : ''}">
+    <div class="panel-h"><h3>${byAdmin ? `Gerenciar cobertura de ${esc(USERS[de].nome)}` : 'Ativar cobertura'}</h3><button type="button" class="btn ghost sm" data-act="cov-cancel">Cancelar</button></div>
+    <div class="covsteps">
+      <div><span class="cstep">1</span><label class="f">Quem vai cobrir<select class="in" id="cf-para">${outras.map(u => `<option value="${u.id}" ${u.id === para ? 'selected' : ''}>${esc(u.nome)}</option>`).join('')}</select></label></div>
+      <div><span class="cstep">2</span><div class="grid2" style="grid-template-columns:1fr 1fr"><label class="f">Início<input class="in" type="date" id="cf-ini" value="${esc(f.ini || ahead(0))}"></label><label class="f">Fim<input class="in" type="date" id="cf-fim" value="${esc(f.fim || ahead(7))}"></label></div></div>
+      <div><span class="cstep">3</span><div class="f">Obras liberadas</div><div class="covchecks">${obras.map(o => `<label class="covchk"><input type="checkbox" name="cf-obra" value="${esc(o.nome)}" ${sel.includes(o.nome) ? 'checked' : ''}><span>${esc(o.nome)}</span></label>`).join('') || '<span class="muted small">Nenhuma obra sob responsabilidade.</span>'}</div></div>
+      <div><span class="cstep">4</span><div class="f">Permissões</div><div class="covchecks">${PERMS.map(([k, n]) => `<label class="covchk"><input type="checkbox" name="cf-perm" value="${k}" ${perms.includes(k) ? 'checked' : ''} ${k === 'ver' ? 'disabled' : ''}><span>${n}</span></label>`).join('')}</div>
+        <div class="note" style="margin-top:6px">Pedidos já fechados nunca podem ser alterados por quem está cobrindo, qualquer que seja a permissão.</div></div>
+    </div>
+    <button class="btn primary lg" type="submit" style="justify-content:center">${byAdmin ? 'Ativar cobertura agora' : 'Confirmar e enviar para aceite'}</button>
+    <div class="small muted">${byAdmin ? 'Ativação pelo gerente: começa valendo na data de início, sem depender de aceite. A pessoa que vai cobrir recebe uma notificação.' : 'A pessoa escolhida recebe uma notificação e precisa aceitar. O acesso termina sozinho no fim do período.'}</div>
+  </form>`;
+}
+function covCard(c, opts = {}) {
+  const st = c.status === 'ativa' && Date.now() < dayStart(c.inicio) ? 'agendada' : c.status;
+  const stTxt = {pendente: 'Aguardando aceite', ativa: 'Cobertura ativa', agendada: 'Agendada', encerrada: 'Encerrada', recusada: 'Recusada'}[st];
+  const stCls = {pendente: 'st-cotacao', ativa: 'st-nova', agendada: 'st-nova', encerrada: '', recusada: 'urg'}[st];
+  return `<div class="covcard ${st}">
+    <div class="row" style="justify-content:space-between"><div><b>${esc(USERS[c.para].nome)}</b> cobre <b>${esc(USERS[c.de].nome)}</b></div><span class="chip ${stCls}">${stTxt}</span></div>
+    <div class="meta"><span>Período <b>${fD(c.inicio)} a ${fD(c.fim)}</b></span><span>Ativada por <b>${esc(USERS[c.ativadoPor].nome)}</b></span>${c.aceitoPor ? `<span>Aceita por <b>${esc(USERS[c.aceitoPor]?.nome || c.aceitoPor)}</b></span>` : ''}</div>
+    <div class="small"><span class="muted">Obras:</span> ${c.obras.map(esc).join(', ')}</div>
+    <div class="row" style="gap:4px">${c.perms.map(p => `<span class="chip">${PERM_NAME[p]}</span>`).join('')}</div>
+    ${c.encerradoPor ? `<div class="small muted">Encerrada por ${esc(c.encerradoPor)} em ${fDT(c.encerradoEm)}</div>` : ''}
+    ${opts.accept ? `<div class="row"><button class="btn ok" data-act="cov-accept" data-v="${c.id}">Aceitar cobertura</button><button class="btn" data-act="cov-refuse" data-v="${c.id}">Recusar</button></div>` : ''}
+    ${opts.end && (c.status === 'ativa' || c.status === 'pendente') ? `<button class="btn sm" data-act="cov-end" data-v="${c.id}" style="justify-self:start">${c.status === 'pendente' ? 'Cancelar pedido' : 'Encerrar cobertura agora'}</button>` : ''}
+  </div>`;
+}
+function covHistory(list) {
+  if (!list.length) return '<div class="empty">Nenhuma cobertura registrada.</div>';
+  return `<div class="tbl-wrap"><table><thead><tr><th>Ausente</th><th>Cobertura</th><th>Período</th><th>Obras</th><th>Permissões</th><th>Ativada por</th><th>Aceita por</th><th>Status</th><th>Encerrada</th></tr></thead><tbody>
+    ${list.slice().sort((a, b) => b.criadoEm.localeCompare(a.criadoEm)).map(c => `<tr><td><b>${esc(USERS[c.de].nome)}</b></td><td>${esc(USERS[c.para].nome)}</td><td>${fD(c.inicio)} a ${fD(c.fim)}</td><td class="small">${c.obras.map(esc).join('<br>')}</td><td class="small">${c.perms.map(p => PERM_NAME[p]).join(', ')}</td><td>${esc(USERS[c.ativadoPor].nome)}<br><span class="small muted">${fDT(c.criadoEm)}</span></td><td>${c.aceitoPor ? esc(USERS[c.aceitoPor]?.nome || c.aceitoPor) + '<br><span class="small muted">' + fDT(c.aceitoEm) + '</span>' : '—'}</td><td>${{pendente: 'Aguardando', ativa: 'Ativa', encerrada: 'Encerrada', recusada: 'Recusada'}[c.status]}</td><td class="small">${c.encerradoPor ? esc(c.encerradoPor) + '<br>' + fDT(c.encerradoEm) : '—'}</td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+function vCobertura() {
+  const u = me(); expireCobs();
+  const mine = (S.coberturas || []).filter(c => c.de === u.id || c.para === u.id);
+  const pend = mine.filter(c => c.status === 'pendente' && c.para === u.id);
+  const minhaAus = mine.filter(c => c.de === u.id && (c.status === 'ativa' || c.status === 'pendente'));
+  const cobrindo = mine.filter(c => c.para === u.id && c.status === 'ativa');
+  mine.filter(c => c.para === u.id && !c.visto && c.status === 'ativa').forEach(c => c.visto = true);
+  const st = userStatus(u.id);
+  return `<div class="phead"><div class="t"><h1>Cobertura</h1><p>Libere suas obras para outra compradora enquanto estiver fora. Seu status: <span class="chip ${st.cls}">${st.txt}</span></p></div>
+    ${S.ui.cform ? '' : `<button class="btn primary lg" data-act="cov-new">Ativar cobertura</button>`}</div>
+  <div class="covwrap">
+    ${S.ui.cform ? covForm(u.id, false) : ''}
+    ${pend.length ? `<section><h3 class="sec-t">Pedidos de cobertura para você</h3>${pend.map(c => covCard(c, {accept: true})).join('')}</section>` : ''}
+    <section><h3 class="sec-t">Quando você está fora</h3>${minhaAus.length ? minhaAus.map(c => covCard(c, {end: true})).join('') : '<div class="empty">Nenhuma cobertura ativa para as suas obras.</div>'}</section>
+    <section><h3 class="sec-t">Obras que você está cobrindo</h3>${cobrindo.length ? cobrindo.map(c => covCard(c, {end: true})).join('') : '<div class="empty">Você não está cobrindo ninguém agora.</div>'}</section>
+    <section><h3 class="sec-t">Histórico</h3>${covHistory(mine)}</section>
+  </div>`;
+}
+function vUsuarios() {
+  expireCobs();
+  const users = Object.values(USERS);
+  const tgt = S.ui.cformDe;
+  return `<div class="phead"><div class="t"><h1>Usuários e acessos</h1><p>Cada pessoa enxerga só as obras dela. O gerente pode ativar ou encerrar coberturas sem depender da compradora.</p></div></div>
+  <div class="covwrap">
+    ${tgt ? covForm(tgt, true) : ''}
+    <div class="tbl-wrap"><table><thead><tr><th>Pessoa</th><th>Perfil</th><th>Acesso</th><th>Status</th><th></th></tr></thead><tbody>
+    ${users.map(u => { const st = userStatus(u.id); const obras = u.papel === 'compradora' ? S.obras.filter(o => o.compradora === u.id).map(o => o.nome) : u.papel === 'engenheiro' ? S.obras.filter(o => o.resp === u.nome).map(o => o.nome) : u.papel === 'assistente' ? u.obras : ['Todas as obras']; return `<tr><td><span class="row" style="gap:8px;flex-wrap:nowrap"><span class="avatar xs ${avCls(u.nome)}">${initials(u.nome)}</span><b>${esc(u.nome)}</b></span></td><td>${PAPEL[u.papel]}${u.papel === 'assistente' ? ' de ' + esc(USERS[u.eng].nome) : ''}</td><td class="small">${obras.map(esc).join('<br>')}</td><td>${u.papel === 'compradora' ? `<span class="chip ${st.cls}">${st.txt}</span>` : '—'}</td><td>${u.papel === 'compradora' ? `<button class="btn sm" data-act="cov-admin" data-v="${u.id}">Gerenciar cobertura</button>` : ''}</td></tr>`; }).join('')}
+    </tbody></table></div>
+    <section><h3 class="sec-t">Coberturas ativas e pendentes</h3>${(S.coberturas || []).filter(c => c.status === 'ativa' || c.status === 'pendente').map(c => covCard(c, {end: true})).join('') || '<div class="empty">Nenhuma cobertura ativa.</div>'}</section>
+    <section><h3 class="sec-t">Obras e responsáveis</h3><div class="tbl-wrap"><table><thead><tr><th>Obra</th><th>Compradora</th><th>Engenheiro</th><th>Assistentes</th></tr></thead><tbody>${S.obras.map(o => `<tr><td><b>${esc(o.nome)}</b></td><td>${esc(USERS[o.compradora]?.nome || '—')}</td><td>${esc(o.resp)}</td><td>${Object.values(USERS).filter(u => u.papel === 'assistente' && u.obras.includes(o.nome)).map(u => esc(u.nome)).join(', ') || '—'}</td></tr>`).join('')}</tbody></table></div></section>
+    <section><h3 class="sec-t">Histórico de coberturas</h3>${covHistory(S.coberturas || [])}</section>
+  </div>`;
+}
+function notifCount() {
+  const u = me(); expireCobs();
+  return (S.coberturas || []).filter(c => c.para === u.id && (c.status === 'pendente' || (c.status === 'ativa' && !c.visto))).length;
+}
+
 /* ===================== estado ===================== */
-const KEY = 'compras-obra-v7';
+const KEY = 'compras-obra-v8';
 let S;
 try { S = JSON.parse(localStorage.getItem(KEY)); } catch (e) { S = null; }
-if (!S || S.v !== 7) S = seed();
+if (!S || S.v !== 8) S = seed();
 S.ui = S.ui || {};
 const save = () => { try { const c = {...S, ui: {}}; localStorage.setItem(KEY, JSON.stringify(c)); } catch (e) {} };
 const FILES = {}; // blobs só nesta sessão
 const req_ = id => S.reqs.find(r => r.id === +id);
 const sup_ = id => S.sups.find(s => s.id === id) || {nome: '?', email: ''};
 const obra_ = n => S.obras.find(o => o.nome === n);
-const log = (r, t) => r.log.push([now(), t]);
+const log = (r, t) => r.log.push([now(), t, actorTag(r)]);
 
 const ST = [['nova', 'Nova'], ['cotacao', 'Em cotação'], ['analise', 'Em análise'], ['aprovado', 'Aprovado'], ['pedido', 'Pedido emitido'], ['entregue', 'Na obra'], ['finalizado', 'Finalizado']];
 const stIdx = s => ST.findIndex(x => x[0] === s);
@@ -715,13 +927,24 @@ function autoReason(r, supId) {
 
 /* ===================== render ===================== */
 function render() {
-  const cur = S.role === 'engenheiro' ? 'eng' : S.role === 'gerente' ? 'ger' : S.tab === 'fornecedores' ? 'for' : S.tab === 'email' ? 'mail' : 'sol';
-  ['ger', 'sol', 'mail', 'for'].forEach(k => $('#n-' + k).setAttribute('aria-pressed', k === cur));
+  expireCobs();
+  const u = me();
+  if (u.papel === 'engenheiro' || u.papel === 'assistente') S.role = 'engenheiro';
+  else if (S.role === 'engenheiro' && !S.ui.fromDash) S.role = 'gerente';
+  if (u.papel !== 'admin' && S.tab === 'usuarios') S.tab = 'solicitacoes';
+  if (u.papel !== 'compradora' && S.tab === 'cob') S.tab = 'solicitacoes';
+  const cur = S.role === 'engenheiro' ? 'eng' : S.role === 'gerente' ? 'ger' : ({fornecedores: 'for', email: 'mail', cob: 'cob', usuarios: 'usr'})[S.tab] || 'sol';
+  const items = u.papel === 'engenheiro' || u.papel === 'assistente' ? [['eng', 'Minhas obras']] : [['ger', 'Dashboard'], ['mail', 'Inbox <b class="navb" id="mail-badge"></b>'], ['sol', 'Quadro'], ['for', 'Fornecedores'], u.papel === 'admin' ? ['usr', 'Usuários'] : ['cob', 'Cobertura']];
+  $('#nav').innerHTML = items.map(([k, n]) => `<button data-act="nav" data-v="${k}" id="n-${k}" aria-pressed="${k === cur}">${n}</button>`).join('');
+  $('#whoami').value = S.me; $('#me-av').textContent = initials(u.nome); $('#me-av').className = 'avatar ' + avCls(u.nome); $('#me-av').title = u.nome + ' · ' + PAPEL[u.papel];
+  const nc = notifCount(); $('#bell-badge').textContent = nc || ''; $('#bell-badge').hidden = !nc;
   if ($('#e-itens')) S.ui.draft = readDraft();
   const app = $('#app');
-  app.innerHTML = S.role === 'engenheiro' ? vEng() : S.role === 'gerente' ? vDash() : vCompras();
+  const cp = u.papel === 'compradora' ? cobPara(u.id) : [], cd = u.papel === 'compradora' ? cobDe(u.id) : [];
+  const banner = cp.length ? `<div class="covbanner">Cobertura ativa: você está cobrindo <b>${cp.map(c => esc(USERS[c.de].nome)).join(', ')}</b> até ${fD(cp[0].fim)} em ${cp.flatMap(c => c.obras).length} obra(s). <button class="linkbtn" data-act="nav" data-v="cob">Ver detalhes</button></div>` : cd.length ? `<div class="covbanner aus">Você está como <b>Ausente</b>: ${cd.map(c => esc(USERS[c.para].nome)).join(', ')} cobre suas obras até ${fD(cd[0].fim)}. <button class="linkbtn" data-act="nav" data-v="cob">Gerenciar</button></div>` : '';
+  app.innerHTML = banner + (S.role === 'engenheiro' ? vEng() : S.role === 'gerente' ? vDash() : vCompras());
   if (S.role === 'engenheiro') updPreview();
-  const ur = S.outlook?.on ? S.mail.filter(m => m.folder === 'entrada' && !m.lido).length : 0; $('#mail-badge').textContent = ur || ''; $('#mail-badge').hidden = !ur;
+  const ur = OL().on ? myMail().filter(m => m.folder === 'entrada' && !m.lido).length : 0; if ($('#mail-badge')) { $('#mail-badge').textContent = ur || ''; $('#mail-badge').hidden = !ur; }
   save();
 }
 
@@ -730,9 +953,11 @@ const obraSlug = n => n.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').r
 const obraLink = n => `https://compras.temafe.com.br/obra/${obraSlug(n)}`;
 const obraResp = n => (obra_(n) || {}).resp || (S.reqs.find(r => r.obra === n) || {}).solicitante || ENGS[0];
 function vEng() {
-  const ob = obra_(S.ui.pobra) || S.obras[0];
-  S.ui.pobra = ob.nome; S.eng = obraResp(ob.nome);
-  const reqs = S.reqs.filter(r => r.obra === ob.nome).sort((a, b) => b.id - a.id);
+  const mineObras = visObras();
+  if (!mineObras.length) return `<div class="empty">Nenhuma obra vinculada ao seu usuário.</div>`;
+  const ob = mineObras.find(o => o.nome === S.ui.pobra) || mineObras[0];
+  S.ui.pobra = ob.nome; S.eng = ['engenheiro', 'assistente'].includes(me().papel) ? me().nome : obraResp(ob.nome);
+  const reqs = S.reqs.filter(r => r.obra === ob.nome && access(r).view).sort((a, b) => b.id - a.id);
   const toConfirm = reqs.filter(r => r.status === 'pedido');
   const open = reqs.filter(r => stIdx(r.status) < 5);
   const delivered = reqs.filter(r => r.entrega);
@@ -766,16 +991,16 @@ function vEng() {
       ${rows.map(({r, i, w, c}) => `<tr><td>${esc(i.desc)}</td><td class="r">${i.qtd == null ? '?' : numBR(i.qtd)} ${esc(i.un)}</td><td><b>${code(r.id)}</b></td><td>${chipSt(r.status)}</td><td>${w && r.aprovadoEm ? esc(sup_(w).nome) : '<span class="muted">em cotação</span>'}</td><td class="r">${w && r.aprovadoEm && c.precos[i.id] != null ? brl(c.precos[i.id] * (i.qtd || 1)) : '—'}</td><td>${r.entrega ? 'chegou ' + fD(r.entrega.em) : w && r.aprovadoEm ? 'prev. ' + fD(addDays(r.aprovadoEm, c.prazoDias)) : 'precisa até ' + fD(r.prazoIdeal)}</td></tr>`).join('') || '<tr><td colspan="7" class="muted">Nada pedido ainda.</td></tr>'}
     </tbody></table></div></div>`;
   }
-  if (et === 'historico') { const ev = []; reqs.forEach(r => r.log.forEach(([t, x]) => ev.push([t, r.id, x]))); ev.sort((a, b) => b[0].localeCompare(a[0]));
+  if (et === 'historico') { const ev = []; reqs.forEach(r => r.log.forEach(([t, x, by]) => ev.push([t, r.id, x + (by ? ' · por ' + by : '')]))); ev.sort((a, b) => b[0].localeCompare(a[0]));
     body = `<div class="panel"><div class="panel-h"><h3>Histórico da obra</h3></div><ul class="log">${ev.map(([t, id, x]) => `<li><time>${fDT(t)}</time><span><b>${code(id)}</b> · ${esc(x)}</span></li>`).join('') || '<li><span class="muted">Sem eventos.</span></li>'}</ul></div>`; }
   const spent = reqs.filter(r => r.aprovadoEm).reduce((t, r) => t + Object.keys(winners(r)).reduce((a, s) => a + winTotal(r, s), 0), 0);
-  return `${S.ui.fromDash ? '<div style="margin-bottom:12px"><button class="btn" data-act="nav" data-v="ger">← Voltar ao dashboard</button></div>' : ''}<div class="portal-pick"><span class="small muted">Prévia do link de cada obra:</span>${S.obras.map(o => `<button class="chip sel" data-act="pobra" data-v="${esc(o.nome)}" aria-pressed="${o.nome === ob.nome}">${esc(o.nome)}</button>`).join('')}</div>
+  return `${S.ui.fromDash ? '<div style="margin-bottom:12px"><button class="btn" data-act="nav" data-v="ger">← Voltar ao dashboard</button></div>' : ''}<div class="portal-pick"><span class="small muted">${['engenheiro', 'assistente'].includes(me().papel) ? 'Suas obras:' : 'Prévia do link de cada obra:'}</span>${mineObras.map(o => `<button class="chip sel" data-act="pobra" data-v="${esc(o.nome)}" aria-pressed="${o.nome === ob.nome}">${esc(o.nome)}</button>`).join('')}</div>
   <div class="eng">
   <div class="obra-hero">
     <div class="lbl">Acompanhamento da obra</div>
     <h1>${esc(ob.nome)}</h1>
     <div class="small" style="opacity:.85">${esc(ob.end)}</div>
-    <div class="row" style="gap:10px;margin-top:4px"><span class="avatar sm ${avCls(S.eng)}">${initials(S.eng)}</span><span><b>${esc(S.eng)}</b><br><span class="small" style="opacity:.8">Engenheiro responsável</span></span></div>
+    <div class="row" style="gap:10px;margin-top:4px"><span class="avatar sm ${avCls(obraResp(ob.nome))}">${initials(obraResp(ob.nome))}</span><span><b>${esc(obraResp(ob.nome))}</b><br><span class="small" style="opacity:.8">Engenheiro responsável · compras com ${esc(USERS[ob.compradora]?.nome || '—')}</span></span>${me().papel === 'assistente' ? `<span class="gpill" style="background:rgba(255,255,255,.18);padding:3px 10px;border-radius:999px;font-size:11.5px">Você é assistente: vê só os pedidos que fez</span>` : ''}</div>
     <div class="ostats"><div><b>${open.length}</b><span>em andamento</span></div><div><b>${toConfirm.length}</b><span>a caminho</span></div><div><b>${delivered.length}</b><span>entregues</span></div><div><b>${brl(spent).replace(/,\d\d$/, '')}</b><span>comprado</span></div></div>
     <button class="btn white sm" data-act="copy-obra" style="justify-self:start">${IC.link} Copiar link desta obra</button>
   </div>
@@ -905,6 +1130,8 @@ function vComprasKpis() {
 function vCompras() {
   if (S.tab === 'fornecedores') return vFornecedores();
   if (S.tab === 'email') return vMail();
+  if (S.tab === 'cob') return vCobertura();
+  if (S.tab === 'usuarios') return vUsuarios();
   const r = req_(S.selId);
   if (S.view === 'detail' && r) return vDetailPage(r);
   return vBoard();
@@ -924,15 +1151,15 @@ function nextStep(r) {
 }
 function vBoard() {
   const q = (S.q || '').toLowerCase();
-  const list = S.reqs.filter(r => (!S.ui.fobra || r.obra === S.ui.fobra) && (!S.ui.onlyUrg || r.urgente) && (!q || [r.obra, r.solicitante, code(r.id), ...r.itens.map(i => i.desc), ...r.cotacoes.map(c => sup_(c.supId).nome), ...r.docs.map(d => d.numero)].join(' ').toLowerCase().includes(q)));
-  const mine = list.filter(r => nextStep(r)[1]).length;
+  const list = visReqs().filter(r => (!S.ui.fobra || r.obra === S.ui.fobra) && (!S.ui.onlyUrg || r.urgente) && (!q || [r.obra, r.solicitante, code(r.id), ...r.itens.map(i => i.desc), ...r.cotacoes.map(c => sup_(c.supId).nome), ...r.docs.map(d => d.numero)].join(' ').toLowerCase().includes(q)));
+  const mine = list.filter(r => nextStep(r)[1] && access(r).perms.size).length;
   return `
   <div class="phead"><div class="t"><h1>Quadro de solicitações</h1><p>${list.filter(r => r.status !== 'finalizado').length} em andamento · <b style="color:var(--accent)">${mine} esperando você</b></p></div>
     <button class="btn primary lg" data-act="nav" data-v="eng">${IC.plus} Nova solicitação</button></div>
   <div class="fbar">
-    <select class="in pill" data-chg="fobra" id="fobra"><option value="">Todas as obras</option>${S.obras.map(o => `<option ${S.ui.fobra === o.nome ? 'selected' : ''}>${esc(o.nome)}</option>`).join('')}</select>
+    <select class="in pill" data-chg="fobra" id="fobra"><option value="">Todas as obras</option>${visObras().map(o => `<option ${S.ui.fobra === o.nome ? 'selected' : ''}>${esc(o.nome)}</option>`).join('')}</select>
     <input class="in pill" id="q" placeholder="Buscar obra, item, fornecedor ou nº do pedido" value="${esc(S.q)}">
-    <button class="chip sel" style="padding:9px 14px;font-size:12.5px" data-act="only-urg" aria-pressed="${!!S.ui.onlyUrg}">Só urgentes · ${S.reqs.filter(r => r.urgente && r.status !== 'finalizado').length}</button>
+    <button class="chip sel" style="padding:9px 14px;font-size:12.5px" data-act="only-urg" aria-pressed="${!!S.ui.onlyUrg}">Só urgentes · ${visReqs().filter(r => r.urgente && r.status !== 'finalizado').length}</button>
   </div>
   <div class="small muted" style="margin:-6px 0 10px">No computador, arraste os cartões entre as colunas para mudar a etapa.</div>
   <div class="board">${ST.map(([k, n]) => { let items = list.filter(r => r.status === k).sort((a, b) => (b.urgente - a.urgente) || b.id - a.id); const tot = items.length; if (k === 'finalizado') items = items.slice(0, 4); return `<section class="kcol" data-col="${k}">
@@ -941,24 +1168,28 @@ function vBoard() {
     </section>`; }).join('')}</div>`;
 }
 function kcard(r) {
-  const [nx, me] = nextStep(r); const bv = bestValue(r);
+  const [nx, meTurn] = nextStep(r); const bv = bestValue(r);
   const left = Math.ceil((new Date(r.prazoIdeal + 'T23:59') - Date.now()) / DAY);
   const late = stIdx(r.status) < 5 && left <= 1;
-  return `<button class="kcard" data-act="sel" data-id="${r.id}" draggable="true">
+  return `<button class="kcard" data-act="sel" data-id="${r.id}" draggable="${access(r).perms.has('editar') && r.status !== 'finalizado'}">
     <div class="kc-top"><span class="kc-id">${code(r.id)}${r.origem === 'email' ? ` <span class="kc-mail" title="Chegou por e-mail">${IC.mail}</span>` : ''}</span>${r.urgente ? '<span class="chip urg"><i>Urgente</i></span>' : ''}</div>
     <div class="kc-obra">${esc(r.obra)}</div>
     <div class="kc-it">${r.itens.length} ${r.itens.length > 1 ? 'itens' : 'item'} · ${esc(r.itens.slice(0, 2).map(i => i.desc).join(', '))}</div>
     <div class="kc-foot"><span class="avatar xs ${avCls(r.solicitante)}" title="${esc(r.solicitante)}">${initials(r.solicitante)}</span>${r.envios.length ? `<span>${r.cotacoes.length}/${r.envios.length} orç.</span>` : ''}<span class="${late ? 'late' : ''}">até ${fD(r.prazoIdeal)}</span><span class="val">${bv ? brl(bv.v).replace(/,\d\d$/, '') : ''}</span></div>
-    <div class="kc-next ${me ? 'me' : ''}">${me ? '→ ' : ''}${nx}</div>
+    ${(() => { const a = access(r); return a.via === 'cob' ? `<div class="kc-cob">Cobertura · ${esc(USERS[r.compradora].nome)}</div>` : a.via === 'shared' ? `<div class="kc-cob ro">Consulta · ${esc(USERS[r.compradora].nome)}</div>` : me().papel === 'admin' ? `<div class="kc-cob gray">Compradora · ${esc(USERS[r.compradora].nome)}</div>` : ''; })()}
+    <div class="kc-next ${meTurn ? 'me' : ''}">${meTurn ? '→ ' : ''}${nx}</div>
   </button>`;
 }
 function vDetailPage(r) {
+  const ac = access(r);
+  if (!ac.view) return `<div class="row" style="margin-bottom:14px"><button class="btn" data-act="back">← Voltar ao quadro</button></div><div class="empty"><b>Acesso negado.</b><br>Esta compra é de outra compradora e não está liberada para você. No sistema real o servidor nem envia esses dados.</div>`;
   const order = S.reqs.filter(x => x.status !== 'finalizado' || x.id === r.id).sort((a, b) => stIdx(a.status) - stIdx(b.status) || b.id - a.id);
   return `<div class="row" style="justify-content:space-between;margin-bottom:14px">
       <button class="btn" data-act="back">← Voltar ao quadro</button>
       <span class="small muted">${stName(r.status)} · ${nextStep(r)[0]}</span>
     </div>
-    <div style="display:grid;gap:16px">${vHero(r)}<section class="detail">${vDetail(r)}</section></div>`;
+    ${ac.via === 'shared' ? `<div class="covbanner ro">Somente consulta: pedido fechado de <b>${esc(USERS[r.compradora].nome)}</b>. Não é possível editar.</div>` : ac.via === 'cob' ? `<div class="covbanner">Você está trabalhando nesta compra pela cobertura de <b>${esc(USERS[r.compradora].nome)}</b>. Tudo que fizer fica registrado assim no histórico.${stIdx(r.status) >= 3 ? ' Pedido fechado: somente consulta.' : ''}</div>` : ''}
+    <div style="display:grid;gap:16px" class="${permClasses(r)}">${vHero(r)}<section class="detail">${vDetail(r)}</section></div>`;
 }
 function vHero(r) {
   const bv = bestValue(r);
@@ -994,7 +1225,18 @@ function vDetail(r) {
   </div>`;
   const head = `<div class="panel hd">
     <div class="row" style="justify-content:space-between">
-      <div class="meta"><span>Criada <b>${fDT(r.criado)}</b></span><span>Solicitante <b>${esc(r.solicitante)}</b></span>${o ? `<span>Entrega <b>${esc(o.end)}</b></span>` : ''}</div>
+      <div class="trace">
+        <div><span>Obra</span><b>${esc(r.obra)}</b></div>
+        <div><span>Engenheiro responsável</span><b>${esc(obraResp(r.obra))}</b></div>
+        <div><span>Solicitado por</span><b>${esc(r.solicitante)}</b><i>${esc(solPapel(r))}</i></div>
+        <div><span>Data da solicitação</span><b>${fDT(r.criado)}</b></div>
+        <div><span>Prioridade</span><b style="color:${r.urgente ? 'var(--urgent)' : 'inherit'}">${r.urgente ? 'Urgente' : 'Normal'}</b></div>
+        <div><span>Status</span><b>${stName(r.status)}</b></div>
+        <div><span>Compradora responsável</span><b>${esc(USERS[r.compradora]?.nome || '—')}</b>${cobDe(r.compradora).find(c => c.obras.includes(r.obra)) ? `<i>Ausente · cobertura: ${esc(USERS[cobDe(r.compradora).find(c => c.obras.includes(r.obra)).para].nome)}</i>` : ''}</div>
+        ${r.aprovadoPor ? `<div><span>Aprovado por</span><b>${esc(r.aprovadoPor)}</b></div>` : ''}
+        ${r.fechadoPor ? `<div><span>Pedido fechado por</span><b>${esc(r.fechadoPor)}</b></div>` : ''}
+        ${o ? `<div class="wide"><span>Entrega</span><b>${esc(o.end)}</b></div>` : ''}
+      </div>
       <div class="seg" role="group" aria-label="Urgência"><button class="n" data-act="urg" data-v="0" aria-pressed="${!r.urgente}">Normal</button><button class="u" data-act="urg" data-v="1" aria-pressed="${r.urgente}">Urgente</button></div>
     </div>
     ${r.obs ? `<div class="small"><span class="muted">Obs. do engenheiro:</span> ${esc(r.obs)}</div>` : ''}
@@ -1020,7 +1262,7 @@ function vDetail(r) {
     motivos: r.cotacoes.length ? pMotivos(r) : '',
     aprovacao: r.cotacoes.length ? pAprovacao(r) : '',
     pedido: i >= 3 ? pPedido(r) + (i >= 4 ? pEntrega(r) : `<div class="panel"><div class="panel-h"><h3>Entrega na obra</h3></div><div class="small muted">Depois que o pedido for anexado, ${esc(r.solicitante)} confirma a chegada pelo celular.</div></div>`) : '',
-    historico: `<div class="panel"><div class="panel-h"><h3>Histórico</h3></div><ul class="log">${[...r.log].reverse().map(([tt, x]) => `<li><time>${fDT(tt)}</time><span>${esc(x)}</span></li>`).join('')}</ul></div>`,
+    historico: `<div class="panel"><div class="panel-h"><h3>Histórico</h3></div><ul class="log">${[...r.log].reverse().map(([tt, x, by]) => `<li><time>${fDT(tt)}</time><span>${esc(x)}${by ? `<span class="logby"> · por ${esc(by)}</span>` : ''}</span></li>`).join('')}</ul></div>`,
   }[t];
   return `${head}
   <div class="dtabs" id="dtabs" role="tablist">${tabs.map(([k, n, c, ok]) => `<button role="tab" data-act="dtab" data-v="${k}" aria-selected="${k === t}" ${ok ? '' : 'disabled title="Disponível nas próximas etapas"'}>${n}${c !== '' && c != null ? `<b>${c}</b>` : ''}</button>`).join('')}</div>
@@ -1031,7 +1273,7 @@ function defTab(r) { return {nova: 'cotacao', cotacao: 'orcamentos', analise: 'i
 function mailText(r) {
   const o = obra_(r.obra);
   const subj = `${r.urgente ? '[URGENTE] ' : ''}Cotação ${code(r.id)} – Obra ${r.obra}`;
-  const body = `Bom dia,\n\nPor gentileza, enviar orçamento dos itens abaixo para a obra ${r.obra}:\n\n${r.itens.map((i, k) => `${k + 1}. ${i.qtd == null ? '' : numBR(i.qtd) + ' ' + i.un + ' – '}${i.desc}`).join('\n')}\n\nLocal de entrega: ${o ? o.end : 'a confirmar'}\nPrazo ideal de entrega: ${fD(r.prazoIdeal)}\n\nFavor informar no orçamento: preço unitário de cada item, prazo de entrega, frete e condição de pagamento.\nAo responder, mantenha o código ${code(r.id)} no assunto.\n\nAtenciosamente,\nLetícia\nDepartamento de Compras`;
+  const body = `Bom dia,\n\nPor gentileza, enviar orçamento dos itens abaixo para a obra ${r.obra}:\n\n${r.itens.map((i, k) => `${k + 1}. ${i.qtd == null ? '' : numBR(i.qtd) + ' ' + i.un + ' – '}${i.desc}`).join('\n')}\n\nLocal de entrega: ${o ? o.end : 'a confirmar'}\nPrazo ideal de entrega: ${fD(r.prazoIdeal)}\n\nFavor informar no orçamento: preço unitário de cada item, prazo de entrega, frete e condição de pagamento.\nAo responder, mantenha o código ${code(r.id)} no assunto.\n\nAtenciosamente,\n${USERS[r.compradora]?.nome || 'Letícia'}\nDepartamento de Compras`;
   return {subj, body};
 }
 function pEnviar(r) {
@@ -1254,8 +1496,8 @@ function obraSummary(o, reqs) {
 }
 function vDash() {
   const f = S.ui; const q = (f.dq || '').toLowerCase();
-  const reqs = S.reqs.filter(r => (!f.dobra || r.obra === f.dobra) && (!f.dfrom || r.criado.slice(0, 10) >= f.dfrom) && (!f.dto || r.criado.slice(0, 10) <= f.dto) && (!q || [r.obra, r.solicitante, code(r.id), ...r.itens.map(i => i.desc)].join(' ').toLowerCase().includes(q)));
-  const obras = S.obras.filter(o => !f.dobra || o.nome === f.dobra).map(o => obraSummary(o, reqs));
+  const reqs = visReqs().filter(r => (!f.dobra || r.obra === f.dobra) && (!f.dfrom || r.criado.slice(0, 10) >= f.dfrom) && (!f.dto || r.criado.slice(0, 10) <= f.dto) && (!q || [r.obra, r.solicitante, code(r.id), ...r.itens.map(i => i.desc)].join(' ').toLowerCase().includes(q)));
+  const obras = visObras().filter(o => !f.dobra || o.nome === f.dobra).map(o => obraSummary(o, reqs));
   const ativas = obras.filter(x => x.open.length);
   const spent = reqs.reduce((t, r) => t + reqTotal(r), 0);
   const maxO = Math.max(1, ...obras.map(x => x.spent));
@@ -1263,7 +1505,7 @@ function vDash() {
   const avg = times.length ? times.reduce((a, b) => a + b.t, 0) / times.length : null;
   const maxT = Math.max(1, ...times.map(x => x.t));
   const pts = times.map((x, i) => [times.length === 1 ? 110 : 10 + i * (200 / (times.length - 1)), 70 - x.t / maxT * 55]);
-  const recv = S.mail.filter(m => m.folder === 'entrada').length, sent = S.reqs.reduce((t, r) => t + r.envios.length, 0), peds = S.mail.filter(m => m.tipo === 'pedido').length, orcs = S.mail.filter(m => m.tipo === 'orcamento').length;
+  const recv = myMail().filter(m => m.folder === 'entrada').length, sent = reqs.reduce((t, r) => t + r.envios.length, 0), peds = myMail().filter(m => m.tipo === 'pedido').length, orcs = myMail().filter(m => m.tipo === 'orcamento').length;
   const nt = f.dnotch || 'todas';
   const shown = obras.filter(x => nt === 'todas' || (nt === 'urg' && x.urg.length) || (nt === 'road' && x.road.length));
   const selO = shown.find(x => x.o.nome === f.dsel) || shown[0];
@@ -1284,10 +1526,10 @@ function vDash() {
       ${pts.length ? `<svg class="spark" viewBox="0 0 220 80" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts.map(p => p.join(',')).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>${pts.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>`).join('')}</svg>` : ''}</div>
     <div class="kpi"><span class="ic">${IC.mail}</span><span class="k">E-mails da cotação</span><span class="s">caixa do Outlook da Letícia</span>
       <div class="mtiles"><div><b>${recv}</b><span>Recebidos</span></div><div class="on"><b>${peds}</b><span>Pedidos</span></div><div><b>${orcs}</b><span>Orçamentos</span></div><div><b>${sent}</b><span>Enviados</span></div></div>
-      <button class="btn dark sm" data-act="nav" data-v="mail" style="justify-self:end">${S.outlook?.on ? 'Abrir inbox' : 'Conectar Outlook'}</button></div>
+      <button class="btn dark sm" data-act="nav" data-v="mail" style="justify-self:end">${OL().on ? 'Abrir inbox' : 'Conectar Outlook'}</button></div>
   </div>
   <div class="fbar"><span class="lab">Filtros ativos <i>${[f.dobra, f.dfrom, f.dto, f.dq].filter(Boolean).length}</i></span>
-    <select class="in pill" data-chg="dobra" id="dobra"><option value="">Todas as obras</option>${S.obras.map(o => `<option ${f.dobra === o.nome ? 'selected' : ''}>${esc(o.nome)}</option>`).join('')}</select>
+    <select class="in pill" data-chg="dobra" id="dobra"><option value="">Todas as obras</option>${visObras().map(o => `<option ${f.dobra === o.nome ? 'selected' : ''}>${esc(o.nome)}</option>`).join('')}</select>
     <label class="datef">De <input class="in pill" type="date" data-chg="dfrom" id="dfrom" value="${esc(f.dfrom || '')}"></label>
     <label class="datef">Até <input class="in pill" type="date" data-chg="dto" id="dto" value="${esc(f.dto || '')}"></label>
     <input class="in pill" id="dq" data-chg="dq" placeholder="Buscar item, engenheiro ou nº" value="${esc(f.dq || '')}">
@@ -1343,20 +1585,27 @@ function syncStatus(r) {
 
 const ACT = {
   role: el => { S.role = el.dataset.v; window.scrollTo(0, 0); render(); },
-  nav: el => { const v = el.dataset.v; S.role = v === 'eng' ? 'engenheiro' : v === 'ger' ? 'gerente' : 'compras'; S.ui.fromDash = false; if (v === 'for') S.tab = 'fornecedores'; if (v === 'mail') S.tab = 'email'; if (v === 'sol') { S.tab = 'solicitacoes'; S.view = 'board'; } window.scrollTo(0, 0); render(); },
+  nav: el => { const v = el.dataset.v; S.role = v === 'eng' ? 'engenheiro' : v === 'ger' ? 'gerente' : 'compras'; S.ui.fromDash = false; S.ui.cform = false; S.ui.cformDe = null; if (v === 'cob') S.tab = 'cob'; if (v === 'usr') S.tab = 'usuarios'; if (v === 'for') S.tab = 'fornecedores'; if (v === 'mail') S.tab = 'email'; if (v === 'sol') { S.tab = 'solicitacoes'; S.view = 'board'; } window.scrollTo(0, 0); render(); },
   goto: el => { const map = {'sec-itens': 'itens', 'sec-enviar': 'cotacao', 'sec-cot': 'orcamentos', 'sec-dec': 'ia', 'sec-ped': 'pedido', 'sec-ent': 'pedido', 'sec-hist': 'historico'}; S.ui.dtab = map[el.dataset.v]; render(); $('#dtabs')?.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start'}); },
   dtab: el => { S.ui.dtab = el.dataset.v; S.ui.qedit = null; render(); },
   'copy-link': () => { const r = req_(S.selId); const slug = r.obra.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); const t = obraLink(r.obra); navigator.clipboard?.writeText(t).then(() => toast('Link da obra copiado (exemplo): ' + t), () => toast(t)); },
   reset: () => { S = seed(); render(); toast('Dados de exemplo restaurados'); },
   tab: el => { S.tab = el.dataset.v; render(); },
   filter: el => { S.filter = el.dataset.v; render(); },
-  sel: el => { S.selId = +el.dataset.id; S.ui.qedit = null; S.ui.decErr = null; S.ui.dtab = null; S.role = 'compras'; S.tab = 'solicitacoes'; S.view = 'detail'; render(); window.scrollTo(0, 0); },
+  sel: el => { if (!access(req_(el.dataset.id)).view) { toast('Sem acesso a esta compra.'); return; } S.selId = +el.dataset.id; S.ui.qedit = null; S.ui.decErr = null; S.ui.dtab = null; S.role = 'compras'; S.tab = 'solicitacoes'; S.view = 'detail'; render(); window.scrollTo(0, 0); },
   back: () => { S.view = 'board'; render(); window.scrollTo(0, 0); },
   dsel: el => { S.ui.dsel = el.dataset.v; render(); },
   dnotch: el => { S.ui.dnotch = el.dataset.v; S.ui.dsel = null; render(); },
   dlink: el => { const t = obraLink(el.dataset.v); navigator.clipboard?.writeText(t).then(() => toast('Link da obra copiado (exemplo): ' + t), () => toast(t)); },
   dboard: el => { S.ui.fobra = el.dataset.v; S.role = 'compras'; S.tab = 'solicitacoes'; S.view = 'board'; render(); window.scrollTo(0, 0); },
   dopen: el => { S.ui.pobra = el.dataset.v; S.ui.etab = null; S.ui.fromDash = true; S.role = 'engenheiro'; render(); window.scrollTo(0, 0); },
+  bell: () => { S.role = 'compras'; S.tab = me().papel === 'admin' ? 'usuarios' : 'cob'; if (['engenheiro', 'assistente'].includes(me().papel)) { toast('Sem notificações'); S.role = 'engenheiro'; } render(); window.scrollTo(0, 0); },
+  'cov-new': () => { S.ui.cform = true; S.ui.cf = null; render(); },
+  'cov-admin': el => { S.ui.cformDe = el.dataset.v; S.ui.cf = null; render(); window.scrollTo(0, 0); },
+  'cov-cancel': () => { S.ui.cform = false; S.ui.cformDe = null; render(); },
+  'cov-accept': el => { const c = S.coberturas.find(x => x.id === el.dataset.v); c.status = 'ativa'; c.aceitoPor = S.me; c.aceitoEm = now(); c.visto = true; render(); toast(`Cobertura aceita. Você passa a ver as obras liberadas de ${USERS[c.de].nome}.`); },
+  'cov-refuse': el => { const c = S.coberturas.find(x => x.id === el.dataset.v); c.status = 'recusada'; c.encerradoPor = me().nome + ' (recusou)'; c.encerradoEm = now(); render(); toast('Pedido de cobertura recusado'); },
+  'cov-end': el => { const c = S.coberturas.find(x => x.id === el.dataset.v); const wasPend = c.status === 'pendente'; c.status = 'encerrada'; c.encerradoPor = me().nome + (wasPend ? ' (cancelou antes do aceite)' : ' (antes do prazo)'); c.encerradoEm = now(); render(); toast(wasPend ? 'Pedido cancelado' : `Cobertura encerrada. ${USERS[c.para].nome} volta a ver só as próprias obras.`); },
   'only-urg': () => { S.ui.onlyUrg = !S.ui.onlyUrg; render(); },
   'open-req': el => { S.ui.dtab = null; S.view = 'detail'; S.role = 'compras'; S.tab = 'solicitacoes'; S.selId = +el.dataset.id; window.scrollTo(0, 0); render(); },
   urg: el => { const r = req_(S.selId); const v = el.dataset.v === '1'; if (r.urgente !== v) { r.urgente = v; log(r, v ? 'Marcada como urgente' : 'Urgência removida'); } render(); },
@@ -1367,7 +1616,7 @@ const ACT = {
     const r = req_(S.selId); const picks = currentPicks(r);
     picks.forEach(id => { const ex = r.envios.find(e => e.supId === id); if (!ex) r.envios.push({supId: id, em: now()}); });
     log(r, `Cotação enviada para ${picks.length} fornecedor(es): ${picks.map(p => sup_(p).nome).join(', ')}`);
-    { const {subj, body} = mailText(r); picks.forEach(id => { const sp = sup_(id); S.mail.push({id: 'm' + uid(), folder: 'enviados', to: sp.email, lido: true, em: now(), tipo: null, reqId: r.id, supId: id, from: 'Letícia', fromEmail: 'leticia@temafe.com.br', subj, body, anexos: []}); }); }
+    { const {subj, body} = mailText(r); picks.forEach(id => { const sp = sup_(id); S.mail.push({id: 'm' + uid(), owner: r.compradora, folder: 'enviados', to: sp.email, lido: true, em: now(), tipo: null, reqId: r.id, supId: id, from: 'Letícia', fromEmail: 'leticia@temafe.com.br', subj, body, anexos: []}); }); }
     if (r.status === 'analise') r.status = 'cotacao';
     syncStatus(r); S.ui.pickFor = null; S.ui.dtab = 'orcamentos'; render(); toast(`Pedido de cotação enviado para ${picks.length} fornecedor(es)`);
   },
@@ -1379,14 +1628,14 @@ const ACT = {
   'mail-make': el => { const m = S.mail.find(x => x.id === el.dataset.v); const r = reqFromMail(m); render(); toast(`Solicitação ${code(r.id)} criada no quadro`); },
   'mail-sync': () => {
     let novos = 0, ped = 0, orc = 0;
-    if (!S.synced) {
-      const m = PEND_MAIL(); S.mail.push(m); novos++;
+    if (!S.synced && S.me === 'leticia') {
+      const m = PEND_MAIL(); m.owner = 'leticia'; S.mail.push(m); novos++;
       if (isPedidoMail(m)) { reqFromMail(m); ped++; } 
     }
-    S.reqs.filter(r => r.status === 'cotacao' || r.status === 'analise').forEach(r => {
+    visReqs().filter(r => (r.status === 'cotacao' || r.status === 'analise') && access(r).perms.has('cotar')).forEach(r => {
       const pend = r.envios.filter(e => !r.cotacoes.find(c => c.supId === e.supId)).slice(0, 1);
       pend.forEach(e => { const q = simulateQuote(r, e.supId); r.cotacoes.push(q); log(r, `Orçamento recebido por e-mail: ${sup_(e.supId).nome} (lido por IA)`); syncStatus(r); const sp = sup_(e.supId);
-        S.mail.push({id: 'm' + uid(), folder: 'entrada', to: 'leticia@temafe.com.br', lido: false, em: now(), tipo: 'orcamento', reqId: r.id, supId: e.supId, from: sp.nome, fromEmail: sp.email.split(';')[0].trim(), subj: `RE: ${r.urgente ? '[URGENTE] ' : ''}Cotação ${code(r.id)} – Obra ${r.obra}`, anexos: [q.arquivo], body: `Letícia, boa tarde.\n\nSegue orçamento em anexo. Prazo: ${q.prazoDias === 0 ? 'imediato' : q.prazoDias + ' dia(s)'}. Pagamento: ${q.pagamento}\n\nAtenciosamente,\n${sp.contato || sp.nome}`}); novos++; orc++; });
+        S.mail.push({id: 'm' + uid(), owner: r.compradora, folder: 'entrada', to: USERS[r.compradora].email, lido: false, em: now(), tipo: 'orcamento', reqId: r.id, supId: e.supId, from: sp.nome, fromEmail: sp.email.split(';')[0].trim(), subj: `RE: ${r.urgente ? '[URGENTE] ' : ''}Cotação ${code(r.id)} – Obra ${r.obra}`, anexos: [q.arquivo], body: `Letícia, boa tarde.\n\nSegue orçamento em anexo. Prazo: ${q.prazoDias === 0 ? 'imediato' : q.prazoDias + ' dia(s)'}. Pagamento: ${q.pagamento}\n\nAtenciosamente,\n${sp.contato || sp.nome}`}); novos++; orc++; });
     });
     S.synced++; S.ui.mfold = 'entrada'; S.ui.msel = null; render();
     toast(novos ? [`${novos} e-mail${novos > 1 ? 's' : ''} novo${novos > 1 ? 's' : ''}`, ped ? `${ped} pedido de material foi para o quadro` : '', orc ? `${orc} orçamento anexado` : ''].filter(Boolean).join(' · ') : 'Nenhum e-mail novo');
@@ -1411,13 +1660,13 @@ const ACT = {
     const pg = txt.match(/\d+\s*DDL/i) || txt.match(/\d+\/\d+(\/\d+)?/) || txt.match(/à vista/i) || txt.match(/pagamento[^.\n]*?(\d+\s*dias)/i); if (pg) q.pagamento = pg[1] || pg[0];
     const pzE = txt.match(/(entrega|prazo)[^.\n]*?(\d+)\s*dias?/i); if (pzE) q.prazoDias = +pzE[2];
     r.cotacoes.push(q);
-    S.mail.push({id: 'm' + uid(), folder: 'entrada', to: 'leticia@temafe.com.br', lido: true, em: now(), tipo: 'orcamento', reqId: r.id, supId: s, from: sp.nome, fromEmail: sp.email.split(';')[0].trim(), subj: `RE: Cotação ${code(r.id)} – Obra ${r.obra}`, anexos: S.ui.replyFile ? [S.ui.replyFile] : [], body: txt || '(orçamento anexado)'});
+    S.mail.push({id: 'm' + uid(), owner: r.compradora, folder: 'entrada', to: USERS[r.compradora].email, lido: true, em: now(), tipo: 'orcamento', reqId: r.id, supId: s, from: sp.nome, fromEmail: sp.email.split(';')[0].trim(), subj: `RE: Cotação ${code(r.id)} – Obra ${r.obra}`, anexos: S.ui.replyFile ? [S.ui.replyFile] : [], body: txt || '(orçamento anexado)'});
     log(r, `Resposta de ${sp.nome} registrada manualmente; valores lidos pela IA`); syncStatus(r);
     S.ui.reply = null; S.ui.replyFile = null; S.ui.qedit = s; render(); toast('Resposta registrada. Confira os valores lidos.');
   },
   'open-mail-id': el => { const m = S.mail.find(x => x.id === el.dataset.v); S.role = 'compras'; S.tab = 'email'; S.ui.mfold = m.folder === 'enviados' ? 'enviados' : (m.tipo || 'entrada'); S.ui.msel = m.id; render(); window.scrollTo(0, 0); },
-  'ol-connect': () => { const e = ($('#ol-email')?.value || '').trim() || 'leticia@temafe.com.br'; S.outlook = {on: true, email: e, em: now()}; render(); toast(`Conta ${e} conectada · ${S.mail.filter(m => m.folder === 'entrada').length} e-mails importados`); },
-  'ol-disconnect': () => { S.outlook = {on: false, email: ''}; render(); toast('Conta do Outlook desconectada'); },
+  'ol-connect': () => { const e = ($('#ol-email')?.value || '').trim() || me().email; S.outlook = S.outlook || {}; S.outlook[S.me] = {on: true, email: e, em: now()}; render(); toast(`Conta ${e} conectada · ${myMail().filter(m => m.folder === 'entrada').length} e-mails importados`); },
+  'ol-disconnect': () => { S.outlook[S.me] = {on: false, email: ''}; render(); toast('Conta do Outlook desconectada'); },
   'attach-quote': el => { const r = req_(S.selId); const s = el.dataset.sup; pickFile(name => { const q = simulateQuote(r, s); q.arquivo = name; r.cotacoes.push(q); log(r, `Orçamento anexado: ${sup_(s).nome} (${name})`); syncStatus(r); S.ui.qedit = s; render(); toast('Orçamento anexado. Confira os valores lidos.'); }); },
   qedit: el => { S.ui.qedit = S.ui.qedit === el.dataset.sup ? null : el.dataset.sup; render(); },
   'apply-sug': () => { const r = req_(S.selId); const a = analyze(r); r.vencedor = {...a.sug}; fillReasons(r); render(); toast('Sugestão aplicada'); },
@@ -1428,8 +1677,8 @@ const ACT = {
     const missing = r.itens.filter(i => !r.vencedor[i.id]);
     if (missing.length || losers.some(s => !r.motivos[s]?.motivo)) { S.ui.dtab = missing.length ? 'ia' : 'motivos'; render(); toast(missing.length ? 'Falta escolher fornecedor para algum item' : 'Falta preencher algum motivo'); return; }
     Object.keys(r.motivos).forEach(s => { if (ws.includes(s)) delete r.motivos[s]; });
-    r.status = 'aprovado'; r.aprovadoEm = now(); r.aprovadoPor = 'Letícia'; S.ui.decErr = null; S.ui.dtab = 'pedido';
-    log(r, `Compra aprovada por Letícia (${ws.length} fornecedor${ws.length > 1 ? 'es' : ''})`); render(); toast('Compra aprovada. Agora é só anexar o pedido.');
+    r.status = 'aprovado'; r.aprovadoEm = now(); r.aprovadoPor = actorTag(r); S.ui.decErr = null; S.ui.dtab = 'pedido';
+    log(r, `Compra aprovada (${ws.length} fornecedor${ws.length > 1 ? 'es' : ''})`); render(); toast('Compra aprovada. Agora é só anexar o pedido.');
   },
   'attach-po': el => {
     const r = req_(S.selId); const s = el.dataset.sup; const num = ($('#pn-' + s)?.value || '').trim() || String(S.seq++).padStart(5, '0');
@@ -1441,7 +1690,7 @@ const ACT = {
       render(); toast('Pedido anexado');
     });
   },
-  archive: () => { const r = req_(S.selId); r.status = 'finalizado'; S.ui.dtab = 'historico'; log(r, 'Enviado ao financeiro e arquivado'); render(); toast('Arquivado'); },
+  archive: () => { const r = req_(S.selId); r.status = 'finalizado'; r.fechadoPor = actorTag(r); S.ui.dtab = 'historico'; log(r, 'Enviado ao financeiro e arquivado'); render(); toast('Arquivado'); },
   'e-urg': el => { S.ui.draft = {...readDraft(), urg: el.dataset.v === '1'}; render(); },
   'e-open': el => { S.ui.eopen = +el.dataset.id; render(); },
   pobra: el => { S.ui.pobra = el.dataset.v; S.ui.etab = null; S.ui.eopen = null; S.ui.draft = {}; render(); },
@@ -1451,8 +1700,8 @@ const ACT = {
   'e-confirm': el => {
     const r = req_(el.dataset.id); const ff = $('#e-foto')?.files?.[0];
     if (ff) FILES[ff.name] = URL.createObjectURL(ff);
-    r.entrega = {em: now(), por: S.eng, completo: el.dataset.full === '1', obs: $('#e-cobs')?.value || '', foto: ff?.name};
-    r.status = 'entregue'; log(r, `Chegada confirmada na obra por ${S.eng}${r.entrega.completo ? '' : ' (parcial)'}`);
+    r.entrega = {em: now(), por: me().nome, completo: el.dataset.full === '1', obs: $('#e-cobs')?.value || '', foto: ff?.name};
+    r.status = 'entregue'; log(r, `Chegada confirmada na obra${r.entrega.completo ? '' : ' (parcial)'}`);
     S.ui.eopen = null; S.ui.etab = 'entregas'; render(); toast('Chegada confirmada. Compras já foi avisada.');
   },
 };
@@ -1470,7 +1719,10 @@ function readDraft() { return {obra: $('#e-obra')?.value || '', itens: $('#e-ite
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-act]'); if (!el) return;
   if (el.tagName === 'A') return;
-  e.preventDefault(); ACT[el.dataset.act]?.(el, e);
+  e.preventDefault();
+  const need = PERM_ACT[el.dataset.act];
+  if (need && S.role === 'compras' && S.view === 'detail') { const r = req_(S.selId); if (r && !access(r).perms?.has(need)) { toast(denyMsg(r, need)); return; } }
+  ACT[el.dataset.act]?.(el, e);
 });
 document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-act][role="button"]')) { e.preventDefault(); ACT[e.target.dataset.act]?.(e.target); } });
 document.addEventListener('input', e => {
@@ -1480,9 +1732,11 @@ document.addEventListener('input', e => {
 document.addEventListener('change', e => {
   const el = e.target; const k = el.dataset.chg; if (!k) return;
   const r = req_(S.selId);
+  if (PERM_CHG[k] && r && !access(r).perms?.has(PERM_CHG[k])) { toast(denyMsg(r, PERM_CHG[k])); render(); return; }
   const it = id => r.itens.find(i => i.id === id);
   switch (k) {
     case 'eng': S.eng = el.value; S.ui.eopen = null; render(); break;
+    case 'whoami': S.me = el.value; S.view = 'board'; S.ui = {}; S.tab = 'solicitacoes'; S.role = ['engenheiro', 'assistente'].includes(USERS[S.me].papel) ? 'engenheiro' : 'gerente'; render(); window.scrollTo(0, 0); toast('Entrou como ' + USERS[S.me].nome + ' · ' + PAPEL[USERS[S.me].papel]); break;
     case 'it-qtd': it(el.dataset.id).qtd = parseNum(el.value); render(); break;
     case 'it-un': it(el.dataset.id).un = el.value; save(); break;
     case 'it-desc': it(el.dataset.id).desc = el.value; save(); break;
@@ -1505,10 +1759,24 @@ document.addEventListener('submit', e => {
   if (e.target.id === 'eng-form') {
     const d = readDraft(); const itens = parseItems(d.itens);
     if (!d.obra.trim() || !itens.length) { toast('Preencha a obra e pelo menos um item'); return; }
-    if (!obra_(d.obra.trim())) S.obras.push({nome: d.obra.trim(), resp: S.eng, end: 'Endereço a cadastrar'});
+    if (!obra_(d.obra.trim())) S.obras.push({nome: d.obra.trim(), resp: me().nome, compradora: 'leticia', end: 'Endereço a cadastrar'});
     const id = Math.max(...S.reqs.map(r => r.id)) + 1;
-    S.reqs.unshift({id, obra: d.obra.trim(), solicitante: S.eng, criado: now(), prazoIdeal: d.prazo, urgente: !!d.urg, status: 'nova', obs: d.obs, itens, envios: [], cotacoes: [], vencedor: {}, motivos: {}, docs: [], entrega: null, log: [[now(), `Solicitação criada por ${S.eng}`]]});
+    const sol = ['engenheiro', 'assistente'].includes(me().papel) ? me() : USERS[uidByName(obraResp(d.obra.trim()))] || me();
+    S.reqs.unshift({id, obra: d.obra.trim(), compradora: obraCompradora(d.obra.trim()) || 'leticia', solicitanteId: sol.id, solicitante: sol.nome, criado: now(), prazoIdeal: d.prazo, urgente: !!d.urg, status: 'nova', obs: d.obs, itens, envios: [], cotacoes: [], vencedor: {}, motivos: {}, docs: [], entrega: null, log: [[now(), `Solicitação criada por ${sol.nome}${sol.papel === 'assistente' ? ' (assistente de ' + USERS[sol.eng].nome + ')' : ''}`]]});
     S.ui.draft = {}; S.selId = id; render(); toast(`Solicitação ${code(id)} enviada para Compras`);
+  }
+  if (e.target.id === 'cov-form') {
+    const f = e.target; const de = f.dataset.de; const byAdmin = !!f.dataset.admin;
+    const para = $('#cf-para').value, ini = $('#cf-ini').value, fim = $('#cf-fim').value;
+    const obras = [...f.querySelectorAll('input[name=cf-obra]:checked')].map(x => x.value);
+    const perms = ['ver', ...[...f.querySelectorAll('input[name=cf-perm]:checked')].map(x => x.value).filter(x => x !== 'ver')];
+    if (!obras.length) { toast('Escolha pelo menos uma obra'); return; }
+    if (!ini || !fim || fim < ini) { toast('Confira o período: o fim precisa ser depois do início'); return; }
+    const c = {id: 'c' + uid(), de, para, inicio: ini, fim, obras, perms, ativadoPor: S.me, criadoEm: now(), status: byAdmin ? 'ativa' : 'pendente', visto: false};
+    if (byAdmin) { c.aceitoPor = 'Dispensado (ativada pelo gerente)'; c.aceitoEm = now(); }
+    S.coberturas.push(c); S.ui.cform = false; S.ui.cformDe = null; render(); window.scrollTo(0, 0);
+    toast(byAdmin ? `Cobertura ativada: ${USERS[para].nome} cobre ${USERS[de].nome} de ${fD(ini)} a ${fD(fim)}` : `${USERS[para].nome} recebeu a notificação e precisa aceitar`);
+    return;
   }
   if (e.target.id === 'sup-form') {
     const nome = $('#ns-nome').value.trim(), email = $('#ns-email').value.trim();
@@ -1524,9 +1792,10 @@ document.addEventListener('dragover', e => { const col = e.target.closest && e.t
 document.addEventListener('drop', e => { const col = e.target.closest && e.target.closest('.kcol'); if (!col || dragId == null) return; e.preventDefault(); const id = dragId; dragId = null; moveReq(id, col.dataset.col); });
 function moveReq(id, st) {
   const r = req_(id); if (!r || r.status === st) return;
+  if (!access(r).perms?.has('editar') || r.status === 'finalizado' || (access(r).via === 'cob' && stIdx(st) >= 3)) { toast(denyMsg(r, 'editar')); return; }
   const from = stName(r.status); r.status = st;
-  if (stIdx(st) >= 3 && !r.aprovadoEm) { r.aprovadoEm = now(); r.aprovadoPor = 'Letícia'; }
-  log(r, `Movido no quadro de "${from}" para "${stName(st)}" por Letícia`);
+  if (stIdx(st) >= 3 && !r.aprovadoEm) { r.aprovadoEm = now(); r.aprovadoPor = actorTag(r); }
+  log(r, `Movido no quadro de "${from}" para "${stName(st)}"`);
   render(); toast(`${code(id)} movido para ${stName(st)}`);
 }
 render();
