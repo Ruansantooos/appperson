@@ -1,0 +1,1536 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Compras de Obra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: app em "moldura" clara; nav em pílula escura; KPIs em cartões; painel escuro com lista + cartão roxo da solicitação; etapas em cartões brancos abaixo */
+:root{
+  --bg:#FFFFFF; --frame:#FFFFFF; --surface:#FFFFFF; --surface-2:#F3F3FA; --ink:#14141F; --muted:#6E6E84; --line:#E5E5EF;
+  --accent:#5847EE; --accent-2:#8072FF; --accent-ink:#FFFFFF; --accent-soft:#ECEAFE;
+  --panel:#16161F; --panel-2:#20202C; --panel-3:#2A2A38; --panel-ink:#F3F3F8; --panel-muted:#9C9CB2;
+  --urgent:#E5484D; --urgent-soft:#FDECEC; --ok:#16A05A; --ok-soft:#E2F5EA; --warn:#C47A0A; --warn-soft:#FCF1DA;
+  --f-display:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-body:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"Plus Jakarta Sans",system-ui,sans-serif;
+  --r:14px; --rc:22px;
+  --shadow:none;
+  color-scheme:light;
+}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--f-body);margin:0;padding-inline:16px;padding-block:16px 40px}
+button,input,select,textarea{font:inherit;color:inherit}
+.mono,.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)} .small{font-size:12.5px}
+h1,h2,h3{margin:0;text-wrap:balance}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.shell{max-width:1360px;margin:0 auto;background:var(--frame);padding:8px 12px 36px}
+@media (max-width:700px){.shell{padding:4px 0 28px}}
+
+/* Top */
+.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:26px}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0}
+.logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--accent-2),var(--accent));display:grid;place-items:center;flex:0 0 auto}
+.logo svg{width:22px;height:22px}
+.brand b{display:block;font:800 17px/1.1 var(--f-display);letter-spacing:.01em}
+.brand span span{display:block;font-size:11.5px;color:var(--muted)}
+.nav{display:flex;gap:2px;background:var(--panel);padding:5px;border-radius:999px;overflow-x:auto;max-width:100%}
+.nav button{border:0;background:transparent;color:var(--panel-muted);padding:8px 16px;border-radius:999px;cursor:pointer;font-weight:600;font-size:13px;white-space:nowrap}
+.nav button:hover{color:var(--panel-ink)}
+.nav button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.top-r{display:flex;gap:8px;align-items:center}
+@media (max-width:700px){.top-r{order:2}.nav{order:3;width:100%}}
+.icobtn{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;color:var(--ink);flex:0 0 auto}
+.icobtn svg{width:18px;height:18px}
+.avatar{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;color:var(--accent-ink);background:linear-gradient(135deg,#F5A26B,#E0607E);flex:0 0 auto}
+.avatar.sm{width:34px;height:34px;font-size:12px}
+.av-0{background:linear-gradient(135deg,#7C9CFF,#5847EE)} .av-1{background:linear-gradient(135deg,#F5A26B,#E0607E)} .av-2{background:linear-gradient(135deg,#4FD1A5,#2A9D8F)} .av-3{background:linear-gradient(135deg,#F7C85C,#E08A2C)}
+.demo-tag{font-size:11px;font-weight:600;color:var(--muted);border:1px dashed var(--line);padding:4px 10px;border-radius:999px;white-space:nowrap}
+@media (max-width:700px){.demo-tag{display:none}}
+
+/* Page head */
+.phead{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.phead .t{margin-right:auto;min-width:0}
+.phead h1{font:700 clamp(28px,4vw,40px)/1.05 var(--f-display);letter-spacing:-.02em}
+.phead p{margin:4px 0 0;color:var(--muted)}
+
+/* Buttons & inputs */
+.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);padding:9px 16px;border-radius:999px;cursor:pointer;font-weight:600;font-size:13px;text-decoration:none;color:var(--ink);white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.lg{padding:12px 22px;font-size:14px}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.dark{background:var(--panel);border-color:var(--panel);color:var(--panel-ink)}
+.btn.white{background:#fff;border-color:#fff;color:#14141F}
+.btn.ghost{background:transparent}
+.btn.sm{padding:5px 12px;font-size:12px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+label.f{display:grid;gap:5px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.in{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:10px 14px;color:var(--ink);font-size:14px}
+.in:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+textarea.in{resize:vertical;min-height:140px;line-height:1.55}
+.in.sm{padding:6px 10px;font-size:13px;border-radius:10px}
+.in.pill{border-radius:999px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+
+/* Chips */
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line);white-space:nowrap}
+.chip.urg{background:var(--urgent-soft);color:var(--urgent);border-color:transparent}
+.chip.urg::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.chip.urg i{font-style:normal}
+.chip.st-nova,.chip.st-aprovado,.chip.st-pedido{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.chip.st-cotacao,.chip.st-analise{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.chip.st-entregue,.chip.st-finalizado{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.chip.ai{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.chip.sel{cursor:pointer}
+.chip.sel[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-bottom:18px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--rc);padding:18px 20px;display:grid;gap:6px;position:relative;overflow:hidden;min-height:150px;align-content:start}
+.kpi .k{font-size:13px;font-weight:600;color:var(--ink)}
+.kpi .v{font:700 30px/1.1 var(--f-display);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.kpi .v small{font-size:16px;font-weight:600;color:var(--muted);margin-right:3px}
+.kpi .s{font-size:12px;color:var(--muted)}
+.kpi .ic{position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2);border:1px solid var(--line)}
+.kpi .ic svg{width:17px;height:17px}
+.kpi.u .ic{color:var(--urgent)} .kpi.a .ic{color:var(--accent)} .kpi.g .ic{color:var(--ok)}
+.kpi .v.u{color:var(--urgent)} .kpi .v.g{color:var(--ok)}
+.mini-bars{display:flex;align-items:flex-end;gap:7px;height:62px;margin-top:6px}
+.mini-bars span{flex:1;border-radius:6px 6px 3px 3px;background:var(--accent);opacity:.9;min-height:6px;position:relative}
+.mini-bars span:nth-child(even){opacity:.55}
+.mini-lab{display:flex;gap:7px;font-size:10px;color:var(--muted)} .mini-lab span{flex:1;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.urg-list{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+
+/* Filters bar */
+.fbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+.fbar .lab{font-weight:700;font-size:13px;display:flex;gap:8px;align-items:center}
+.fbar .lab i{font-style:normal;background:var(--panel);color:var(--panel-ink);border-radius:999px;font-size:11px;padding:1px 8px}
+.fbar .in{flex:1 1 200px;min-width:0}
+.fbar select.in{flex:0 1 240px}
+
+/* Dark panel */
+.dpanel{background:var(--panel);border-radius:28px;padding:20px;color:var(--panel-ink);display:grid;grid-template-columns:minmax(280px,380px) minmax(0,1fr);gap:18px;position:relative;margin-bottom:18px}
+@media (max-width:980px){.dpanel{grid-template-columns:minmax(0,1fr)}}
+.dpanel-h{grid-column:1/-1;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.dpanel-h h2{font:700 17px var(--f-display);margin-right:auto}
+.notch{display:flex;gap:4px;background:var(--frame);padding:5px;border-radius:999px;overflow-x:auto;max-width:100%}
+.notch button{border:0;background:var(--surface);color:var(--ink);padding:7px 14px;border-radius:999px;cursor:pointer;font-weight:600;font-size:12.5px;display:flex;gap:8px;align-items:center;white-space:nowrap;border:1px solid var(--line)}
+.notch button b{font-size:11px;background:var(--surface-2);border-radius:999px;padding:0 7px;min-width:20px;text-align:center}
+.notch button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.notch button[aria-pressed="true"] b{background:#fff;color:var(--accent)}
+.rlist{display:grid;gap:8px;max-height:560px;overflow:auto;padding-right:4px;align-content:start}
+.ritem{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;text-align:left;background:var(--panel-2);border:0;border-radius:18px;padding:10px 14px 10px 10px;cursor:pointer;color:var(--panel-ink)}
+.ritem:hover{background:var(--panel-3)}
+.ritem[aria-current="true"]{background:linear-gradient(135deg,var(--accent-2),var(--accent))}
+.ritem .id{font-weight:700;font-size:13.5px;display:flex;gap:6px;align-items:center}
+.ritem .sub{font-size:12px;color:var(--panel-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ritem[aria-current="true"] .sub{color:rgba(255,255,255,.8)}
+.ritem .val{font-weight:700;font-size:14px;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.ritem .val small{display:block;font-size:11px;font-weight:600;color:var(--panel-muted)}
+.ritem[aria-current="true"] .val small{color:rgba(255,255,255,.8)}
+.dot-urg{width:7px;height:7px;border-radius:50%;background:var(--urgent);display:inline-block}
+.pst{font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--panel-3);color:var(--panel-ink);white-space:nowrap}
+.ritem[aria-current="true"] .pst{background:#fff;color:#14141F}
+
+.hero{background:linear-gradient(140deg,#7869FF 0%,#5847EE 55%,#4A3BD6 100%);border-radius:24px;padding:22px 24px;color:#fff;display:grid;gap:18px;min-width:0;align-content:start}
+.hero .lbl{font-size:12px;color:rgba(255,255,255,.75);font-weight:500}
+.hero-top{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1.2fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:760px){.hero-top{grid-template-columns:1fr}}
+.hero .code{font:700 30px/1.1 var(--f-display);letter-spacing:-.01em;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.hero .gpill{font-size:11.5px;font-weight:600;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:999px}
+.hero .gpill.u{background:#fff;color:var(--urgent)}
+.hero .obra{font:700 17px/1.25 var(--f-display)}
+.hero .who{display:flex;gap:10px;align-items:center}
+.hero .who b{display:block;font-size:13.5px} .hero .who span{font-size:11.5px;color:rgba(255,255,255,.75)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.tile{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:14px;display:grid;gap:6px;min-height:96px;align-content:space-between}
+.tile .tq{font:700 20px var(--f-display);font-variant-numeric:tabular-nums}
+.tile .tq small{font-size:12px;font-weight:600;opacity:.8;margin-left:3px}
+.tile .d{font-size:12px;color:rgba(255,255,255,.85);line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tile.more{background:transparent;border:1.5px dashed rgba(255,255,255,.4);place-items:center;text-align:center;align-content:center;font-size:12.5px;font-weight:600}
+.hero-foot{display:flex;gap:18px 30px;align-items:flex-end;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,.18);padding-top:16px}
+.hero-foot .m b{display:block;font:700 18px var(--f-display);font-variant-numeric:tabular-nums}
+.hero-foot .act{margin-left:auto;display:flex;gap:8px;align-items:center}
+.hero .ring{width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.4);background:transparent;color:#fff;display:grid;place-items:center;cursor:pointer}
+.hero .ring svg{width:17px;height:17px}
+
+/* Detail sections */
+.detail{display:grid;gap:16px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--rc);padding:20px 22px;min-width:0;scroll-margin-top:16px}
+.panel-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.panel-h h3{font:700 17px/1.2 var(--f-display);letter-spacing:-.01em}
+.panel-h .step{font-size:11.5px;font-weight:600;color:var(--muted);background:var(--surface-2);padding:3px 10px;border-radius:999px}
+.hd{display:grid;gap:12px}
+.meta{display:flex;gap:6px 18px;flex-wrap:wrap;color:var(--muted);font-size:13px}
+.meta b{color:var(--ink);font-weight:600}
+.stepper{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.stepper div{flex:1 0 auto;min-width:96px;font-size:11.5px;font-weight:600;color:var(--muted);padding:7px 12px;border-radius:999px;background:var(--surface-2);text-align:center;white-space:nowrap}
+.stepper div.done{background:var(--ok-soft);color:var(--ok)}
+.stepper div.cur{background:var(--accent);color:var(--accent-ink)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;padding:3px;gap:2px;background:var(--surface)}
+.seg button{border:0;background:transparent;padding:6px 14px;cursor:pointer;font-weight:600;font-size:12.5px;color:var(--muted);border-radius:999px}
+.seg button[aria-pressed="true"].u{background:var(--urgent);color:#fff}
+.seg button[aria-pressed="true"].n{background:var(--panel);color:var(--panel-ink)}
+
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:16px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{font-size:11px;letter-spacing:.04em;color:var(--muted);font-weight:600;background:var(--surface-2);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right} td.c,th.c{text-align:center}
+.cell-pick{cursor:pointer;border-radius:999px;padding:5px 10px;display:inline-flex;align-items:center;gap:5px;border:1px solid transparent;font-variant-numeric:tabular-nums;font-weight:500}
+.cell-pick:hover{border-color:var(--line)}
+.cell-pick.best{color:var(--ok);font-weight:700}
+.cell-pick.win{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+.cell-na{color:var(--muted);font-size:12px}
+tfoot td{font-weight:700;background:var(--surface-2)}
+
+.suppick{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;max-height:330px;overflow:auto;padding:2px}
+.sup{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:16px;padding:10px 12px;cursor:pointer;background:var(--surface)}
+.sup:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.sup input{margin-top:3px;accent-color:var(--accent)}
+.sup .n{font-weight:600;line-height:1.25}
+.sup .e{font-size:11.5px;color:var(--muted);word-break:break-all}
+.mail{background:var(--surface-2);border:1px dashed var(--line);border-radius:16px;padding:14px 16px;font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word;max-height:260px;overflow:auto}
+
+.quotes{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.q{border:1px solid var(--line);border-radius:18px;padding:14px;display:grid;gap:9px;background:var(--surface);align-content:start}
+.q.wait{border-style:dashed;background:var(--surface-2)}
+.q .qh{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.q .qn{font-weight:700}
+.file{display:inline-flex;align-items:center;gap:6px;font-size:12px;background:var(--surface-2);border:1px solid var(--line);padding:4px 10px 4px 4px;border-radius:999px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);text-decoration:none}
+.file::before{content:"PDF";font-size:9.5px;font-weight:700;background:var(--urgent);color:#fff;padding:2px 6px;border-radius:999px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:12.5px;margin:0}
+.kv dt{color:var(--muted)} .kv dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+
+.ai-box{border-radius:20px;padding:18px 20px;display:grid;gap:12px;background:linear-gradient(140deg,var(--accent-soft),var(--surface-2));border:1px solid var(--line)}
+.ai-box h4{margin:0;font:700 15px var(--f-display);color:var(--accent);display:flex;gap:8px;align-items:center}
+.ai-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.ai-card{background:var(--surface);border-radius:14px;padding:12px 14px;display:grid;gap:2px;border:1px solid var(--line)}
+.ai-card .k{font-size:11.5px;color:var(--muted);font-weight:600}
+.ai-card .v{font-weight:700}
+.ai-card .x{font:700 20px var(--f-display);font-variant-numeric:tabular-nums}
+.flags{display:grid;gap:5px;margin:0;padding:0;list-style:none;font-size:13px}
+.flags li{display:flex;gap:8px;align-items:baseline}
+.flags li::before{content:"";flex:0 0 7px;height:7px;border-radius:50%;background:var(--warn);transform:translateY(-1px)}
+.flags li.good::before{background:var(--ok)}
+
+.reasons{display:grid;gap:8px}
+.reason{display:grid;grid-template-columns:minmax(140px,1.1fr) minmax(150px,1fr) minmax(160px,1.4fr);gap:8px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:16px}
+@media (max-width:640px){.reason{grid-template-columns:1fr}}
+.err{color:var(--urgent);font-size:12.5px;font-weight:600}
+.doccard{border:1px solid var(--line);border-radius:16px;padding:14px;display:grid;gap:10px}
+.doccard .dh{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:baseline}
+.soon{border:1px dashed var(--line);border-radius:16px;padding:12px 14px;color:var(--muted);font-size:13px}
+.log{list-style:none;margin:0;padding:0;display:grid}
+.log li{display:grid;grid-template-columns:110px 1fr;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.log li:last-child{border-bottom:0}
+.log time{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(168px,1fr);gap:8px;overflow-x:auto;padding-bottom:8px;align-items:start}
+.kcol{background:var(--surface-2);border-radius:20px;padding:10px;display:grid;gap:8px;align-content:start;min-height:340px}
+.kcol-h{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;padding:4px 4px 2px}
+.kcol-h b{margin-left:auto;font-size:11px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:1px 9px}
+.kdot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+.kempty{font-size:12px;color:var(--muted);text-align:center;padding:18px 6px;border:1px dashed var(--line);border-radius:14px}
+.kcard{text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px;display:grid;gap:7px;cursor:pointer;color:var(--ink);font:inherit;min-width:0}
+.kcard:hover{border-color:var(--accent);box-shadow:0 4px 14px rgba(88,71,238,.12)}
+.kc-top{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.kc-id{font-weight:700;font-size:12px;color:var(--muted);white-space:nowrap}
+.kc-obra{font-weight:700;font-size:13.5px;line-height:1.3}
+.kc-it{font-size:12px;color:var(--muted);line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.kc-foot{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);flex-wrap:wrap}
+.kc-foot .val{margin-left:auto;font-weight:700;color:var(--ink)}
+.kc-foot .late{color:var(--urgent);font-weight:700}
+.kc-next{font-size:11.5px;font-weight:700;padding:6px 9px;border-radius:10px;background:var(--surface-2);color:var(--muted)}
+.kc-next.me{background:var(--accent-soft);color:var(--accent)}
+.avatar.xs{width:24px;height:24px;font-size:10px}
+.dsup{display:grid;gap:6px;border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.dtabs{display:flex;gap:6px;background:var(--surface-2);padding:6px;border-radius:999px;overflow-x:auto;scroll-margin-top:12px;max-width:100%}
+.dtabs button{border:0;background:transparent;color:var(--muted);padding:9px 16px;border-radius:999px;cursor:pointer;font-weight:600;font-size:13px;display:flex;gap:8px;align-items:center;white-space:nowrap}
+.dtabs button:hover:not([disabled]){color:var(--ink)}
+.dtabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(20,20,40,.1)}
+.dtabs button[disabled]{opacity:.4;cursor:not-allowed}
+.dtabs button b{font-size:11px;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:1px 8px}
+.portal-pick{display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:center;margin-bottom:16px}
+.obra-hero{background:linear-gradient(140deg,#7869FF 0%,#5847EE 55%,#4A3BD6 100%);color:#fff;border-radius:24px;padding:22px;display:grid;gap:8px}
+.obra-hero .lbl{font-size:12px;opacity:.8;font-weight:600}
+.obra-hero h1{font:700 26px/1.15 var(--f-display);letter-spacing:-.01em}
+.ostats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0 4px}
+.ostats div{background:rgba(255,255,255,.14);border-radius:14px;padding:10px;display:grid}
+.ostats b{font:700 17px var(--f-display);white-space:nowrap}
+.ostats span{font-size:11px;opacity:.85}
+@media (max-width:460px){.ostats{grid-template-columns:repeat(2,1fr)}}
+.eng .dtabs button{flex:1 0 auto;justify-content:center}
+.spark{width:100%;height:64px;margin-top:6px}
+.mtiles{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
+.mtiles div{background:var(--surface-2);border-radius:12px;padding:8px;display:grid;gap:2px;min-width:0}
+.mtiles div.on{background:var(--accent);color:#fff}
+.mtiles b{font:700 18px var(--f-display)}
+.mtiles span{font-size:10.5px;line-height:1.2;opacity:.85}
+.datef{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.datef .in{width:auto}
+.kcol.over{outline:2px dashed var(--accent);outline-offset:-4px;background:var(--accent-soft)}
+.kcard.dragging{opacity:.4}
+.g2{margin-top:2px}
+.mtagsel{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.connect{max-width:460px;margin:10px auto 0;background:var(--surface);border:1px solid var(--line);border-radius:28px;padding:30px;display:grid;gap:14px;justify-items:center;text-align:center}
+.connect h2{font:700 22px var(--f-display)}
+.connect p{margin:0}
+.connect .f,.connect .btn,.connect .flags,.connect .note{width:100%}
+.thread{display:grid;gap:6px}
+.trow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:9px 12px;cursor:pointer;font:inherit;color:var(--ink)}
+.trow:hover{border-color:var(--accent)}
+.trow svg{width:12px;height:12px;vertical-align:-1px}
+.tdir{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.trow.in .tdir{background:var(--ok-soft);color:var(--ok)}
+.navb{font-size:10.5px;background:var(--urgent);color:#fff;border-radius:999px;padding:0 6px;margin-left:4px}
+.mailapp{display:grid;grid-template-columns:200px minmax(260px,360px) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:1100px){.mailapp{grid-template-columns:minmax(0,1fr)}}
+.mfold{display:grid;gap:4px;align-content:start}
+.mfold button{border:0;background:transparent;text-align:left;padding:9px 14px;border-radius:999px;cursor:pointer;font-weight:600;font-size:13px;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+.mfold button:hover{background:var(--surface-2);color:var(--ink)}
+.mfold button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
+.mfold button b{font-size:11px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:0 8px;color:var(--ink)}
+.mlist{display:grid;gap:6px;max-height:680px;overflow:auto;background:var(--surface-2);border-radius:20px;padding:8px;align-content:start}
+.mrow{display:grid;gap:4px;text-align:left;background:var(--surface);border:1px solid transparent;border-radius:14px;padding:10px 12px;cursor:pointer;font:inherit;color:var(--ink);min-width:0}
+.mrow:hover{border-color:var(--line)}
+.mrow[aria-current="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.mrow-top{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.mrow-top b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mrow.unread .mrow-top b,.mrow.unread .mrow-subj{font-weight:800}
+.mrow.unread{border-left:3px solid var(--accent)}
+.mrow-top time{font-size:11px;color:var(--muted);white-space:nowrap}
+.mrow-subj{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mtag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.mtag svg{width:12px;height:12px}
+.mtag.ped{background:var(--accent-soft);color:var(--accent)}
+.mtag.orc{background:var(--ok-soft);color:var(--ok)}
+.mclip{display:inline-flex;align-items:center;gap:2px;font-size:11px;color:var(--muted)}
+.mread{background:var(--surface);border:1px solid var(--line);border-radius:var(--rc);padding:20px 22px;display:grid;gap:14px;min-width:0}
+.mread-h{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.mread-h h2{font:700 18px/1.3 var(--f-display)}
+.mfrom{display:flex;gap:10px;align-items:center}
+.mbody{white-space:pre-wrap;font-size:14px;line-height:1.65;border-top:1px solid var(--line);padding-top:14px}
+.kc-mail svg{width:12px;height:12px;vertical-align:-1px;color:var(--accent)}
+.pullbox{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--accent-soft);border-radius:18px;padding:14px 16px}
+.dbody{display:grid;gap:16px;min-width:0}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:1100px){.two{grid-template-columns:minmax(0,1fr)}}
+
+/* Engenheiro */
+.eng{max-width:820px;margin:0 auto;display:grid;gap:16px}
+.eng-hello{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.eng-hello h2{font:700 24px/1.1 var(--f-display);letter-spacing:-.02em}
+.preview{display:grid;gap:5px;margin:0;padding:0;list-style:none}
+.preview li{display:grid;grid-template-columns:62px 38px 1fr;gap:8px;font-size:13px;padding:7px 10px;background:var(--surface-2);border-radius:12px;align-items:baseline}
+.preview li.noq .qq{color:var(--urgent)}
+.ecard{background:var(--surface);border:1px solid var(--line);border-radius:var(--rc);padding:16px 18px;display:grid;gap:10px}
+.ecard .t{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.ecard .obra{font-weight:700}
+.progress{display:flex;gap:4px}
+.progress span{flex:1;height:6px;border-radius:999px;background:var(--line)}
+.progress span.on{background:var(--ok)} .progress span.cur{background:var(--accent)}
+.closed{display:grid;gap:6px;font-size:13px;border-top:1px dashed var(--line);padding-top:10px}
+.closed .w{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+
+/* Gerente */
+.g2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:980px){.g2{grid-template-columns:minmax(0,1fr)}}
+.bars{display:grid;gap:10px}
+.bar{display:grid;grid-template-columns:150px 1fr 28px;gap:10px;align-items:center;font-size:13px}
+.bar .tr{height:10px;background:var(--surface-2);border-radius:999px;overflow:hidden}
+.bar .tr i{display:block;height:100%;background:var(--accent);border-radius:999px}
+.bar b{text-align:right;font-weight:700}
+.clickrow{cursor:pointer} .clickrow:hover td{background:var(--surface-2)}
+.catblock{display:grid;gap:8px;margin-bottom:18px}
+.catblock h4{margin:0;font:700 16px var(--f-display);display:flex;gap:8px;align-items:baseline}
+.empty{padding:30px 16px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:18px}
+.dpanel .empty{border-color:var(--panel-3);color:var(--panel-muted)}
+.note{font-size:12.5px;color:var(--muted);display:flex;gap:8px;align-items:flex-start}
+.note::before{content:"i";flex:0 0 16px;height:16px;border-radius:50%;border:1px solid var(--muted);font:700 10px/14px var(--f-body);text-align:center}
+.linkbtn{background:none;border:0;color:var(--accent);text-decoration:underline;cursor:pointer;font-size:12.5px;padding:0;font-weight:600}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:var(--panel);color:var(--panel-ink);padding:11px 18px;border-radius:999px;font-weight:600;opacity:0;transition:.25s;pointer-events:none;z-index:50;max-width:calc(100vw - 32px)}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+.hidden-file{display:none}
+</style>
+</head>
+<body>
+
+<div class="shell">
+<header class="top">
+  <div class="brand"><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10l8-6 8 6v10"/><path d="M9 20v-6h6v6"/></svg></span><span><b>COMPRAS DE OBRA</b><span>Temafe · Suprimentos</span></span></div>
+  <nav class="nav" aria-label="Seções">
+    <button data-act="nav" data-v="ger" id="n-ger">Dashboard</button>
+    <button data-act="nav" data-v="mail" id="n-mail">Inbox <b class="navb" id="mail-badge"></b></button>
+    <button data-act="nav" data-v="sol" id="n-sol">Quadro</button>
+    <button data-act="nav" data-v="for" id="n-for">Fornecedores</button>
+
+  </nav>
+  <div class="top-r">
+    <span class="demo-tag">dados de exemplo</span>
+    <button class="icobtn" data-act="reset" title="Restaurar dados de exemplo" aria-label="Restaurar dados de exemplo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
+    <span class="avatar" title="Letícia · Compras">LT</span>
+  </div>
+</header>
+<main id="app"></main>
+</div>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="filepick" class="hidden-file" accept=".pdf,.png,.jpg,.jpeg,.xlsx,.xls,.doc,.docx">
+
+<script>
+/* ===================== utilidades ===================== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Math.random().toString(36).slice(2, 9);
+const brl = v => v == null || isNaN(v) ? '—' : v.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+const numBR = v => v == null ? '' : String(v).replace('.', ',');
+const parseNum = s => { if (s == null || String(s).trim() === '') return null; const n = parseFloat(String(s).replace(/[R$\s]/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.')); return isNaN(n) ? null : n; };
+const DAY = 864e5;
+const now = () => new Date().toISOString();
+const ago = (d, h = 9) => { const x = new Date(Date.now() - d * DAY); x.setHours(h, 15, 0, 0); return x.toISOString(); };
+const ahead = d => { const x = new Date(Date.now() + d * DAY); x.setHours(12,0,0,0); return x.toISOString().slice(0,10); };
+const fD = iso => iso ? new Date(iso.length === 10 ? iso + 'T12:00' : iso).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'}) : '—';
+const fDT = iso => iso ? new Date(iso).toLocaleString('pt-BR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) : '—';
+const code = id => '#' + String(id).padStart(4, '0');
+const addDays = (iso, d) => new Date(new Date(iso).getTime() + d * DAY).toISOString();
+
+/* ===================== categorias e fornecedores ===================== */
+const CATS = ['Madeira', 'Hidráulica', 'Elétrica', 'Telha trapezoidal', 'Civil', 'Serralheria e ferros'];
+const CAT_KEYS = [
+  ['Serralheria e ferros', /tubo.*galv|galvaniz|alambrado|\btela\b|arame|vergalh|barra chata|cantoneira|metalon|perfil/i],
+  ['Hidráulica', /pvc|joelho|registro|conex|caixa d.?[aá]gua|esgoto|lu[vb]a|t[eê] |sif[aã]o|ralo|hidr/i],
+  ['Elétrica', /cabo|fio |disjuntor|caixa 4x|eletroduto|tomada|interruptor|quadro|l[aâ]mpada|refletor|el[eé]tr/i],
+  ['Madeira', /madeira|caibro|viga|ripa|sarrafo|t[aá]bua|compensado|pontalete|pinus|eucalipto|madeirite|chapa resinada/i],
+  ['Civil', /cimento|areia|brita|bloco|tijolo|argamassa|cal |concreto|graute|reboco|pedra/i],
+  ['Telha trapezoidal', /telha|calha|rufo|cumeeira|parafuso autobrocante/i],
+];
+const guessCats = itens => { const s = new Set(); itens.forEach(i => CAT_KEYS.forEach(([c, re]) => re.test(i.desc) && s.add(c))); return [...s]; };
+
+const SEED_SUPS = [["40 Anos Madeira", "Madeira", "", "40anosmadeira@gmail.com"], ["Telhadão", "Madeira", "Ricardo Toledo", "ricardo.toledo@telhadao.com.br"], ["Madeireira JM", "Madeira", "", "contato@madeireirajm.com"], ["Madeiras Mademix", "Madeira", "", "contato@madeirasmademix.com.br"], ["Madeireira Tiquatira", "Madeira", "", "contato@madeireiratiquatira.com.br"], ["Madeira Fácil", "Madeira", "", "contato@madeirafacil.com.br; comercial@madeirafacil.com.br"], ["Center Leste Serafim", "Madeira", "", "contato@centerlesteserafim.com.br"], ["Madep Madeiras", "Madeira", "", "contato@madepmadeiras.com.br; madepmadeireira@gmail.com"], ["Madeiras 50x1", "Madeira", "", "madeiras50x1@terra.com.br"], ["Tudo Para Seu Telhado", "Madeira", "", "financeiro@tudoparaseutelhado.com.br"], ["Nova Floresta", "Madeira", "", "novafloresta@uol.com.br"], ["Madwork", "Madeira", "", "licitacao@madwork.com.br"], ["Solução Madeiras", "Madeira", "", "administrativo1@solucaomadeiras.com.br"], ["ST Wood", "Madeira", "", "stwood@stwood.com.br"], ["Prema", "Madeira", "", "prema@prema.com.br; contasapagar@prema.com.br"], ["Ripema", "Madeira", "", "administrativo@ripema.com.br; financeiro@ripema.com.br"], ["Terrata", "Madeira", "", "contato@terrata.com.br"], ["Madeireira Rezende", "Madeira", "", "financeiro@madeireirarezende.com.br"], ["Madeireira Limoeiro", "Madeira", "", "madlimoeiro@uol.com.br"], ["Madeireira Marco Leste", "Madeira", "", "falecom@madeireiramarcoleste.com.br"], ["Jeralves", "Madeira", "", "contato@jeralves.com.br"], ["Soedral", "Hidráulica", "Bruno", "bruno@soedral.com.br"], ["Casa Mimosa", "Hidráulica", "Gabriel", "gabriel@casamimosa.com.br"], ["Hidrofort", "Hidráulica", "Mário", "mario@hidrofort.com.br"], ["Hidráulica Vitória", "Hidráulica", "", "vendas@hidraulicavitoria.com.br"], ["Unihidral", "Hidráulica", "Fábio / Júnior", "fabio@unihidral.com.br; junior@unihidral.com.br"], ["FLX Hidráulica", "Hidráulica", "", "vendas@flxhidraulica.com.br"], ["Alpha Saneamento", "Hidráulica", "", "comercial@alphasaneamento.com.br"], ["REC Materiais", "Hidráulica", "", "sac@recmateriais.com.br"], ["Strutubos", "Hidráulica", "", "contato@strutubos.com.br"], ["Hidrojá", "Hidráulica", "", "comercial@hidroja.com"], ["Hidráulica SP", "Hidráulica", "", "hidraulicasp1@gmail.com"], ["Emavah", "Hidráulica", "", "vendas@emavah.com.br"], ["Aranda Corp", "Hidráulica", "", "arandacorp@arandacorp.com.br"], ["Siro", "Elétrica", "André", "andre@siro.com.br"], ["Rimo Elétrica", "Elétrica", "Diego", "diego@rimoeletrica.com.br"], ["Elétrica Área", "Elétrica", "Edson Libório", "edson.liborio@eletricaarea.com.br"], ["Elétrica Tensão", "Elétrica", "Percy", "percy@eletricatensao.com.br"], ["PJ Neblina", "Elétrica", "Francisco Costa", "francisco.costa@pjneblina.com.br"], ["Bras Distribuidora", "Elétrica", "", "vendas@brasdistribuidora.com.br"], ["JMC", "Elétrica", "", "atendimento@jmc.com.br"], ["Fera Atacado", "Elétrica", "", "vendas@feraatacado.com"], ["Santil", "Elétrica", "", "orcamentos@santil.com.br"], ["Dimel", "Elétrica", "", "dimel@dimel.com.br"], ["Eletron 24h", "Elétrica", "", "vendas@eletron24h.com.br"], ["Histec Comercial", "Elétrica", "", "histec@histeccomercial.com.br"], ["Qatar Elétrica", "Elétrica", "", "vendas@qatareletrica.com.br"], ["Sinergia Soluções", "Elétrica", "", "comercial@sinergiasolucoes.com.br"], ["Isotel Brasil", "Elétrica", "", "isotel@isotelbrasil.com.br"], ["1000 WM", "Elétrica", "", "contato@1000wm.com.br"], ["LSA Materiais Elétricos", "Elétrica", "", "vendas@lsamateriaiseletricos.com"], ["Grupo Pizzinatto", "Telha trapezoidal", "", "vendas3@grupopizzinatto.com.br"], ["Provera Aço Telhas", "Telha trapezoidal", "", "vendas1@proveracotelhas.com.br"], ["Guilherme Balieiro", "Telha trapezoidal", "Guilherme", "guilhermebalieiro@gmail.com"], ["Perfil Líder", "Telha trapezoidal", "Abigail", "abigail@perfillider.com.br"], ["Telhas MP", "Telha trapezoidal", "", "comercial@telhasmp.com.br"], ["SP Telhas", "Telha trapezoidal", "", "vendas@sptelhas.com.br; contato@sptelhas.com.br"], ["New Telhas", "Telha trapezoidal", "", "contato@newtelhas.com.br"], ["Rodrifer", "Telha trapezoidal", "", "vendas@rodrifer.com.br"], ["Visaço", "Telha trapezoidal", "", "sac@visaco.com.br"], ["ME Telhas Metálicas", "Telha trapezoidal", "", "contato@metelhasmetalicas.com.br"], ["Top Telha Metálica", "Telha trapezoidal", "", "vendas@toptelhametalica.com.br; vendas1@toptelhametalica.com.br; vendas6@toptelhametalica.com.br; vendas7@toptelhametalica.com.br; vendas9@toptelhametalica.com.br"], ["Criativa TP", "Telha trapezoidal", "", "vendas@criativatp.com.br"], ["Total Telhas", "Telha trapezoidal", "", "contato@totaltelhas.com"], ["Artaço", "Telha trapezoidal", "", "contato@artaco.com.br"], ["FIC Telhas", "Telha trapezoidal", "", "contato@fictelhas.com.br"], ["Brastelhas", "Telha trapezoidal", "", "contato@brastelhas.com.br"], ["Galvanofer", "Telha trapezoidal", "Júnior / Cida", "jr@galvanofer.com.br; cida@galvanofer.com.br"], ["Telha Metal", "Telha trapezoidal", "", "telhametal@gmail.com"], ["Aços Campinas", "Telha trapezoidal", "", "contato@acoscampinas.com.br"], ["Telhas Leste", "Telha trapezoidal", "", "mkt@telhasleste.com.br"], ["Saint-Gobain", "Civil", "Augusto Mendes", "augusto.mendes@saint-gobain.com"], ["Sodimac", "Civil", "O. Santos", "osantos@sodimac.com.br"], ["Tumkus", "Civil", "Amanda", "amanda@tumkus.com.br"], ["Cimemprimo", "Civil", "Adriana Mayumi", "adriana.mayumi@cimemprimo.com.br"], ["Copafer", "Civil", "Adriana", "adriana@copafer.com.br"], ["Mateubras", "Civil", "", "contato@mateubras.com.br"], ["Global Atacadista", "Civil", "", "vendas@globalatacadista.com.br"], ["Nicom", "Civil", "", "sac@nicom.com.br"], ["Casa do Lojista", "Civil", "", "contato@casadolojista.com.br"], ["Construjá", "Civil", "", "contabilidade@construja.com.br"], ["RD Distribuidora CML", "Civil", "", "rd.distribuidoracml@gmail.com"], ["Mat. Construção Caldas", "Civil", "", "mat.construccaocaldas@gmail.com"], ["Performance Areia e Pedra", "Civil", "", "vendas@performanceareiaepedra.com.br"], ["Obramax", "Civil", "", "sac@obramax.com.br"], ["EA Nunes Representação", "Civil", "", "eanunesrepresetacao@gmail.com"], ["Piguima", "Civil", "", "vendas@piguima.com.br"], ["Materiais do Paulo", "Civil", "", "materiaisdopaulo@gmail.com"], ["MF Representa", "Civil", "Maurício", "mauricio@mf-representa.com.br"], ["HJS Com. de Ferros e Materiais", "Serralheria e ferros", "Rose", "(e-mail a cadastrar)"], ["Artel Ferros, Tubos e Telas", "Serralheria e ferros", "Rose", "rose@telasartel.com.br"]].map(([nome, cat, contato, email], i) => ({id: 's' + (i + 1), nome, cat, contato, email, fone: ''}));
+const sid = n => SEED_SUPS.find(x => x.nome === n).id;
+
+const SEED_OBRAS = [
+  {nome: 'EE Maria Cristina Schmidt Miranda', resp: 'Lucas Henriques', end: 'Rua Ábramo Luchesi, 12 – Jardim Leblon, São Bernardo do Campo – SP, 09781-030'},
+  {nome: 'Residencial Vila Feijó', resp: 'Paula Nogueira', end: 'Rua Dante Pellacani, 300 – Vila Rejente Feijó, São Paulo – SP'},
+  {nome: 'EE Prof. Oswaldo Ortiz', resp: 'Marcos Tavares', end: 'Av. Getúlio Vargas, 1450 – Baeta Neves, São Bernardo do Campo – SP'},
+];
+const ENGS = ['Lucas Henriques', 'Paula Nogueira', 'Marcos Tavares'];
+const MOTIVOS = ['Preço maior', 'Prazo de entrega', 'Não cotou todos os itens', 'Condição de pagamento', 'Frete', 'Não respondeu', 'Outro'];
+
+/* ===================== leitura dos itens digitados ===================== */
+const UNITS = {'m²':'m²','m2':'m²','m³':'m³','m3':'m³','m':'m','mt':'m','mts':'m','metro':'m','metros':'m','un':'un','und':'un','unid':'un','unidade':'un','unidades':'un','pç':'pç','pc':'pç','pçs':'pç','pcs':'pç','peça':'pç','peças':'pç','pecas':'pç','br':'br','barra':'br','barras':'br','kg':'kg','kgs':'kg','sc':'sc','saco':'sc','sacos':'sc','rolo':'rl','rolos':'rl','rl':'rl','cx':'cx','caixas':'cx','l':'L','lt':'L','litro':'L','litros':'L','gl':'gl','galão':'gl','galões':'gl','lata':'lata','latas':'lata','cj':'cj','conjunto':'cj','conjuntos':'cj','jg':'jg','jogo':'jg','jogos':'jg','t':'t','ton':'t','tonelada':'t','toneladas':'t','milheiro':'mil','pct':'pct','pacote':'pct','pacotes':'pct'};
+function parseItems(text) {
+  return String(text || '').split(/\n|;/)
+    .map(s => s.replace(/^\s*(?:[-•*·–]+|\d{1,2}[.)](?=\s))\s*/, '').trim())
+    .filter(s => s.length > 1)
+    .map(line => {
+      let qtd = null, un = 'un', desc = line;
+      const m = line.match(/^(\d+(?:[.,]\d+)?)\s*(.*)$/);
+      if (m && m[2]) {
+        qtd = parseFloat(m[1].replace(',', '.'));
+        const rest = m[2].replace(/^x\s+/i, '');
+        const um = rest.match(/^([^\s\d]+?)\.?\s+(.*)$/);
+        if (um && UNITS[um[1].toLowerCase()]) { un = UNITS[um[1].toLowerCase()]; desc = um[2]; }
+        else desc = rest;
+        desc = desc.replace(/^(de|do|da|dos|das)\s+/i, '');
+      }
+      desc = desc.charAt(0).toUpperCase() + desc.slice(1);
+      return {id: uid(), qtd, un, desc};
+    });
+}
+
+/* ===================== preço de referência (simulação da leitura por IA) ===================== */
+const REF = [[/alambrado|tela/i, 26], [/tubo.*1 ?1\/4|tubo.*galv/i, 84], [/arame/i, 15], [/cimento/i, 38], [/areia/i, 145], [/brita/i, 155], [/cabo|fio/i, 329], [/disjuntor/i, 86], [/caixa 4x/i, 3.6], [/joelho/i, 2.9], [/registro/i, 48], [/pvc.*25|tubo pvc/i, 22], [/caixa d.?[aá]gua/i, 420], [/telha/i, 64], [/cumeeira/i, 38], [/parafuso/i, 0.9]];
+const refPrice = d => (REF.find(([re]) => re.test(d)) || [0, 30])[1];
+const round2 = n => Math.round(n * 100) / 100;
+function simulateQuote(req, supId, opts = {}) {
+  const precos = {};
+  req.itens.forEach(it => {
+    const skip = !opts.full && req.itens.length > 1 && Math.random() < .18;
+    precos[it.id] = skip ? null : round2(refPrice(it.desc) * (0.86 + Math.random() * .34));
+  });
+  const sup = sup_(supId);
+  return {supId, recebidoEm: now(), arquivo: `Orcamento_${sup.nome.split(' ')[0]}_${code(req.id).slice(1)}.pdf`, prazoDias: [0, 1, 2, 3, 5, 7, 10][Math.floor(Math.random() * 7)], pagamento: ['28 DDL', '30 dias', '28/56', 'À vista 3% desc.'][Math.floor(Math.random() * 4)], frete: Math.random() < .6 ? 0 : round2(40 + Math.random() * 120), precos, ia: true};
+}
+
+/* ===================== dados de exemplo ===================== */
+function seed() {
+  const S = SEED_SUPS;
+  const it = (qtd, un, desc) => ({id: uid(), qtd, un, desc});
+  const r96i = [it(48, 'm²', 'Tela alambrado malha 2" fio 12 galvanizada, 4,00 m de altura'), it(7, 'br', 'Tubo 1 1/4" x 1,55 x 6 m galvanizado'), it(2, 'kg', 'Arame 14 para amarração')];
+  const [a, b, c] = r96i.map(i => i.id);
+  const r96 = {
+    id: 96, obra: SEED_OBRAS[0].nome, solicitante: 'Lucas Henriques', criado: ago(2, 11), prazoIdeal: ahead(1), urgente: false, status: 'pedido',
+    obs: 'Material de serralharia para o fechamento da quadra.', itens: r96i,
+    envios: [{supId: sid('HJS Com. de Ferros e Materiais'), em: ago(2, 12)}, {supId: sid('Artel Ferros, Tubos e Telas'), em: ago(2, 12)}, {supId: sid('Visaço'), em: ago(2, 12)}],
+    cotacoes: [
+      {supId: sid('Artel Ferros, Tubos e Telas'), recebidoEm: ago(2, 14), arquivo: 'TEMAFE TB 01-10-26 MARIA CRISTINA.pdf', prazoDias: 0, pagamento: '28 DDL', frete: 0, precos: {[a]: 25.85, [b]: null, [c]: 15.00}, ia: true},
+      {supId: sid('HJS Com. de Ferros e Materiais'), recebidoEm: ago(2, 15), arquivo: 'TEMAFE H-05-10-27.pdf', prazoDias: 0, pagamento: '28 DDL', frete: 0, precos: {[a]: null, [b]: 82.00, [c]: null}, ia: true},
+      {supId: sid('Visaço'), recebidoEm: ago(1, 10), arquivo: 'Visaco_orcamento_MARIA_CRISTINA.pdf', prazoDias: 3, pagamento: '30 dias', frete: 0, precos: {[a]: 27.90, [b]: 86.50, [c]: 14.20}, ia: true},
+    ],
+    vencedor: {[a]: sid('Artel Ferros, Tubos e Telas'), [b]: sid('HJS Com. de Ferros e Materiais'), [c]: sid('Artel Ferros, Tubos e Telas')},
+    motivos: {[sid('Visaço')]: {motivo: 'Preço maior', obs: 'Cotou tudo, mas R$ 128 acima da combinação Artel + HJS'}},
+    aprovadoEm: ago(1, 16), aprovadoPor: 'Letícia',
+    docs: [{id: uid(), tipo: 'Pedido de compra', supId: sid('HJS Com. de Ferros e Materiais'), numero: '00096', valor: 574, arquivo: 'Pedido_00096_HJS.pdf', em: ago(0, 9)}, {id: uid(), tipo: 'Pedido de compra', supId: sid('Artel Ferros, Tubos e Telas'), numero: '00097', valor: 1270.80, arquivo: 'Pedido_00097_Artel.pdf', em: ago(0, 9)}],
+    entrega: null, log: [],
+  };
+  r96.log = [[r96.criado, 'Solicitação criada por Lucas Henriques'], [ago(2, 12), 'Cotação enviada para 3 fornecedores'], [ago(2, 14), 'Orçamento recebido: Artel'], [ago(2, 15), 'Orçamento recebido: HJS'], [ago(1, 10), 'Orçamento recebido: Visaço'], [ago(1, 16), 'Compra aprovada por Letícia (2 fornecedores)'], [ago(0, 9), 'Pedidos 00096 e 00097 anexados']];
+
+  const r97i = [it(20, 'br', 'Tubo PVC soldável 25 mm (barra 6 m)'), it(30, 'pç', 'Joelho 90° PVC soldável 25 mm'), it(10, 'pç', 'Registro de gaveta 3/4"'), it(2, 'pç', "Caixa d'água 1.000 L polietileno")];
+  const [d, e, f, g] = r97i.map(i => i.id);
+  const r97 = {
+    id: 97, obra: SEED_OBRAS[1].nome, solicitante: 'Paula Nogueira', criado: ago(1, 8), prazoIdeal: ahead(3), urgente: true, status: 'cotacao', obs: '', itens: r97i,
+    envios: [{supId: sid('Hidrofort'), em: ago(1, 9)}, {supId: sid('Unihidral'), em: ago(1, 9)}, {supId: sid('FLX Hidráulica'), em: ago(1, 9)}],
+    cotacoes: [
+      {supId: sid('Hidrofort'), recebidoEm: ago(1, 15), arquivo: 'Hidrofort_orc_0097.pdf', prazoDias: 2, pagamento: '28 DDL', frete: 0, precos: {[d]: 21.40, [e]: 2.75, [f]: 49.90, [g]: 439.00}, ia: true},
+      {supId: sid('Unihidral'), recebidoEm: ago(0, 8), arquivo: 'Unihidral - Cotação 0097.pdf', prazoDias: 5, pagamento: '30 dias', frete: 85, precos: {[d]: 19.80, [e]: 2.60, [f]: 46.00, [g]: null}, ia: true},
+    ],
+    vencedor: {}, motivos: {}, docs: [], entrega: null,
+    log: [[ago(1, 8), 'Solicitação criada por Paula Nogueira'], [ago(1, 9), 'Marcada como urgente'], [ago(1, 9), 'Cotação enviada para 3 fornecedores'], [ago(1, 15), 'Orçamento recebido: Hidrofort'], [ago(0, 8), 'Orçamento recebido: Unihidral']],
+  };
+
+  const r98 = {
+    id: 98, obra: SEED_OBRAS[2].nome, solicitante: 'Marcos Tavares', criado: ago(0, 8), prazoIdeal: ahead(4), urgente: true, status: 'nova', obs: 'Para a troca do quadro do bloco B.',
+    itens: parseItems('10 rolos cabo flexível 2,5mm 100m\n8 disjuntor bipolar 32A\n50 caixa 4x2 de embutir\n6 barras eletroduto corrugado 3/4'),
+    envios: [], cotacoes: [], vencedor: {}, motivos: {}, docs: [], entrega: null, log: [[ago(0, 8), 'Solicitação criada por Marcos Tavares']],
+  };
+
+  const r95i = [it(40, 'sc', 'Cimento CP-II 50 kg'), it(6, 'm³', 'Areia média lavada'), it(4, 'm³', 'Brita 1')];
+  const [h, k, l] = r95i.map(i => i.id);
+  const r95 = {
+    id: 95, obra: SEED_OBRAS[0].nome, solicitante: 'Lucas Henriques', criado: ago(9, 8), prazoIdeal: ahead(-5), urgente: false, status: 'finalizado', obs: '', itens: r95i,
+    envios: [{supId: sid('Copafer'), em: ago(9, 9)}, {supId: sid('Cimemprimo'), em: ago(9, 9)}, {supId: sid('Performance Areia e Pedra'), em: ago(9, 9)}],
+    cotacoes: [
+      {supId: sid('Copafer'), recebidoEm: ago(9, 13), arquivo: 'Copafer_orc_95.pdf', prazoDias: 1, pagamento: '28 DDL', frete: 0, precos: {[h]: 36.90, [k]: 142, [l]: 150}, ia: true},
+      {supId: sid('Cimemprimo'), recebidoEm: ago(8, 10), arquivo: 'Cimemprimo_95.pdf', prazoDias: 4, pagamento: '28 DDL', frete: 0, precos: {[h]: 35.50, [k]: null, [l]: null}, ia: true},
+      {supId: sid('Performance Areia e Pedra'), recebidoEm: ago(8, 11), arquivo: 'Performance_95.pdf', prazoDias: 6, pagamento: 'À vista', frete: 120, precos: {[h]: null, [k]: 139, [l]: 148}, ia: true},
+    ],
+    vencedor: {[h]: sid('Copafer'), [k]: sid('Copafer'), [l]: sid('Copafer')},
+    motivos: {[sid('Cimemprimo')]: {motivo: 'Não cotou todos os itens', obs: 'Só cimento; pedido separado não compensa'}, [sid('Performance Areia e Pedra')]: {motivo: 'Prazo de entrega', obs: '6 dias, obra precisava em 2'}},
+    aprovadoEm: ago(8, 15), aprovadoPor: 'Letícia',
+    docs: [{id: uid(), tipo: 'Pedido de compra', supId: sid('Copafer'), numero: '00091', valor: 2928, arquivo: 'Pedido_00091_Copafer.pdf', em: ago(8, 16)}],
+    entrega: {em: ago(7, 10), por: 'Lucas Henriques', completo: true, obs: 'Tudo certo, descarregado no canteiro.'},
+    log: [[ago(9, 8), 'Solicitação criada por Lucas Henriques'], [ago(9, 9), 'Cotação enviada para 3 fornecedores'], [ago(8, 15), 'Compra aprovada por Letícia'], [ago(8, 16), 'Pedido 00091 anexado'], [ago(7, 10), 'Chegada confirmada na obra por Lucas Henriques'], [ago(6, 9), 'Enviado ao financeiro e arquivado']],
+  };
+
+  const r94i = [it(44, 'pç', 'Telha trapézio 40/980 galvanizada 0,43 mm x 6 m'), it(4, 'pç', 'Cumeeira trapézio 40'), it(300, 'pç', 'Parafuso autobrocante 12x1" com vedação')];
+  const [m1, m2, m3] = r94i.map(i => i.id);
+  const r94 = {
+    id: 94, obra: SEED_OBRAS[1].nome, solicitante: 'Paula Nogueira', criado: ago(3, 10), prazoIdeal: ahead(6), urgente: false, status: 'analise', obs: 'Parte 2 da telha.', itens: r94i,
+    envios: [{supId: sid('Perfil Líder'), em: ago(3, 11)}, {supId: sid('Top Telha Metálica'), em: ago(3, 11)}],
+    cotacoes: [
+      {supId: sid('Perfil Líder'), recebidoEm: ago(2, 9), arquivo: 'PerfilLider_orc_94.pdf', prazoDias: 5, pagamento: '28 DDL', frete: 0, precos: {[m1]: 62.40, [m2]: 39.00, [m3]: 0.85}, ia: true},
+      {supId: sid('Top Telha Metálica'), recebidoEm: ago(2, 16), arquivo: 'TopTelha_94.pdf', prazoDias: 2, pagamento: '28/56', frete: 0, precos: {[m1]: 63.10, [m2]: 36.50, [m3]: 0.95}, ia: true},
+    ],
+    vencedor: {}, motivos: {}, docs: [], entrega: null,
+    log: [[ago(3, 10), 'Solicitação criada por Paula Nogueira'], [ago(3, 11), 'Cotação enviada para 2 fornecedores'], [ago(2, 9), 'Orçamento recebido: Perfil Líder'], [ago(2, 16), 'Orçamento recebido: Top Telha Metálica']],
+  };
+
+  const mail = seedMail([r98, r97, r96]);
+  return {v: 7, outlook: {on: false, email: ''}, role: 'gerente', eng: 'Lucas Henriques', tab: 'solicitacoes', filter: 'abertas', q: '', selId: 97, seq: 99, synced: 0,
+    reqs: [r98, r97, r96, r95, r94], sups: S, obras: SEED_OBRAS, mail, ui: {}};
+}
+
+/* ===================== e-mail (Outlook) ===================== */
+const ENG_EMAIL = {'Lucas Henriques': 'lucas.henriques@temafe.com.br', 'Paula Nogueira': 'paula.nogueira@temafe.com.br', 'Marcos Tavares': 'marcos.tavares@temafe.com.br'};
+function seedMail(reqs) {
+  const [r98, r97, r96] = reqs;
+  const M = (o) => ({id: 'm' + uid(), folder: 'entrada', to: 'leticia@temafe.com.br', anexos: [], lido: true, ...o});
+  r96.origem = r97.origem = r98.origem = 'email';
+  const list = [
+    M({from: 'Lucas Henriques', fromEmail: ENG_EMAIL['Lucas Henriques'], em: r96.criado, tipo: 'pedido', reqId: 96, subj: 'OBRA EE MARIA CRISTINA SCHMIDT - SOLICITAÇÃO DE MATERIAL',
+      body: 'Letícia,\n\nPor gentileza, providenciar o seguinte material de serralharia para a obra EE MARIA CRISTINA SCHMIDT MIRANDA:\n\n-12m de tela alambrado malha 2 fio 12 com 4m de altura\n-7 barras de tubo de 1 1/4 esp 1.5 galvanizado\n-2 kg arame 14 p/ amarração\n\nAtenciosamente,\nLucas Henriques'}),
+    M({from: 'Rose · Artel', fromEmail: 'rose@telasartel.com.br', em: ago(2, 14), tipo: 'orcamento', reqId: 96, supId: sid('Artel Ferros, Tubos e Telas'), subj: 'RES: OBRA EE MARIA CRISTINA SCHMIDT - SOLICITAÇÃO DE MATERIAL', anexos: ['TEMAFE TB 01-10-26 MARIA CRISTINA.pdf'],
+      body: 'Boa tarde Letícia,\n\nSegue orçamento em anexo.\nPrazo de entrega imediato, faturamento 28 DDL (sujeito a análise de crédito).\n\nRose\nArtel Com. de Ferros, Tubos e Telas'}),
+    M({from: 'Paula Nogueira', fromEmail: ENG_EMAIL['Paula Nogueira'], em: r97.criado, tipo: 'pedido', reqId: 97, subj: 'URGENTE - Hidráulica Residencial Vila Feijó',
+      body: 'Letícia, bom dia!\n\nPreciso com urgência para o Residencial Vila Feijó:\n\n- 20 barras tubo PVC soldável 25 mm\n- 30 joelho 90° PVC soldável 25 mm\n- 10 registro de gaveta 3/4"\n- 2 caixa d\'água 1.000 L polietileno\n\nObrigada,\nPaula'}),
+    M({from: 'Hidrofort', fromEmail: 'mario@hidrofort.com.br', em: ago(1, 15), tipo: 'orcamento', reqId: 97, supId: sid('Hidrofort'), subj: 'RE: [URGENTE] Cotação #0097 – Obra Residencial Vila Feijó', anexos: ['Hidrofort_orc_0097.pdf'],
+      body: 'Letícia, segue nossa proposta. Entrega em 2 dias úteis.\n\nMário\nHidrofort'}),
+    M({from: 'Marcos Tavares', fromEmail: ENG_EMAIL['Marcos Tavares'], em: r98.criado, tipo: 'pedido', reqId: 98, lido: false, subj: 'Material elétrico - quadro bloco B - EE Prof. Oswaldo Ortiz',
+      body: 'Letícia,\n\nPara a troca do quadro do bloco B da EE Prof. Oswaldo Ortiz:\n\n- 10 rolos cabo flexível 2,5mm 100m\n- 8 disjuntor bipolar 32A\n- 50 caixa 4x2 de embutir\n- 6 barras eletroduto corrugado 3/4\n\nPrecisa até quinta.\nMarcos'}),
+    M({from: 'Financeiro Temafe', fromEmail: 'financeiro@temafe.com.br', em: ago(0, 7), tipo: 'outro', lido: false, subj: 'Fechamento de notas de setembro',
+      body: 'Letícia, por favor enviar até sexta as notas de setembro que ainda estão com você.\n\nObrigado.'}),
+  ];
+  [r97, r96].forEach(r => { const subj = `${r.urgente ? '[URGENTE] ' : ''}Cotação ${code(r.id)} – Obra ${r.obra}`; r.envios.forEach(e => { const sp = SEED_SUPS.find(x => x.id === e.supId); list.push({id: 'm' + uid(), folder: 'enviados', to: sp.email, lido: true, em: e.em, tipo: null, reqId: r.id, supId: e.supId, from: 'Letícia', fromEmail: 'leticia@temafe.com.br', subj, anexos: [], body: `Bom dia,\n\nPor gentileza, enviar orçamento dos itens abaixo para a obra ${r.obra}:\n\n${r.itens.map((i, k) => `${k + 1}. ${i.qtd} ${i.un} – ${i.desc}`).join('\n')}\n\nAo responder, mantenha o código ${code(r.id)} no assunto.\n\nAtenciosamente,\nLetícia\nDepartamento de Compras`}); }); });
+  return list;
+}
+const PEND_MAIL = () => ({id: 'm' + uid(), folder: 'entrada', to: 'leticia@temafe.com.br', anexos: [], lido: false, em: now(), tipo: null, from: 'Lucas Henriques', fromEmail: ENG_EMAIL['Lucas Henriques'],
+  subj: 'Solicitação de material - madeira para forma - EE Maria Cristina',
+  body: 'Letícia, bom dia.\n\nPor gentileza providenciar para a obra EE MARIA CRISTINA SCHMIDT MIRANDA:\n\n- 30 pç caibro 5x5 cm 3 m\n- 20 pç tábua pinus 30 cm x 3 m\n- 10 chapa compensado resinado 12 mm\n- 5 kg prego 17x27\n\nPrecisamos até quinta-feira para a concretagem.\n\nAtt,\nLucas Henriques'});
+
+function isPedidoMail(m) { return Object.values(ENG_EMAIL).includes(m.fromEmail) && /(solicita|pedido|material|preciso|providenciar)/i.test(m.subj + ' ' + m.body) && parseItems(m.body.split('\n').filter(l => /^\s*[-•]/.test(l)).join('\n')).length > 0; }
+function reqFromMail(m) {
+  const txt = (m.subj + '\n' + m.body).toUpperCase();
+  const ob = S.obras.find(o => txt.includes(o.nome.toUpperCase())) || S.obras.find(o => txt.includes(o.nome.toUpperCase().split(' ').slice(0, 3).join(' ')));
+  const itens = parseItems(m.body.split('\n').filter(l => /^\s*[-•]/.test(l)).join('\n'));
+  const id = Math.max(...S.reqs.map(r => r.id)) + 1;
+  const r = {id, obra: ob ? ob.nome : m.subj, solicitante: m.from, criado: m.em, prazoIdeal: ahead(4), urgente: /urgente/i.test(m.subj + m.body), status: 'nova', obs: '', itens, envios: [], cotacoes: [], vencedor: {}, motivos: {}, docs: [], entrega: null, origem: 'email', mailId: m.id,
+    log: [[m.em, `E-mail recebido de ${m.from}`], [now(), `Solicitação criada automaticamente pela IA a partir do e-mail (${itens.length} itens)`]]};
+  S.reqs.unshift(r); m.tipo = 'pedido'; m.reqId = id;
+  return r;
+}
+const MFOLD = [['entrada', 'Caixa de entrada'], ['pedido', 'Pedidos de material'], ['orcamento', 'Orçamentos'], ['outro', 'Outros'], ['enviados', 'Enviados']];
+function mailIn(f) { return S.mail.filter(m => f === 'enviados' ? m.folder === 'enviados' : m.folder === 'entrada' && (f === 'entrada' || m.tipo === f)).sort((a, b) => b.em.localeCompare(a.em)); }
+function mailTag(m) {
+  if (m.tipo === 'pedido') return `<span class="mtag ped">${IC.cart}Pedido de material${m.reqId ? ' · ' + code(m.reqId) : ''}</span>`;
+  if (m.tipo === 'orcamento') return `<span class="mtag orc">${IC.clip}Orçamento${m.reqId ? ' · ' + code(m.reqId) : ''}</span>`;
+  if (m.folder === 'enviados') return `<span class="mtag">Cotação enviada${m.reqId ? ' · ' + code(m.reqId) : ''}</span>`;
+  return '';
+}
+function vConnect() {
+  return `<div class="phead"><div class="t"><h1>Inbox</h1><p>Conecte a conta do Outlook para trazer os e-mails de pedidos e orçamentos para o sistema.</p></div></div>
+  <div class="connect">
+    <div class="logo" style="width:56px;height:56px;border-radius:18px">${IC.mail.replace('<svg', '<svg style="width:28px;height:28px;color:#fff"')}</div>
+    <h2>Entrar com o Outlook</h2>
+    <p class="muted">Use a conta Microsoft 365 da construtora. O sistema só lê e envia e-mails de compras; a senha fica com a Microsoft.</p>
+    <label class="f" style="text-align:left">E-mail da conta<input class="in" id="ol-email" type="email" value="leticia@temafe.com.br"></label>
+    <button class="btn primary lg" style="justify-content:center" data-act="ol-connect">Entrar com a conta Microsoft</button>
+    <ul class="flags" style="text-align:left"><li class="good">Pedidos de material dos engenheiros viram cartões no quadro</li><li class="good">Respostas dos fornecedores são anexadas na solicitação certa</li><li class="good">Etiquetas "Compras" aparecem também no Outlook</li></ul>
+    <div class="note" style="text-align:left">No protótipo a conexão é simulada. Na versão final, este botão abre a tela de login da Microsoft e a TI autoriza o acesso uma única vez.</div>
+  </div>`;
+}
+function vMail() {
+  if (!S.outlook?.on) return vConnect();
+  const f = S.ui.mfold || 'entrada';
+  const list = mailIn(f);
+  const sel = S.mail.find(m => m.id === S.ui.msel) || list[0];
+  if (sel && !sel.lido) sel.lido = true;
+  const unread = S.mail.filter(m => m.folder === 'entrada' && !m.lido).length;
+  return `<div class="phead"><div class="t"><h1>Inbox</h1><p><span class="chip st-entregue">Conectado</span> ${esc(S.outlook.email)} · a IA marca pedidos de material e orçamentos e manda cada um para o lugar certo. <button class="linkbtn" data-act="ol-disconnect">Desconectar</button></p></div>
+    <button class="btn primary lg" data-act="mail-sync">${IC.sync} Sincronizar com o Outlook</button></div>
+  <div class="mailapp">
+    <aside class="mfold">${MFOLD.map(([k, n]) => { const c = k === 'entrada' ? unread : mailIn(k).length; return `<button data-act="mfold" data-v="${k}" aria-pressed="${f === k}">${n}${c ? `<b>${c}</b>` : ''}</button>`; }).join('')}
+      <div class="note" style="margin-top:12px">No protótipo os e-mails são de exemplo.</div></aside>
+    <div class="mlist">${list.map(m => `<button class="mrow ${m.lido ? '' : 'unread'}" data-act="msel" data-v="${m.id}" aria-current="${sel && m.id === sel.id}">
+        <span class="mrow-top"><b>${esc(m.folder === 'enviados' ? 'Para: ' + m.to : m.from)}</b><time>${fDT(m.em)}</time></span>
+        <span class="mrow-subj">${esc(m.subj)}</span>
+        <span class="row" style="gap:6px">${mailTag(m)}${m.anexos.length ? `<span class="mclip">${IC.clip}${m.anexos.length}</span>` : ''}</span>
+      </button>`).join('') || '<div class="empty" style="margin:10px">Nenhum e-mail aqui.</div>'}</div>
+    <article class="mread">${sel ? mailRead(sel) : '<div class="empty">Escolha um e-mail.</div>'}</article>
+  </div>`;
+}
+function mailRead(m) {
+  const r = m.reqId ? req_(m.reqId) : null;
+  let ai = '';
+  if (m.tipo === 'pedido' && r) ai = `<div class="ai-box"><h4>${IC.spark} Pedido de material identificado</h4>
+      <div class="small">A IA leu o e-mail e criou a solicitação <b>${code(r.id)}</b> no quadro, na coluna <b>${stName(r.status)}</b>.</div>
+      <div class="meta"><span>Obra <b>${esc(r.obra)}</b></span><span>Engenheiro <b>${esc(r.solicitante)}</b></span><span>Itens <b>${r.itens.length}</b></span>${r.urgente ? '<span><b style="color:var(--urgent)">Urgente</b></span>' : ''}</div>
+      <ul class="preview">${r.itens.map(i => `<li><span style="text-align:right;font-weight:700">${i.qtd == null ? '?' : numBR(i.qtd)}</span><span class="muted">${esc(i.un)}</span><span>${esc(i.desc)}</span></li>`).join('')}</ul>
+      <div class="row"><button class="btn primary" data-act="sel" data-id="${r.id}">Abrir ${code(r.id)} no quadro</button>${r.status === 'nova' ? `<button class="btn" data-act="mail-quote" data-id="${r.id}">Pedir cotação aos fornecedores</button>` : ''}</div></div>`;
+  else if (m.tipo === 'orcamento' && r) ai = `<div class="ai-box"><h4>${IC.spark} Orçamento identificado</h4>
+      <div class="small">Resposta da cotação <b>${code(r.id)}</b>. O PDF foi anexado na solicitação e os preços foram lidos para a análise.</div>
+      <div class="row"><button class="btn primary" data-act="sel-tab" data-id="${r.id}" data-v="orcamentos">Ver orçamentos de ${code(r.id)}</button><button class="btn" data-act="sel-tab" data-id="${r.id}" data-v="ia">Ver análise da IA</button></div></div>`;
+  else if (m.folder === 'entrada' && (!m.tipo || (m.tipo === 'pedido' && !r))) ai = `<div class="ai-box"><h4>${IC.spark} Parece um pedido de material</h4><div class="row"><button class="btn primary" data-act="mail-make" data-v="${m.id}">Criar solicitação no quadro</button></div></div>`;
+  else if (m.folder === 'entrada' && m.tipo === 'outro') ai = `<div class="soon">A IA não encontrou pedido de material nem orçamento neste e-mail. <button class="linkbtn" data-act="mail-make" data-v="${m.id}">É um pedido? Criar solicitação</button></div>`;
+  return `<div class="mread-h"><h2>${esc(m.subj)}</h2>${mailTag(m)}</div>
+    ${m.folder === 'entrada' ? `<div class="mtagsel">Etiqueta no Outlook:<select class="in sm pill" style="width:auto" data-chg="mtag" data-id="${m.id}" id="mt-${m.id}"><option value="pedido" ${m.tipo === 'pedido' ? 'selected' : ''}>Compras · Pedido de material</option><option value="orcamento" ${m.tipo === 'orcamento' ? 'selected' : ''}>Compras · Orçamento</option><option value="outro" ${m.tipo === 'outro' || !m.tipo ? 'selected' : ''}>Sem etiqueta</option></select><span>A mesma etiqueta aparece no Outlook da Letícia.</span></div>` : ''}
+    <div class="mfrom"><span class="avatar sm ${avCls(m.from)}">${initials(m.folder === 'enviados' ? 'Letícia T' : m.from)}</span><span style="min-width:0"><b>${esc(m.folder === 'enviados' ? 'Letícia · Compras' : m.from)}</b> <span class="muted small">&lt;${esc(m.folder === 'enviados' ? 'leticia@temafe.com.br' : m.fromEmail)}&gt;</span><br><span class="small muted">Para ${esc(m.to)} · ${fDT(m.em)}</span></span></div>
+    ${ai}
+    <div class="mbody">${esc(m.body)}</div>
+    ${m.anexos.length ? `<div class="row">${m.anexos.map(fileChip).join('')}</div>` : ''}`;
+}
+
+/* ===================== estado ===================== */
+const KEY = 'compras-obra-v7';
+let S;
+try { S = JSON.parse(localStorage.getItem(KEY)); } catch (e) { S = null; }
+if (!S || S.v !== 7) S = seed();
+S.ui = S.ui || {};
+const save = () => { try { const c = {...S, ui: {}}; localStorage.setItem(KEY, JSON.stringify(c)); } catch (e) {} };
+const FILES = {}; // blobs só nesta sessão
+const req_ = id => S.reqs.find(r => r.id === +id);
+const sup_ = id => S.sups.find(s => s.id === id) || {nome: '?', email: ''};
+const obra_ = n => S.obras.find(o => o.nome === n);
+const log = (r, t) => r.log.push([now(), t]);
+
+const ST = [['nova', 'Nova'], ['cotacao', 'Em cotação'], ['analise', 'Em análise'], ['aprovado', 'Aprovado'], ['pedido', 'Pedido emitido'], ['entregue', 'Na obra'], ['finalizado', 'Finalizado']];
+const stIdx = s => ST.findIndex(x => x[0] === s);
+const stName = s => (ST.find(x => x[0] === s) || [0, s])[1];
+const chipSt = s => `<span class="chip st-${s}">${stName(s)}</span>`;
+const chipUrg = `<span class="chip urg"><i>Urgente</i></span>`;
+
+/* ===================== análise das cotações ===================== */
+function cotTotal(r, c, onlyIds) {
+  let t = 0; r.itens.forEach(i => { const p = c.precos[i.id]; if (p != null && (!onlyIds || onlyIds.includes(i.id))) t += p * (i.qtd || 1); }); return t;
+}
+const coverage = (r, c) => r.itens.filter(i => c.precos[i.id] != null).length;
+function analyze(r) {
+  const cs = r.cotacoes; if (!cs.length) return null;
+  const best = {}; let splitTotal = 0; const noQuote = [];
+  r.itens.forEach(i => {
+    let b = null; cs.forEach(c => { const p = c.precos[i.id]; if (p != null && (!b || p < b.price || (p === b.price && c.prazoDias < cot_(r, b.supId).prazoDias))) b = {supId: c.supId, price: p}; });
+    if (b) { best[i.id] = b; splitTotal += b.price * (i.qtd || 1); } else noQuote.push(i);
+  });
+  const completos = cs.filter(c => coverage(r, c) === r.itens.length).map(c => ({supId: c.supId, total: cotTotal(r, c) + (c.frete || 0), prazo: c.prazoDias})).sort((a, b) => a.total - b.total);
+  const bestSingle = completos[0] || null;
+  const fastest = [...cs].sort((a, b) => a.prazoDias - b.prazoDias || coverage(r, b) - coverage(r, a))[0];
+  const splitSups = [...new Set(Object.values(best).map(b => b.supId))];
+  const splitFrete = splitSups.reduce((t, s) => t + (cot_(r, s).frete || 0), 0);
+  const splitGross = splitTotal + splitFrete;
+  let sug, sugText;
+  if (bestSingle && (splitSups.length === 1 || bestSingle.total <= splitGross * 1.03)) {
+    sug = Object.fromEntries(r.itens.map(i => [i.id, bestSingle.supId]));
+    sugText = splitSups.length === 1 ? `Fechar tudo com ${sup_(bestSingle.supId).nome}: menor preço em todos os itens.` : bestSingle.total <= splitGross ? `Fechar tudo com ${sup_(bestSingle.supId).nome}: com o frete incluso, sai mais barato que dividir entre ${splitSups.length} fornecedores.` : `Fechar tudo com ${sup_(bestSingle.supId).nome}. Dividir entre ${splitSups.length} fornecedores economizaria só ${brl(bestSingle.total - splitGross)}, não compensa mais um pedido.`;
+  } else {
+    sug = Object.fromEntries(Object.entries(best).map(([k, v]) => [k, v.supId]));
+    sugText = `Dividir a compra entre ${splitSups.map(s => sup_(s).nome).join(' e ')}: cada item com quem cotou mais barato.` + (bestSingle ? ` Economia de ${brl(bestSingle.total - splitGross)} contra fechar tudo com ${sup_(bestSingle.supId).nome}.` : ' Nenhum fornecedor cotou todos os itens.');
+  }
+  const flags = [];
+  const pend = r.envios.filter(e => !cs.find(c => c.supId === e.supId));
+  if (pend.length) flags.push(['', `${pend.length} fornecedor(es) ainda sem resposta: ${pend.map(e => sup_(e.supId).nome).join(', ')}.`]);
+  const parc = cs.filter(c => coverage(r, c) < r.itens.length);
+  if (parc.length) flags.push(['', parc.length <= 3 ? parc.map(c => `${sup_(c.supId).nome} cotou ${coverage(r, c)} de ${r.itens.length} itens.`).join(' ') : `${parc.length} fornecedores não cotaram todos os itens: ${parc.map(c => sup_(c.supId).nome).join(', ')}.`]);
+  noQuote.forEach(i => flags.push(['', `Ninguém cotou: ${i.desc}.`]));
+  if (r.prazoIdeal) { const lim = Math.ceil((new Date(r.prazoIdeal + 'T12:00') - Date.now()) / DAY); const late = cs.filter(c => c.prazoDias > lim && lim >= 0); if (late.length) flags.push(['', late.length <= 2 ? late.map(c => `${sup_(c.supId).nome} entrega em ${c.prazoDias} dia(s), depois do prazo ideal da obra (${fD(r.prazoIdeal)}).`).join(' ') : `${late.length} fornecedores entregam depois do prazo ideal da obra (${fD(r.prazoIdeal)}): ${late.map(c => sup_(c.supId).nome).join(', ')}.`]); }
+  if (!noQuote.length && !pend.length) flags.push(['good', 'Todos os itens têm pelo menos um orçamento.']);
+  const sugTotal = r.itens.reduce((t, i) => t + (sug[i.id] && cot_(r, sug[i.id]).precos[i.id] != null ? cot_(r, sug[i.id]).precos[i.id] * (i.qtd || 1) : 0), 0);
+  return {best, splitTotal: splitGross, completos, bestSingle, fastest, sug, sugText, sugTotal, flags, noQuote};
+}
+const cot_ = (r, supId) => r.cotacoes.find(c => c.supId === supId) || {precos: {}, prazoDias: 99};
+function winners(r) { const m = {}; r.itens.forEach(i => { const s = r.vencedor[i.id]; if (s) (m[s] = m[s] || []).push(i.id); }); return m; }
+function winTotal(r, supId) { const ids = winners(r)[supId] || []; const c = cot_(r, supId); return cotTotal(r, c, ids) + (ids.length ? (c.frete || 0) : 0); }
+function autoReason(r, supId) {
+  const c = r.cotacoes.find(x => x.supId === supId);
+  if (!c) return 'Não respondeu';
+  if (coverage(r, c) < r.itens.length) {
+    const cheaper = r.itens.some(i => c.precos[i.id] != null && r.vencedor[i.id] && c.precos[i.id] < cot_(r, r.vencedor[i.id]).precos[i.id]);
+    if (!cheaper) return 'Não cotou todos os itens';
+  }
+  const fastestWinner = Math.min(...Object.keys(winners(r)).map(s => cot_(r, s).prazoDias));
+  const priceWorse = r.itens.some(i => c.precos[i.id] != null && r.vencedor[i.id] && c.precos[i.id] > cot_(r, r.vencedor[i.id]).precos[i.id]);
+  if (priceWorse) return 'Preço maior';
+  if (c.prazoDias > fastestWinner) return 'Prazo de entrega';
+  return 'Outro';
+}
+
+/* ===================== render ===================== */
+function render() {
+  const cur = S.role === 'engenheiro' ? 'eng' : S.role === 'gerente' ? 'ger' : S.tab === 'fornecedores' ? 'for' : S.tab === 'email' ? 'mail' : 'sol';
+  ['ger', 'sol', 'mail', 'for'].forEach(k => $('#n-' + k).setAttribute('aria-pressed', k === cur));
+  if ($('#e-itens')) S.ui.draft = readDraft();
+  const app = $('#app');
+  app.innerHTML = S.role === 'engenheiro' ? vEng() : S.role === 'gerente' ? vDash() : vCompras();
+  if (S.role === 'engenheiro') updPreview();
+  const ur = S.outlook?.on ? S.mail.filter(m => m.folder === 'entrada' && !m.lido).length : 0; $('#mail-badge').textContent = ur || ''; $('#mail-badge').hidden = !ur;
+  save();
+}
+
+/* ---------- Engenheiro ---------- */
+const obraSlug = n => n.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const obraLink = n => `https://compras.temafe.com.br/obra/${obraSlug(n)}`;
+const obraResp = n => (obra_(n) || {}).resp || (S.reqs.find(r => r.obra === n) || {}).solicitante || ENGS[0];
+function vEng() {
+  const ob = obra_(S.ui.pobra) || S.obras[0];
+  S.ui.pobra = ob.nome; S.eng = obraResp(ob.nome);
+  const reqs = S.reqs.filter(r => r.obra === ob.nome).sort((a, b) => b.id - a.id);
+  const toConfirm = reqs.filter(r => r.status === 'pedido');
+  const open = reqs.filter(r => stIdx(r.status) < 5);
+  const delivered = reqs.filter(r => r.entrega);
+  const draft = S.ui.draft || {};
+  const et = S.ui.etab || (toConfirm.length ? 'entregas' : 'acomp');
+  const tabs = [['acomp', 'Acompanhamento', open.length], ['entregas', 'Entregas', toConfirm.length], ['nova', 'Pedir material', ''], ['materiais', 'Materiais', reqs.reduce((t, r) => t + r.itens.length, 0)], ['historico', 'Histórico', '']];
+  let body = '';
+  if (et === 'acomp') body = reqs.length ? reqs.map(ecard).join('') : `<div class="empty">Nenhum pedido de material para esta obra ainda.</div>`;
+  if (et === 'entregas') body = (toConfirm.length ? toConfirm.map(dcard).join('') : `<div class="empty">Nenhum material a caminho agora. Quando Compras emitir um pedido para esta obra, ele aparece aqui para confirmar a chegada.</div>`)
+    + (delivered.length ? `<div class="panel"><div class="panel-h"><h3>Já entregues</h3></div><div class="tbl-wrap"><table><thead><tr><th>Pedido</th><th>Recebido em</th><th>Por</th><th>Situação</th></tr></thead><tbody>${delivered.map(r => `<tr><td><b>${code(r.id)}</b> · ${r.itens.length} itens</td><td>${fDT(r.entrega.em)}</td><td>${esc(r.entrega.por)}</td><td>${r.entrega.completo ? '<span class="chip st-entregue">Completo</span>' : '<span class="chip st-cotacao">Parcial</span>'}${r.entrega.obs ? ' <span class="small muted">' + esc(r.entrega.obs) + '</span>' : ''}</td></tr>`).join('')}</tbody></table></div></div>` : '');
+  if (et === 'nova') body = `<form class="panel" id="eng-form" style="display:grid;gap:12px">
+    <input type="hidden" id="e-obra" value="${esc(ob.nome)}">
+    <div class="small muted">Pedido para a obra <b style="color:var(--ink)">${esc(ob.nome)}</b>, em nome de <b style="color:var(--ink)">${esc(S.eng)}</b>.</div>
+    <label class="f">O que você precisa (um item por linha, do jeito que você escreveria no e-mail)
+      <textarea class="in" id="e-itens" placeholder="12 m² tela alambrado malha 2&quot; fio 12, 4 m de altura&#10;7 barras de tubo 1 1/4 esp 1,5 galvanizado&#10;2 kg arame 14 p/ amarração" required>${esc(draft.itens || '')}</textarea></label>
+    <div id="e-prev"></div>
+    <div class="grid2">
+      <label class="f">Precisa na obra até
+        <input class="in" type="date" id="e-prazo" value="${esc(draft.prazo || ahead(3))}"></label>
+      <div class="f" style="display:grid;gap:5px;font-size:12.5px;font-weight:600;color:var(--muted)">Urgência
+        <div class="seg" role="group"><button type="button" class="n" data-act="e-urg" data-v="0" aria-pressed="${!draft.urg}">Normal</button><button type="button" class="u" data-act="e-urg" data-v="1" aria-pressed="${!!draft.urg}">Urgente</button></div></div>
+    </div>
+    <label class="f">Observação (opcional)
+      <input class="in" id="e-obs" placeholder="Ex.: entregar no portão 2, falar com o mestre de obras" value="${esc(draft.obs || '')}"></label>
+    <button class="btn primary lg" type="submit" style="justify-content:center">Enviar para Compras</button>
+    <div class="note">Também vale mandar por e-mail para a Letícia, como hoje: a IA lê o e-mail e o pedido aparece aqui do mesmo jeito.</div>
+  </form>`;
+  if (et === 'materiais') {
+    const rows = []; reqs.forEach(r => r.itens.forEach(i => { const w = r.vencedor[i.id]; const c = w ? cot_(r, w) : null; rows.push({r, i, w, c}); }));
+    body = `<div class="panel"><div class="panel-h"><h3>Todos os materiais pedidos</h3><span class="step">${rows.length} itens</span></div><div class="tbl-wrap"><table><thead><tr><th>Material</th><th class="r">Qtd</th><th>Pedido</th><th>Situação</th><th>Fornecedor</th><th class="r">Valor</th><th>Previsão / chegada</th></tr></thead><tbody>
+      ${rows.map(({r, i, w, c}) => `<tr><td>${esc(i.desc)}</td><td class="r">${i.qtd == null ? '?' : numBR(i.qtd)} ${esc(i.un)}</td><td><b>${code(r.id)}</b></td><td>${chipSt(r.status)}</td><td>${w && r.aprovadoEm ? esc(sup_(w).nome) : '<span class="muted">em cotação</span>'}</td><td class="r">${w && r.aprovadoEm && c.precos[i.id] != null ? brl(c.precos[i.id] * (i.qtd || 1)) : '—'}</td><td>${r.entrega ? 'chegou ' + fD(r.entrega.em) : w && r.aprovadoEm ? 'prev. ' + fD(addDays(r.aprovadoEm, c.prazoDias)) : 'precisa até ' + fD(r.prazoIdeal)}</td></tr>`).join('') || '<tr><td colspan="7" class="muted">Nada pedido ainda.</td></tr>'}
+    </tbody></table></div></div>`;
+  }
+  if (et === 'historico') { const ev = []; reqs.forEach(r => r.log.forEach(([t, x]) => ev.push([t, r.id, x]))); ev.sort((a, b) => b[0].localeCompare(a[0]));
+    body = `<div class="panel"><div class="panel-h"><h3>Histórico da obra</h3></div><ul class="log">${ev.map(([t, id, x]) => `<li><time>${fDT(t)}</time><span><b>${code(id)}</b> · ${esc(x)}</span></li>`).join('') || '<li><span class="muted">Sem eventos.</span></li>'}</ul></div>`; }
+  const spent = reqs.filter(r => r.aprovadoEm).reduce((t, r) => t + Object.keys(winners(r)).reduce((a, s) => a + winTotal(r, s), 0), 0);
+  return `${S.ui.fromDash ? '<div style="margin-bottom:12px"><button class="btn" data-act="nav" data-v="ger">← Voltar ao dashboard</button></div>' : ''}<div class="portal-pick"><span class="small muted">Prévia do link de cada obra:</span>${S.obras.map(o => `<button class="chip sel" data-act="pobra" data-v="${esc(o.nome)}" aria-pressed="${o.nome === ob.nome}">${esc(o.nome)}</button>`).join('')}</div>
+  <div class="eng">
+  <div class="obra-hero">
+    <div class="lbl">Acompanhamento da obra</div>
+    <h1>${esc(ob.nome)}</h1>
+    <div class="small" style="opacity:.85">${esc(ob.end)}</div>
+    <div class="row" style="gap:10px;margin-top:4px"><span class="avatar sm ${avCls(S.eng)}">${initials(S.eng)}</span><span><b>${esc(S.eng)}</b><br><span class="small" style="opacity:.8">Engenheiro responsável</span></span></div>
+    <div class="ostats"><div><b>${open.length}</b><span>em andamento</span></div><div><b>${toConfirm.length}</b><span>a caminho</span></div><div><b>${delivered.length}</b><span>entregues</span></div><div><b>${brl(spent).replace(/,\d\d$/, '')}</b><span>comprado</span></div></div>
+    <button class="btn white sm" data-act="copy-obra" style="justify-self:start">${IC.link} Copiar link desta obra</button>
+  </div>
+  <div class="dtabs" role="tablist">${tabs.map(([k, n, c]) => `<button role="tab" data-act="etab" data-v="${k}" aria-selected="${k === et}">${n}${c ? `<b>${c}</b>` : ''}</button>`).join('')}</div>
+  ${body}
+  </div>`;
+}
+function dcard(r) {
+  const W = winners(r); const open = S.ui.eopen === r.id;
+  const peds = r.docs.filter(d => d.tipo === 'Pedido de compra');
+  return `<div class="ecard dcard">
+    <div class="t"><div><div class="small muted">${code(r.id)} · pedido emitido ${fD(peds[0]?.em)}</div><div class="obra" style="font-size:17px">${esc(r.obra)}</div></div>${r.urgente ? chipUrg : ''}</div>
+    ${Object.keys(W).map(s => { const c = cot_(r, s); const prev = r.aprovadoEm ? addDays(r.aprovadoEm, c.prazoDias) : null; const ped = peds.find(d => d.supId === s); return `<div class="dsup">
+      <div class="row" style="justify-content:space-between"><b>${esc(sup_(s).nome)}</b><span class="small muted">${ped ? 'Pedido ' + esc(ped.numero) : ''}${prev ? ' · previsão ' + fD(prev) : ''}</span></div>
+      <ul class="preview">${W[s].map(id => { const it = r.itens.find(x => x.id === id); return `<li><span style="text-align:right;font-weight:700">${it.qtd == null ? '?' : numBR(it.qtd)}</span><span class="muted">${esc(it.un)}</span><span>${esc(it.desc)}</span></li>`; }).join('')}</ul></div>`; }).join('')}
+    ${open ? `<div style="display:grid;gap:8px;border-top:1px dashed var(--line);padding-top:12px">
+        <label class="f">O que faltou ou veio errado?<input class="in" id="e-cobs" placeholder="Ex.: vieram 5 barras de tubo, faltam 2"></label>
+        <label class="btn ghost sm" style="justify-self:start">Foto do material ou do canhoto (opcional)<input type="file" accept="image/*" class="hidden-file" id="e-foto"></label>
+        <div class="row"><button class="btn primary" data-act="e-confirm" data-id="${r.id}" data-full="0">Registrar entrega parcial</button><button class="btn ghost" data-act="e-open" data-id="0">Cancelar</button></div></div>`
+      : `<div class="grid2" style="grid-template-columns:1fr 1fr"><button class="btn ok lg" style="justify-content:center" data-act="e-confirm" data-id="${r.id}" data-full="1">Chegou tudo</button><button class="btn lg" style="justify-content:center" data-act="e-open" data-id="${r.id}">Chegou faltando</button></div>`}
+  </div>`;
+}
+function dcard(r) {
+  const W = winners(r); const open = S.ui.eopen === r.id;
+  const peds = r.docs.filter(d => d.tipo === 'Pedido de compra');
+  return `<div class="ecard dcard">
+    <div class="t"><div><div class="small muted">${code(r.id)} · pedido emitido ${fD(peds[0]?.em)}</div><div class="obra" style="font-size:17px">${esc(r.obra)}</div></div>${r.urgente ? chipUrg : ''}</div>
+    ${Object.keys(W).map(s => { const c = cot_(r, s); const prev = r.aprovadoEm ? addDays(r.aprovadoEm, c.prazoDias) : null; const ped = peds.find(d => d.supId === s); return `<div class="dsup">
+      <div class="row" style="justify-content:space-between"><b>${esc(sup_(s).nome)}</b><span class="small muted">${ped ? 'Pedido ' + esc(ped.numero) : ''}${prev ? ' · previsão ' + fD(prev) : ''}</span></div>
+      <ul class="preview">${W[s].map(id => { const it = r.itens.find(x => x.id === id); return `<li><span style="text-align:right;font-weight:700">${it.qtd == null ? '?' : numBR(it.qtd)}</span><span class="muted">${esc(it.un)}</span><span>${esc(it.desc)}</span></li>`; }).join('')}</ul></div>`; }).join('')}
+    ${open ? `<div style="display:grid;gap:8px;border-top:1px dashed var(--line);padding-top:12px">
+        <label class="f">O que faltou ou veio errado?<input class="in" id="e-cobs" placeholder="Ex.: vieram 5 barras de tubo, faltam 2"></label>
+        <label class="btn ghost sm" style="justify-self:start">Foto do material ou do canhoto (opcional)<input type="file" accept="image/*" class="hidden-file" id="e-foto"></label>
+        <div class="row"><button class="btn primary" data-act="e-confirm" data-id="${r.id}" data-full="0">Registrar entrega parcial</button><button class="btn ghost" data-act="e-open" data-id="0">Cancelar</button></div></div>`
+      : `<div class="grid2" style="grid-template-columns:1fr 1fr"><button class="btn ok lg" style="justify-content:center" data-act="e-confirm" data-id="${r.id}" data-full="1">Chegou tudo</button><button class="btn lg" style="justify-content:center" data-act="e-open" data-id="${r.id}">Chegou faltando</button></div>`}
+  </div>`;
+}
+
+function updPreview() {
+  const ta = $('#e-itens'); if (!ta) return;
+  const its = parseItems(ta.value); const el = $('#e-prev');
+  if (!its.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="small muted" style="margin-bottom:6px">Compras vai receber ${its.length} ${its.length > 1 ? 'itens' : 'item'}:</div>
+   <ul class="preview">${its.map(i => `<li class="${i.qtd == null ? 'noq' : ''}"><span class="mono qq" style="text-align:right">${i.qtd == null ? 'qtd?' : numBR(i.qtd)}</span><span class="muted">${esc(i.un)}</span><span>${esc(i.desc)}</span></li>`).join('')}</ul>
+   ${its.some(i => i.qtd == null) ? '<div class="small" style="color:var(--urgent);margin-top:4px">Sem quantidade em algum item. Pode enviar assim, Compras confirma com você.</div>' : ''}`;
+}
+function ecard(r) {
+  const i = stIdx(r.status); const open = S.ui.eopen === r.id;
+  const W = winners(r); const ws = Object.keys(W);
+  const ncot = r.cotacoes.length;
+  const msg = {nova: 'Recebida por Compras', cotacao: `Cotando com ${r.envios.length} fornecedores (${ncot} já responderam)`, analise: `Comparando ${ncot} orçamentos`, aprovado: 'Compra aprovada, emitindo pedido', pedido: 'Pedido emitido. Confirme quando o material chegar.', entregue: 'Material entregue na obra', finalizado: 'Concluída'}[r.status];
+  return `<div class="ecard">
+    <div class="t"><div><div class="obra">${esc(r.obra)}</div><div class="small muted"><span class="mono">${code(r.id)}</span> · ${fD(r.criado)} · ${r.itens.length} itens</div></div>
+      <div class="row" style="gap:4px;justify-content:flex-end">${r.urgente ? chipUrg : ''}${chipSt(r.status)}</div></div>
+    <div class="progress">${ST.map((s, k) => `<span class="${k < i ? 'on' : k === i ? 'cur' : ''}"></span>`).join('')}</div>
+    <div class="small">${msg}</div>
+    ${ws.length ? `<div class="closed">${ws.map(s => { const c = cot_(r, s); const prev = r.aprovadoEm ? addDays(r.aprovadoEm, c.prazoDias) : null; return `<div class="w"><span>Fechado com <b>${esc(sup_(s).nome)}</b></span><span class="mono">${brl(winTotal(r, s))}</span></div><div class="small muted">${W[s].length} item(ns) · entrega ${c.prazoDias === 0 ? 'imediata' : 'em ' + c.prazoDias + ' dia(s)'}${prev ? ' · previsão ' + fD(prev) : ''}</div>`; }).join('')}</div>` : ''}
+    ${r.status === 'pedido' ? `<button class="btn ok" data-act="etab" data-v="entregas" style="justify-content:center">Confirmar chegada na obra</button>` : ''}
+    ${r.entrega ? `<div class="small" style="color:var(--ok)">Chegada confirmada por ${esc(r.entrega.por)} em ${fDT(r.entrega.em)}${r.entrega.completo ? '' : ' · <b>entrega parcial</b>'}${r.entrega.obs ? ' · ' + esc(r.entrega.obs) : ''}</div>` : ''}
+    <details><summary class="small muted" style="cursor:pointer">Ver itens</summary><ul class="preview" style="margin-top:6px">${r.itens.map(it => `<li><span class="mono" style="text-align:right">${it.qtd == null ? '?' : numBR(it.qtd)}</span><span class="muted">${esc(it.un)}</span><span>${esc(it.desc)}</span></li>`).join('')}</ul></details>
+  </div>`;
+}
+function confirmForm(r) {
+  return `<div style="display:grid;gap:8px;border-top:1px dashed var(--line);padding-top:10px">
+    <div class="seg" role="group"><button type="button" class="n" data-act="e-comp" data-v="1" aria-pressed="${S.ui.ecomp !== false}">Chegou tudo</button><button type="button" class="u" data-act="e-comp" data-v="0" aria-pressed="${S.ui.ecomp === false}">Chegou faltando</button></div>
+    <input class="in" id="e-cobs" placeholder="${S.ui.ecomp === false ? 'O que faltou?' : 'Observação (opcional)'}">
+    <label class="btn ghost sm" style="justify-self:start">Foto do material / canhoto (opcional)<input type="file" accept="image/*" class="hidden-file" id="e-foto"></label>
+    <div class="row"><button class="btn ok" data-act="e-confirm" data-id="${r.id}">Confirmar</button><button class="btn ghost" data-act="e-open" data-id="0">Cancelar</button></div>
+  </div>`;
+}
+
+/* ---------- Compras ---------- */
+const IC = {
+  alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg>',
+  mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg>',
+  cart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.4 11h10.2L20 8H6.2"/><circle cx="9" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>',
+  clip: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 11-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/></svg>',
+  sync: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5M3 21v-5h5"/></svg>',
+  spark: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2l2.2 6.3L20 10l-5.8 1.7L12 18l-2.2-6.3L4 10l5.8-1.7z"/></svg>',
+  home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10l8-6 8 6v10"/><path d="M9 20v-6h6v6"/></svg>',
+  board: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="10" rx="1.5"/><rect x="17" y="4" width="4" height="13" rx="1.5"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+};
+const initials = n => n.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+const avCls = n => 'av-' + (Math.max(0, ENGS.indexOf(n)) % 4);
+const FILTERS = [['abertas', 'Abertas'], ['urgentes', 'Urgentes'], ['nova', 'Novas'], ['cotacao', 'Em cotação'], ['analise', 'Em análise'], ['andamento', 'Pedido / entrega'], ['finalizado', 'Finalizadas'], ['todas', 'Todas']];
+const matchF = (r, f) => f === 'todas' || (f === 'abertas' && r.status !== 'finalizado') || (f === 'urgentes' && r.urgente && r.status !== 'finalizado') || (f === 'andamento' && ['aprovado', 'pedido', 'entregue'].includes(r.status)) || r.status === f;
+function filtered() {
+  const q = (S.q || '').toLowerCase();
+  return S.reqs.filter(r => {
+    if (!matchF(r, S.filter)) return false;
+    if (S.ui.fobra && r.obra !== S.ui.fobra) return false;
+    if (!q) return true;
+    const hay = [r.obra, r.solicitante, code(r.id), ...r.itens.map(i => i.desc), ...r.cotacoes.map(c => sup_(c.supId).nome), ...r.docs.map(d => d.numero)].join(' ').toLowerCase();
+    return hay.includes(q);
+  }).sort((a, b) => (a.status === 'finalizado') - (b.status === 'finalizado') || (b.urgente - a.urgente) || b.id - a.id);
+}
+function bestValue(r) {
+  const ws = Object.keys(winners(r));
+  if (ws.length) return {v: ws.reduce((t, s) => t + winTotal(r, s), 0), lab: r.aprovadoEm ? 'fechado' : 'escolhido'};
+  if (r.cotacoes.length) { const a = analyze(r); return {v: sugGross(r, a.sug), lab: 'melhor proposta'}; }
+  return null;
+}
+function vComprasKpis() {
+  const open = S.reqs.filter(r => r.status !== 'finalizado');
+  const urg = open.filter(r => r.urgente);
+  const waitQ = open.reduce((t, r) => t + r.envios.filter(e => !r.cotacoes.find(c => c.supId === e.supId)).length, 0);
+  const waitR = open.filter(r => r.envios.some(e => !r.cotacoes.find(c => c.supId === e.supId))).length;
+  const closed = S.reqs.filter(r => stIdx(r.status) >= 3).sort((a, b) => a.id - b.id);
+  const vals = closed.map(r => ({r, v: Object.keys(winners(r)).reduce((t, s) => t + winTotal(r, s), 0)}));
+  const spent = vals.reduce((t, x) => t + x.v, 0); const maxV = Math.max(1, ...vals.map(x => x.v));
+  const times = S.reqs.map(r => { const d = r.docs.find(x => x.tipo === 'Pedido de compra'); return d ? (new Date(d.em) - new Date(r.criado)) / DAY : null; }).filter(x => x != null);
+  const avg = times.length ? times.reduce((a, b) => a + b, 0) / times.length : null;
+  const money = v => `<small>R$</small>${v.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+  return `<div class="kpis">
+    <div class="kpi u"><span class="ic">${IC.alert}</span><span class="k">Urgentes abertas</span><span class="v u">${urg.length}</span><span class="s">${urg.length ? 'Precisam de atenção hoje' : 'Nenhuma urgência'}</span>
+      <div class="urg-list">${urg.map(r => `<button class="chip sel" data-act="sel" data-id="${r.id}">${code(r.id)}</button>`).join('')}</div></div>
+    <div class="kpi a"><span class="ic">${IC.mail}</span><span class="k">Orçamentos aguardando</span><span class="v">${waitQ}</span><span class="s">fornecedores sem resposta em ${waitR} solicitação(ões)</span></div>
+    <div class="kpi"><span class="ic">${IC.cart}</span><span class="k">Comprado (aprovado)</span><span class="v">${money(spent)}</span>
+      <div class="mini-bars">${vals.map(x => `<span style="height:${Math.max(10, x.v / maxV * 100)}%" title="${code(x.r.id)} · ${brl(x.v)}"></span>`).join('')}</div>
+      <div class="mini-lab">${vals.map(x => `<span>${code(x.r.id)}</span>`).join('')}</div></div>
+    <div class="kpi g"><span class="ic">${IC.clock}</span><span class="k">Tempo até o pedido</span><span class="v">${avg == null ? '—' : numBR(Math.round(avg * 10) / 10)} <small>dias</small></span><span class="s">média da solicitação ao pedido de compra</span></div>
+  </div>`;
+}
+function vCompras() {
+  if (S.tab === 'fornecedores') return vFornecedores();
+  if (S.tab === 'email') return vMail();
+  const r = req_(S.selId);
+  if (S.view === 'detail' && r) return vDetailPage(r);
+  return vBoard();
+}
+const COLDOT = {nova: 'var(--accent)', cotacao: 'var(--warn)', analise: 'var(--warn)', aprovado: 'var(--accent-2)', pedido: 'var(--accent-2)', entregue: 'var(--ok)', finalizado: 'var(--ok)'};
+function nextStep(r) {
+  const pend = r.envios.filter(e => !r.cotacoes.find(c => c.supId === e.supId)).length;
+  switch (r.status) {
+    case 'nova': return ['Pedir cotação', true];
+    case 'cotacao': return [pend ? `Aguardando ${pend} orçamento${pend > 1 ? 's' : ''}` : 'Comparar orçamentos', !pend];
+    case 'analise': return ['Comparar e aprovar', true];
+    case 'aprovado': return ['Anexar pedido de compra', true];
+    case 'pedido': return ['Engenheiro confirma a chegada', false];
+    case 'entregue': return [r.entrega?.completo ? 'Arquivar e mandar ao financeiro' : 'Entrega parcial: verificar', true];
+    default: return ['Concluída', false];
+  }
+}
+function vBoard() {
+  const q = (S.q || '').toLowerCase();
+  const list = S.reqs.filter(r => (!S.ui.fobra || r.obra === S.ui.fobra) && (!S.ui.onlyUrg || r.urgente) && (!q || [r.obra, r.solicitante, code(r.id), ...r.itens.map(i => i.desc), ...r.cotacoes.map(c => sup_(c.supId).nome), ...r.docs.map(d => d.numero)].join(' ').toLowerCase().includes(q)));
+  const mine = list.filter(r => nextStep(r)[1]).length;
+  return `
+  <div class="phead"><div class="t"><h1>Quadro de solicitações</h1><p>${list.filter(r => r.status !== 'finalizado').length} em andamento · <b style="color:var(--accent)">${mine} esperando você</b></p></div>
+    <button class="btn primary lg" data-act="nav" data-v="eng">${IC.plus} Nova solicitação</button></div>
+  <div class="fbar">
+    <select class="in pill" data-chg="fobra" id="fobra"><option value="">Todas as obras</option>${S.obras.map(o => `<option ${S.ui.fobra === o.nome ? 'selected' : ''}>${esc(o.nome)}</option>`).join('')}</select>
+    <input class="in pill" id="q" placeholder="Buscar obra, item, fornecedor ou nº do pedido" value="${esc(S.q)}">
+    <button class="chip sel" style="padding:9px 14px;font-size:12.5px" data-act="only-urg" aria-pressed="${!!S.ui.onlyUrg}">Só urgentes · ${S.reqs.filter(r => r.urgente && r.status !== 'finalizado').length}</button>
+  </div>
+  <div class="small muted" style="margin:-6px 0 10px">No computador, arraste os cartões entre as colunas para mudar a etapa.</div>
+  <div class="board">${ST.map(([k, n]) => { let items = list.filter(r => r.status === k).sort((a, b) => (b.urgente - a.urgente) || b.id - a.id); const tot = items.length; if (k === 'finalizado') items = items.slice(0, 4); return `<section class="kcol" data-col="${k}">
+      <div class="kcol-h"><span class="kdot" style="background:${COLDOT[k]}"></span>${n}<b>${tot}</b></div>
+      ${items.map(kcard).join('') || '<div class="kempty">Nada aqui</div>'}
+    </section>`; }).join('')}</div>`;
+}
+function kcard(r) {
+  const [nx, me] = nextStep(r); const bv = bestValue(r);
+  const left = Math.ceil((new Date(r.prazoIdeal + 'T23:59') - Date.now()) / DAY);
+  const late = stIdx(r.status) < 5 && left <= 1;
+  return `<button class="kcard" data-act="sel" data-id="${r.id}" draggable="true">
+    <div class="kc-top"><span class="kc-id">${code(r.id)}${r.origem === 'email' ? ` <span class="kc-mail" title="Chegou por e-mail">${IC.mail}</span>` : ''}</span>${r.urgente ? '<span class="chip urg"><i>Urgente</i></span>' : ''}</div>
+    <div class="kc-obra">${esc(r.obra)}</div>
+    <div class="kc-it">${r.itens.length} ${r.itens.length > 1 ? 'itens' : 'item'} · ${esc(r.itens.slice(0, 2).map(i => i.desc).join(', '))}</div>
+    <div class="kc-foot"><span class="avatar xs ${avCls(r.solicitante)}" title="${esc(r.solicitante)}">${initials(r.solicitante)}</span>${r.envios.length ? `<span>${r.cotacoes.length}/${r.envios.length} orç.</span>` : ''}<span class="${late ? 'late' : ''}">até ${fD(r.prazoIdeal)}</span><span class="val">${bv ? brl(bv.v).replace(/,\d\d$/, '') : ''}</span></div>
+    <div class="kc-next ${me ? 'me' : ''}">${me ? '→ ' : ''}${nx}</div>
+  </button>`;
+}
+function vDetailPage(r) {
+  const order = S.reqs.filter(x => x.status !== 'finalizado' || x.id === r.id).sort((a, b) => stIdx(a.status) - stIdx(b.status) || b.id - a.id);
+  return `<div class="row" style="justify-content:space-between;margin-bottom:14px">
+      <button class="btn" data-act="back">← Voltar ao quadro</button>
+      <span class="small muted">${stName(r.status)} · ${nextStep(r)[0]}</span>
+    </div>
+    <div style="display:grid;gap:16px">${vHero(r)}<section class="detail">${vDetail(r)}</section></div>`;
+}
+function vHero(r) {
+  const bv = bestValue(r);
+  const show = r.itens.slice(0, 3); const rest = r.itens.length - show.length;
+  const cta = {nova: ['Pedir cotação', 'sec-enviar'], cotacao: ['Ver orçamentos', 'sec-cot'], analise: ['Comparar e aprovar', 'sec-dec'], aprovado: ['Anexar pedido', 'sec-ped'], pedido: ['Acompanhar entrega', 'sec-ent'], entregue: ['Arquivar compra', 'sec-ent'], finalizado: ['Ver histórico', 'sec-hist']}[r.status];
+  return `<div class="hero" id="hero">
+    <div class="hero-top">
+      <div><div class="lbl">Solicitação</div><div class="code">${code(r.id)} <span class="gpill">${stName(r.status)}</span>${r.urgente ? '<span class="gpill u">Urgente</span>' : ''}</div></div>
+      <div><div class="lbl">Obra</div><div class="obra">${esc(r.obra)}</div></div>
+      <div><div class="lbl">Engenheiro</div><div class="who"><span class="avatar sm ${avCls(r.solicitante)}">${initials(r.solicitante)}</span><span><b>${esc(r.solicitante)}</b><span>Engenheiro de obra</span></span></div></div>
+    </div>
+    <div class="tiles">${show.map(it => `<div class="tile"><span class="tq">${it.qtd == null ? '?' : numBR(it.qtd)}<small>${esc(it.un)}</small></span><span class="d">${esc(it.desc)}</span></div>`).join('')}
+      ${rest > 0 ? `<button class="tile more" data-act="goto" data-v="sec-itens" style="color:#fff;cursor:pointer">+ ${rest} ${rest > 1 ? 'itens' : 'item'}</button>` : stIdx(r.status) <= 2 ? `<button class="tile more" data-act="it-add" style="color:#fff;cursor:pointer">${IC.plus}<br>Adicionar item</button>` : ''}</div>
+    <div class="hero-foot">
+      <div class="m"><span class="lbl">Orçamentos</span><b>${r.cotacoes.length}/${r.envios.length || 0}</b></div>
+      <div class="m"><span class="lbl">${bv ? ({fechado: 'Total fechado', escolhido: 'Total escolhido'}[bv.lab] || 'Melhor proposta') : 'Melhor proposta'}</span><b>${bv ? brl(bv.v) : '—'}</b></div>
+      <div class="m"><span class="lbl">Precisa na obra até</span><b>${fD(r.prazoIdeal)}</b></div>
+      <div class="act"><button class="ring" data-act="copy-link" title="Copiar link de acompanhamento do engenheiro" aria-label="Copiar link do engenheiro">${IC.link}</button><button class="btn white lg" data-act="goto" data-v="${cta[1]}">${cta[0]}</button></div>
+    </div>
+  </div>`;
+}
+function vDetail(r) {
+  const i = stIdx(r.status); const o = obra_(r.obra);
+  const canEdit = i <= 2;
+  const itens = `<div class="panel">
+    ${r.mailId || r.origem === 'email' ? `<div class="soon" style="margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">Chegou por e-mail de ${esc(r.solicitante)}; a IA separou os itens. <button class="linkbtn" data-act="open-mail" data-id="${r.id}">Ver e-mail original</button></div>` : ''}
+    <div class="panel-h"><h3>Itens solicitados</h3>${canEdit ? '<span class="step">editável até aprovar</span>' : ''}</div>
+    <div class="tbl-wrap"><table><thead><tr><th class="r" style="width:84px">Qtd</th><th style="width:64px">Un</th><th>Descrição</th>${canEdit ? '<th></th>' : ''}</tr></thead><tbody>
+    ${r.itens.map(it => canEdit ? `<tr><td><input class="in sm" style="text-align:right" value="${it.qtd == null ? '' : numBR(it.qtd)}" placeholder="?" data-chg="it-qtd" data-id="${it.id}" id="q-${it.id}"></td><td><input class="in sm" value="${esc(it.un)}" data-chg="it-un" data-id="${it.id}" id="u-${it.id}"></td><td><input class="in sm" value="${esc(it.desc)}" data-chg="it-desc" data-id="${it.id}" id="d-${it.id}"></td><td class="c"><button class="btn ghost sm" data-act="it-del" data-id="${it.id}" aria-label="Remover item">✕</button></td></tr>`
+      : `<tr><td class="r">${it.qtd == null ? '?' : numBR(it.qtd)}</td><td>${esc(it.un)}</td><td>${esc(it.desc)}</td></tr>`).join('')}
+    </tbody></table></div>
+    ${canEdit ? `<button class="btn ghost sm" data-act="it-add" style="margin-top:10px">+ Adicionar item</button>` : ''}
+  </div>`;
+  const head = `<div class="panel hd">
+    <div class="row" style="justify-content:space-between">
+      <div class="meta"><span>Criada <b>${fDT(r.criado)}</b></span><span>Solicitante <b>${esc(r.solicitante)}</b></span>${o ? `<span>Entrega <b>${esc(o.end)}</b></span>` : ''}</div>
+      <div class="seg" role="group" aria-label="Urgência"><button class="n" data-act="urg" data-v="0" aria-pressed="${!r.urgente}">Normal</button><button class="u" data-act="urg" data-v="1" aria-pressed="${r.urgente}">Urgente</button></div>
+    </div>
+    ${r.obs ? `<div class="small"><span class="muted">Obs. do engenheiro:</span> ${esc(r.obs)}</div>` : ''}
+    <div class="stepper">${ST.map(([k, n], j) => `<div class="${j < i ? 'done' : j === i ? 'cur' : ''}">${n}</div>`).join('')}</div>
+  </div>`;
+  const tabs = [
+    ['itens', 'Itens', r.itens.length, true],
+    ['cotacao', 'Pedir cotação', r.envios.length || '', true],
+    ['orcamentos', 'Orçamentos', r.envios.length ? `${r.cotacoes.length}/${r.envios.length}` : '', r.envios.length > 0],
+    ['ia', 'Análise da IA', '', r.cotacoes.length > 0],
+    ['motivos', 'Motivos', losersOf(r).length && Object.keys(winners(r)).length ? losersOf(r).length : '', r.cotacoes.length > 0],
+    ['aprovacao', 'Aprovação', '', r.cotacoes.length > 0],
+    ['pedido', 'Pedido e entrega', '', i >= 3],
+    ['historico', 'Histórico', r.log.length, true],
+  ];
+  let t = S.ui.dtab || defTab(r);
+  if (!tabs.find(x => x[0] === t && x[3])) t = defTab(r);
+  const body = {
+    itens: itens,
+    cotacao: i <= 2 ? pEnviar(r) : pEnviosResumo(r),
+    orcamentos: r.envios.length ? pOrcamentos(r) : '',
+    ia: r.cotacoes.length ? pAnalise(r) : '',
+    motivos: r.cotacoes.length ? pMotivos(r) : '',
+    aprovacao: r.cotacoes.length ? pAprovacao(r) : '',
+    pedido: i >= 3 ? pPedido(r) + (i >= 4 ? pEntrega(r) : `<div class="panel"><div class="panel-h"><h3>Entrega na obra</h3></div><div class="small muted">Depois que o pedido for anexado, ${esc(r.solicitante)} confirma a chegada pelo celular.</div></div>`) : '',
+    historico: `<div class="panel"><div class="panel-h"><h3>Histórico</h3></div><ul class="log">${[...r.log].reverse().map(([tt, x]) => `<li><time>${fDT(tt)}</time><span>${esc(x)}</span></li>`).join('')}</ul></div>`,
+  }[t];
+  return `${head}
+  <div class="dtabs" id="dtabs" role="tablist">${tabs.map(([k, n, c, ok]) => `<button role="tab" data-act="dtab" data-v="${k}" aria-selected="${k === t}" ${ok ? '' : 'disabled title="Disponível nas próximas etapas"'}>${n}${c !== '' && c != null ? `<b>${c}</b>` : ''}</button>`).join('')}</div>
+  <div class="dbody">${body}</div>`;
+}
+function defTab(r) { return {nova: 'cotacao', cotacao: 'orcamentos', analise: 'ia', aprovado: 'pedido', pedido: 'pedido', entregue: 'pedido', finalizado: 'historico'}[r.status]; }
+
+function mailText(r) {
+  const o = obra_(r.obra);
+  const subj = `${r.urgente ? '[URGENTE] ' : ''}Cotação ${code(r.id)} – Obra ${r.obra}`;
+  const body = `Bom dia,\n\nPor gentileza, enviar orçamento dos itens abaixo para a obra ${r.obra}:\n\n${r.itens.map((i, k) => `${k + 1}. ${i.qtd == null ? '' : numBR(i.qtd) + ' ' + i.un + ' – '}${i.desc}`).join('\n')}\n\nLocal de entrega: ${o ? o.end : 'a confirmar'}\nPrazo ideal de entrega: ${fD(r.prazoIdeal)}\n\nFavor informar no orçamento: preço unitário de cada item, prazo de entrega, frete e condição de pagamento.\nAo responder, mantenha o código ${code(r.id)} no assunto.\n\nAtenciosamente,\nLetícia\nDepartamento de Compras`;
+  return {subj, body};
+}
+function pEnviar(r) {
+  const sentIds = r.envios.map(e => e.supId);
+  const cats = S.ui.cats && S.ui.catsFor === r.id ? S.ui.cats : guessCats(r.itens);
+  const pool = S.sups.filter(s => !cats.length || cats.includes(s.cat));
+  const picked = S.ui.pickFor === r.id ? S.ui.pick : pool.filter(s => !sentIds.includes(s.id)).map(s => s.id);
+  const {subj, body} = mailText(r);
+  const pickedSups = picked.map(sup_).filter(s => s.email && s.email.includes('@'));
+  const owa = s => `https://outlook.office.com/mail/deeplink/compose?to=${encodeURIComponent(s.email)}&subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+  const mailto = `mailto:?bcc=${pickedSups.map(s => s.email.replace(/\s/g, '')).join(';')}&subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+  return `<div class="panel">
+    <div class="panel-h"><h3>Pedir cotação</h3><span class="step">${r.envios.length ? `${r.envios.length} já enviados` : 'passo 1'}</span></div>
+    <div style="display:grid;gap:12px">
+      <div class="row" style="gap:6px"><span class="small muted">Categoria:</span>${CATS.map(c => `<button class="chip sel" data-act="cat" data-v="${esc(c)}" aria-pressed="${cats.includes(c)}">${esc(c)}</button>`).join('')}${S.ui.cats && S.ui.catsFor === r.id ? '' : (guessCats(r.itens).length ? '<span class="chip ai">sugerida pelos itens</span>' : '')}</div>
+      <div class="row" style="gap:6px"><span class="small muted">${picked.length} de ${pool.length} marcados</span><button class="btn ghost sm" data-act="pick-all">Marcar todos</button><button class="btn ghost sm" data-act="pick-none">Limpar</button></div>
+      <div class="suppick">${pool.map(s => `<label class="sup"><input type="checkbox" data-chg="pick" data-id="${s.id}" ${picked.includes(s.id) ? 'checked' : ''}><span style="min-width:0"><span class="n">${esc(s.nome)}</span>${sentIds.includes(s.id) ? ' <span class="chip st-entregue">já enviado</span>' : ''}<br><span class="e">${s.email.split(';').map(x => esc(x.trim())).join('<br>')}</span></span></label>`).join('') || '<div class="muted small">Nenhum fornecedor nessa categoria.</div>'}</div>
+      <details ${S.ui.mailOpen ? 'open' : ''}><summary class="small" style="cursor:pointer;font-weight:600">Ver e-mail que será enviado</summary>
+        <div class="small muted" style="margin:8px 0 4px">Assunto: <b style="color:var(--ink)">${esc(subj)}</b></div><div class="mail">${esc(body)}</div></details>
+      <div class="row">
+        <button class="btn primary" data-act="send" ${picked.length ? '' : 'disabled'}>Enviar para ${picked.length} fornecedor${picked.length === 1 ? '' : 'es'}</button>
+        <a class="btn" href="${esc(mailto)}" target="_blank" rel="noopener">Abrir no Outlook (cópia oculta)</a>
+        <button class="btn ghost" data-act="copy-mail">Copiar texto</button>
+      </div>
+      ${pickedSups.length ? `<details><summary class="small muted" style="cursor:pointer">Abrir um e-mail separado por fornecedor no Outlook Web</summary><div class="row" style="margin-top:8px;gap:6px">${pickedSups.map(s => `<a class="btn sm" target="_blank" rel="noopener" href="${esc(owa(s))}">${esc(s.nome)}</a>`).join('')}</div></details>` : ''}
+      <div class="note">No sistema final, “Enviar” dispara pelo Outlook da Letícia (Microsoft 365), um e-mail por fornecedor com o código ${code(r.id)} no assunto. As respostas voltam sozinhas pra esta solicitação.</div>
+    </div>
+  </div>`;
+}
+function pEnviosResumo(r) {
+  return `<div class="panel"><div class="panel-h"><h3>Cotação enviada</h3><span class="small muted">${r.envios.length} fornecedores · ${fDT(r.envios[0]?.em)}</span></div>
+  <div class="row" style="gap:6px">${r.envios.map(e => `<span class="chip">${esc(sup_(e.supId).nome)}</span>`).join('')}</div></div>`;
+}
+
+function qcard(r, c, editable) {
+  const s = sup_(c.supId); const cv = coverage(r, c);
+  const open = S.ui.qedit === c.supId;
+  return `<div class="q">
+    <div class="qh"><span class="qn">${esc(s.nome)}</span>${c.ia ? '<span class="chip ai">lido por IA</span>' : '<span class="chip">manual</span>'}</div>
+    ${c.arquivo ? fileChip(c.arquivo) : ''}
+    ${(() => { const m = S.mail.find(x => x.tipo === 'orcamento' && x.reqId === r.id && x.supId === c.supId); return m ? `<button class="linkbtn" style="justify-self:start" data-act="open-mail-id" data-v="${m.id}">Ver e-mail do fornecedor</button>` : ''; })()}
+    <dl class="kv"><dt>Total cotado</dt><dd class="mono">${brl(cotTotal(r, c))}</dd><dt>Itens cotados</dt><dd>${cv}/${r.itens.length}</dd><dt>Prazo</dt><dd>${c.prazoDias === 0 ? 'Imediato' : c.prazoDias + ' dia(s)'}</dd><dt>Frete</dt><dd>${c.frete ? brl(c.frete) : 'CIF / grátis'}</dd><dt>Pagamento</dt><dd>${esc(c.pagamento)}</dd></dl>
+    ${editable ? `<button class="btn ghost sm" data-act="qedit" data-sup="${c.supId}">${open ? 'Fechar' : 'Conferir / corrigir valores'}</button>` : ''}
+    ${open ? `<div style="display:grid;gap:6px">${r.itens.map(i => `<label class="f" style="font-weight:400">${esc(i.desc)} <span class="muted">(${i.qtd ?? '?'} ${esc(i.un)})</span><input class="in sm mono" placeholder="não cotou" value="${c.precos[i.id] == null ? '' : numBR(c.precos[i.id])}" data-chg="price" data-sup="${c.supId}" data-id="${i.id}" id="p-${c.supId}-${i.id}"></label>`).join('')}
+      <div class="grid2" style="grid-template-columns:1fr 1fr 1fr"><label class="f">Prazo (dias)<input class="in sm mono" value="${c.prazoDias}" data-chg="qf" data-k="prazoDias" data-sup="${c.supId}" id="pz-${c.supId}"></label><label class="f">Frete<input class="in sm mono" value="${numBR(c.frete || 0)}" data-chg="qf" data-k="frete" data-sup="${c.supId}" id="fr-${c.supId}"></label><label class="f">Pagamento<input class="in sm" value="${esc(c.pagamento)}" data-chg="qf" data-k="pagamento" data-sup="${c.supId}" id="pg-${c.supId}"></label></div></div>` : ''}
+  </div>`;
+}
+function fileChip(name) { const u = FILES[name]; return u ? `<a class="file" href="${u}" target="_blank" rel="noopener" title="${esc(name)}">${esc(name)}</a>` : `<span class="file" title="${esc(name)}">${esc(name)}</span>`; }
+
+function sugGross(r, map) { let t = 0; const sups = new Set(); r.itens.forEach(i => { const s = map[i.id]; if (s) { const p = cot_(r, s).precos[i.id]; if (p != null) { t += p * (i.qtd || 1); sups.add(s); } } }); sups.forEach(s => t += cot_(r, s).frete || 0); return t; }
+
+function nextBtn(tab, label) { return `<div class="row" style="justify-content:flex-end;margin-top:4px"><button class="btn primary" data-act="dtab" data-v="${tab}">${label} →</button></div>`; }
+function pOrcamentos(r) {
+  const pend = r.envios.filter(e => !r.cotacoes.find(c => c.supId === e.supId));
+  const editable = stIdx(r.status) <= 2;
+  return `<div class="panel">
+    <div class="panel-h"><h3>Orçamentos recebidos</h3><span class="step">${r.cotacoes.length} de ${r.envios.length} responderam</span></div>
+    ${editable ? `<div class="pullbox">
+      <div style="min-width:0"><b>Puxar orçamentos do e-mail</b><div class="small muted">Procura no Outlook as respostas com <b>${code(r.id)}</b> no assunto, anexa o PDF aqui e a IA lê preço de cada item, prazo, frete e pagamento.</div></div>
+      ${pend.length ? `<button class="btn primary" data-act="pull">${IC.mail} Buscar respostas no Outlook</button>` : '<span class="chip st-entregue">Todos responderam</span>'}
+    </div>` : ''}
+    ${r.cotacoes.length ? (() => { const an = analyze(r); return `<div class="ai-box" style="margin-top:14px"><h4>${IC.spark} A IA já comparou ${r.cotacoes.length} orçamento${r.cotacoes.length > 1 ? 's' : ''}</h4><div style="font-weight:600">${esc(an.sugText)}</div><div class="row"><span class="small muted">Total sugerido</span><b>${brl(sugGross(r, an.sug))}</b><button class="btn primary sm" data-act="dtab" data-v="ia" style="margin-left:auto">Ver cotação inteligente →</button></div></div>`; })() : ''}
+    <div class="quotes" style="margin-top:14px">
+      ${r.cotacoes.map(c => qcard(r, c, editable)).join('')}
+      ${pend.map(e => S.ui.reply === e.supId ? replyForm(r, e.supId) : `<div class="q wait"><div class="qh"><span class="qn">${esc(sup_(e.supId).nome)}</span><span class="chip">aguardando</span></div>
+        <div class="small muted">Cotação enviada ${fDT(e.em)}</div>
+        ${editable ? `<button class="btn primary sm" data-act="reply-open" data-sup="${e.supId}">Registrar resposta do fornecedor</button>` : ''}</div>`).join('')}
+    </div>
+    ${threadOf(r)}
+    ${r.cotacoes.length ? nextBtn('ia', 'Ver análise da IA') : ''}
+  </div>`;
+}
+function replyForm(r, supId) {
+  return `<div class="q" style="grid-column:1/-1;border-color:var(--accent)">
+    <div class="qh"><span class="qn">Resposta de ${esc(sup_(supId).nome)}</span><button class="btn ghost sm" data-act="reply-close">Cancelar</button></div>
+    <div class="small muted">Para quando o fornecedor respondeu fora do fluxo (encaminhou de outro e-mail, mandou por WhatsApp ou ligou). Cole o texto e anexe o orçamento; a IA lê os valores.</div>
+    <label class="f">Texto da resposta<textarea class="in" id="reply-txt" style="min-height:110px" placeholder="Ex.: Letícia, segue orçamento. Prazo de entrega 3 dias, pagamento 28 DDL.">${esc(S.ui.replyTxt || '')}</textarea></label>
+    <div class="row"><button class="btn sm" data-act="reply-file">${IC.clip} ${S.ui.replyFile ? esc(S.ui.replyFile) : 'Anexar PDF ou foto do orçamento'}</button>
+      <button class="btn primary" data-act="reply-save" data-sup="${supId}">Salvar resposta e ler valores</button></div>
+  </div>`;
+}
+function threadOf(r) {
+  const ms = S.mail.filter(m => m.reqId === r.id && (m.tipo === 'orcamento' || m.folder === 'enviados')).sort((a, b) => a.em.localeCompare(b.em));
+  if (!ms.length) return '';
+  return `<div style="margin-top:18px"><div style="font-weight:700;margin-bottom:8px">Conversa por e-mail com os fornecedores</div>
+    <div class="thread">${ms.map(m => `<button class="trow ${m.folder === 'enviados' ? 'out' : 'in'}" data-act="open-mail-id" data-v="${m.id}">
+      <span class="tdir">${m.folder === 'enviados' ? 'Enviado' : 'Resposta'}</span>
+      <span style="min-width:0"><b>${esc(m.folder === 'enviados' ? (sup_(m.supId).nome || m.to) : m.from)}</b><span class="small muted" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(m.body.split('\n').find(l => l.trim() && !/^(letícia|bom dia|boa tarde)/i.test(l.trim())) || m.subj)}</span></span>
+      <span class="small muted" style="white-space:nowrap">${m.anexos.length ? IC.clip + ' ' : ''}${fDT(m.em)}</span></button>`).join('')}</div></div>`;
+}
+function pAnalise(r) {
+  const a = analyze(r); const editable = stIdx(r.status) <= 2;
+  const cs = r.cotacoes; const W = r.vencedor; const n = r.itens.length;
+  const full = cs.filter(c => coverage(r, c) === n);
+  const fastest = [...cs].sort((x, y) => x.prazoDias - y.prazoDias)[0];
+  const rows = [...cs].sort((x, y) => (coverage(r, y) === n) - (coverage(r, x) === n) || (cotTotal(r, x) + (x.frete || 0)) - (cotTotal(r, y) + (y.frete || 0)));
+  const prazoTxt = d => d === 0 ? 'Imediato' : d + ' dia(s)';
+  return `<div class="panel">
+    <div class="panel-h"><h3>Análise da IA</h3>${editable ? `<button class="btn primary" data-act="apply-sug">Usar a sugestão da IA</button>` : ''}</div>
+    <div style="display:grid;gap:16px">
+    <div class="ai-box">
+      <h4>Sugestão</h4>
+      <div style="font-weight:600">${esc(a.sugText)}</div>
+      <div class="ai-grid">
+        <div class="ai-card"><span class="k">Total sugerido</span><span class="x">${brl(sugGross(r, a.sug))}</span><span class="small muted">com frete</span></div>
+        <div class="ai-card"><span class="k">Melhor preço (cotou tudo)</span><span class="v">${a.bestSingle ? esc(sup_(a.bestSingle.supId).nome) : 'Ninguém cotou tudo'}</span><span class="small muted">${a.bestSingle ? brl(a.bestSingle.total) : 'compra precisa ser dividida'}</span></div>
+        <div class="ai-card"><span class="k">Melhor prazo</span><span class="v">${esc(sup_(fastest.supId).nome)}</span><span class="small muted">${prazoTxt(fastest.prazoDias)} · cotou ${coverage(r, fastest)}/${n}</span></div>
+        <div class="ai-card"><span class="k">Cotaram todos os itens</span><span class="x">${full.length}<small class="muted" style="font-size:13px"> de ${cs.length}</small></span><span class="small muted">${full.length ? full.map(c => sup_(c.supId).nome).slice(0, 3).join(', ') + (full.length > 3 ? '…' : '') : 'nenhum'}</span></div>
+      </div>
+      <ul class="flags">${a.flags.map(([k, t]) => `<li class="${k}">${esc(t)}</li>`).join('')}</ul>
+    </div>
+    <div><div style="font-weight:700;margin-bottom:8px">Ranking dos fornecedores</div>
+    <div class="tbl-wrap"><table><thead><tr><th>Fornecedor</th><th class="r">Total c/ frete</th><th>Itens</th><th>Prazo</th><th>Pagamento</th><th>Destaques</th></tr></thead><tbody>
+      ${rows.map(c => { const cv = coverage(r, c); const tags = []; if (a.bestSingle?.supId === c.supId) tags.push('<span class="chip st-entregue">Menor preço</span>'); if (fastest.supId === c.supId) tags.push('<span class="chip ai">Mais rápido</span>'); if (Object.values(a.sug).includes(c.supId)) tags.push('<span class="chip ai">Na sugestão</span>'); return `<tr><td><b>${esc(sup_(c.supId).nome)}</b></td><td class="r"><b>${brl(cotTotal(r, c) + (c.frete || 0))}</b></td><td>${cv === n ? `<span class="chip st-entregue">${cv}/${n} completo</span>` : `<span class="chip st-cotacao">${cv}/${n} · faltou ${n - cv}</span>`}</td><td>${prazoTxt(c.prazoDias)}</td><td>${esc(c.pagamento)}</td><td><span class="row" style="gap:4px">${tags.join('')}</span></td></tr>`; }).join('')}
+    </tbody></table></div></div>
+    <div><div style="font-weight:700;margin-bottom:4px">Preço por item</div>
+    <div class="small muted" style="margin-bottom:8px">${editable ? 'Clique no preço para escolher de quem comprar cada item. Verde = menor preço da linha.' : 'Em roxo, o fornecedor escolhido para cada item.'}</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Item</th><th class="r">Qtd</th>${cs.map(c => `<th class="r">${esc(sup_(c.supId).nome)}</th>`).join('')}</tr></thead>
+      <tbody>${r.itens.map(i => `<tr><td style="min-width:200px">${esc(i.desc)}</td><td class="r">${i.qtd ?? '?'} ${esc(i.un)}</td>${cs.map(c => { const p = c.precos[i.id]; if (p == null) return '<td class="r"><span class="cell-na">não cotou</span></td>'; const best = a.best[i.id]?.supId === c.supId; const win = W[i.id] === c.supId; return `<td class="r"><span class="cell-pick ${win ? 'win' : best ? 'best' : ''}" ${editable ? `data-act="pick-win" data-id="${i.id}" data-sup="${c.supId}" role="button" tabindex="0"` : ''} title="Total ${brl(p * (i.qtd || 1))}">${win ? '✓ ' : ''}${brl(p)}</span></td>`; }).join('')}</tr>`).join('')}</tbody>
+    </table></div></div>
+    ${editable && Object.keys(winners(r)).length ? nextBtn('motivos', 'Próximo: motivos') : ''}
+    </div>
+  </div>`;
+}
+function losersOf(r) { const ws = Object.keys(winners(r)); return r.envios.map(e => e.supId).filter(s => !ws.includes(s)); }
+function pMotivos(r) {
+  const editable = stIdx(r.status) <= 2; const ws = Object.keys(winners(r));
+  if (!ws.length) return `<div class="panel"><div class="panel-h"><h3>Motivos</h3></div><div class="empty">Primeiro escolha com quem fechar na Análise da IA. Os motivos dos outros fornecedores são preenchidos automaticamente.<div style="margin-top:12px"><button class="btn primary" data-act="dtab" data-v="ia">Ir para a análise</button></div></div></div>`;
+  const losers = losersOf(r);
+  return `<div class="panel">
+    <div class="panel-h"><h3>Por que não fechei com os outros</h3><span class="step">${losers.filter(s => r.motivos[s]?.motivo).length}/${losers.length} preenchidos</span></div>
+    <div class="small muted" style="margin-bottom:12px">Fechando com ${ws.map(s => '<b style="color:var(--ink)">' + esc(sup_(s).nome) + '</b>').join(' e ')}. A IA já sugeriu um motivo para cada um; troque se precisar.</div>
+    <div class="reasons">${losers.map(s => { const m = r.motivos[s] || {}; const c = r.cotacoes.find(x => x.supId === s); return `<div class="reason"><span><b>${esc(sup_(s).nome)}</b><br><span class="small muted">${c ? brl(cotTotal(r, c)) + ' · ' + coverage(r, c) + '/' + r.itens.length + ' itens · ' + (c.prazoDias === 0 ? 'imediato' : c.prazoDias + 'd') : 'sem resposta'}</span></span>
+      ${editable ? `<span style="display:grid;gap:4px"><select class="in sm" data-chg="motivo" data-sup="${s}" id="mo-${s}"><option value="">Escolher motivo…</option>${MOTIVOS.map(x => `<option ${m.motivo === x ? 'selected' : ''}>${x}</option>`).join('')}</select>${m.auto && !m.manual ? '<span class="small" style="color:var(--accent);font-weight:600">sugerido pela IA</span>' : ''}</span>
+      <input class="in sm" placeholder="Detalhe (opcional)" value="${esc(m.obs || '')}" data-chg="motivo-obs" data-sup="${s}" id="mob-${s}">`
+      : `<span><b>${esc(m.motivo || '—')}</b></span><span class="small muted">${esc(m.obs || '')}</span>`}</div>`; }).join('') || '<div class="muted small">Todos os fornecedores consultados foram escolhidos.</div>'}</div>
+    ${editable ? nextBtn('aprovacao', 'Próximo: aprovação') : ''}
+  </div>`;
+}
+function pAprovacao(r) {
+  const editable = stIdx(r.status) <= 2;
+  const W = winners(r); const ws = Object.keys(W); const losers = losersOf(r);
+  const missing = r.itens.filter(i => !r.vencedor[i.id]);
+  const noReason = losers.filter(s => !r.motivos[s]?.motivo);
+  const total = ws.reduce((t, s) => t + winTotal(r, s), 0);
+  let econ = 0; r.itens.forEach(i => { const ps = r.cotacoes.map(c => c.precos[i.id]).filter(p => p != null); const w = r.vencedor[i.id]; if (ps.length > 1 && w) econ += (Math.max(...ps) - cot_(r, w).precos[i.id]) * (i.qtd || 1); });
+  const pend = r.envios.filter(e => !r.cotacoes.find(c => c.supId === e.supId)).length;
+  const check = (ok, txt, tab) => `<li class="${ok ? 'good' : ''}">${txt}${!ok && tab ? ` <button class="linkbtn" data-act="dtab" data-v="${tab}">resolver</button>` : ''}</li>`;
+  return `<div class="panel">
+    <div class="panel-h"><h3>Aprovação</h3>${r.aprovadoEm ? `<span class="chip st-entregue">Aprovado por ${esc(r.aprovadoPor)} · ${fDT(r.aprovadoEm)}</span>` : '<span class="step">última etapa da cotação</span>'}</div>
+    <div style="display:grid;gap:14px">
+    ${ws.length ? `<div class="tbl-wrap"><table><thead><tr><th>Fechar com</th><th class="r">Itens</th><th>Prazo</th><th>Pagamento</th><th class="r">Valor</th></tr></thead><tbody>
+      ${ws.map(s => `<tr><td><b>${esc(sup_(s).nome)}</b></td><td class="r">${W[s].length}</td><td>${cot_(r, s).prazoDias === 0 ? 'Imediato' : cot_(r, s).prazoDias + ' dia(s)'}</td><td>${esc(cot_(r, s).pagamento)}</td><td class="r"><b>${brl(winTotal(r, s))}</b></td></tr>`).join('')}
+    </tbody><tfoot><tr><td>Total da compra</td><td class="r">${r.itens.length - missing.length}/${r.itens.length}</td><td></td><td></td><td class="r">${brl(total)}</td></tr></tfoot></table></div>
+    <div class="ai-grid"><div class="ai-card"><span class="k">Total</span><span class="x">${brl(total)}</span></div><div class="ai-card"><span class="k">Economia</span><span class="x" style="color:var(--ok)">${brl(econ)}</span><span class="small muted">contra o maior orçamento de cada item</span></div></div>`
+    : `<div class="empty">Ainda não há fornecedor escolhido. <button class="linkbtn" data-act="dtab" data-v="ia">Ir para a análise</button></div>`}
+    ${editable ? `<ul class="flags">
+      ${check(!missing.length && ws.length, missing.length || !ws.length ? `Falta escolher fornecedor para ${missing.length || r.itens.length} item(ns)` : 'Todos os itens têm fornecedor', 'ia')}
+      ${check(!noReason.length, noReason.length ? `Falta o motivo de ${noReason.length} fornecedor(es)` : 'Motivos preenchidos', 'motivos')}
+      ${check(!pend, pend ? `${pend} fornecedor(es) ainda não responderam (pode aprovar mesmo assim)` : 'Todos os orçamentos recebidos', '')}
+    </ul>
+    <div class="row"><button class="btn ok lg" data-act="approve" ${ws.length && !missing.length && !noReason.length ? '' : 'disabled'}>Aprovar compra${ws.length ? ' · ' + brl(total) : ''}</button></div>` : ''}
+    </div>
+  </div>`;
+}
+
+function pPedido(r) {
+  const W = winners(r);
+  return `<div class="panel">
+    <div class="panel-h"><h3>Pedido de compra</h3><span class="step">${r.docs.filter(d => d.tipo === 'Pedido de compra').length}/${Object.keys(W).length} anexados</span></div>
+    <div style="display:grid;gap:10px">
+    ${Object.keys(W).map(s => { const d = r.docs.find(x => x.supId === s && x.tipo === 'Pedido de compra'); return `<div class="doccard">
+      <div class="dh"><b>${esc(sup_(s).nome)}</b><span class="mono">${brl(winTotal(r, s))}</span></div>
+      ${d ? `<div class="row">${fileChip(d.arquivo)}<span class="small muted">Pedido nº <b class="mono" style="color:var(--ink)">${esc(d.numero)}</b> · anexado ${fDT(d.em)}</span></div>`
+      : `<div class="row"><input class="in sm mono" style="max-width:160px" placeholder="Nº do pedido" id="pn-${s}"><button class="btn primary sm" data-act="attach-po" data-sup="${s}">Anexar pedido (PDF)</button></div>`}
+    </div>`; }).join('')}
+    <div class="soon">Nota fiscal: anexo e leitura da NF entram na próxima fase.</div>
+    </div>
+  </div>`;
+}
+function pEntrega(r) {
+  return `<div class="panel">
+    <div class="panel-h"><h3>Entrega na obra</h3></div>
+    ${r.entrega ? `<div style="display:grid;gap:8px"><div><span class="chip st-entregue">${r.entrega.completo ? 'Recebido completo' : 'Recebido parcial'}</span> <span class="small">por <b>${esc(r.entrega.por)}</b> em ${fDT(r.entrega.em)}</span></div>${r.entrega.obs ? `<div class="small">${esc(r.entrega.obs)}</div>` : ''}${r.entrega.foto ? fileChip(r.entrega.foto) : ''}
+      ${r.status === 'entregue' ? `<div class="row"><button class="btn ok" data-act="archive">Enviar ao financeiro e arquivar</button></div>` : ''}</div>`
+    : `<div class="small muted">Aguardando ${esc(r.solicitante)} confirmar pelo celular que o material chegou. <button class="linkbtn" style="color:var(--accent)" data-act="role" data-v="engenheiro">Ver como engenheiro</button></div>`}
+  </div>`;
+}
+
+/* ---------- Fornecedores ---------- */
+function vFornecedores() {
+  return `<div class="phead"><div class="t"><h1>Fornecedores</h1><p>${S.sups.length} empresas em ${CATS.length} categorias. A cotação é enviada por categoria.</p></div></div><div style="display:grid;gap:16px">
+  <form class="panel" id="sup-form" style="display:grid;gap:10px">
+    <div class="panel-h" style="margin:0"><h3>Cadastrar fornecedor</h3><span class="small muted">Para mais de um e-mail, separe com ponto e vírgula</span></div>
+    <div class="grid2">
+      <label class="f">Empresa<input class="in" id="ns-nome" required></label>
+      <label class="f">Categoria<select class="in" id="ns-cat">${CATS.map(c => `<option>${c}</option>`).join('')}</select></label>
+      <label class="f">E-mail de orçamento<input class="in" id="ns-email" required></label>
+      <label class="f">Contato<input class="in" id="ns-contato"></label>
+      <label class="f">Telefone<input class="in" id="ns-fone"></label>
+    </div>
+    <div><button class="btn primary" type="submit">Adicionar</button></div>
+  </form>
+  ${CATS.map(c => { const ss = S.sups.filter(s => s.cat === c); return `<div class="catblock"><h4>${esc(c)} <span class="small muted mono">${ss.length}</span></h4>
+    <div class="tbl-wrap"><table><thead><tr><th>Empresa</th><th>Contato</th><th>E-mail</th><th>Telefone</th><th class="r">Cotações</th><th class="r">Fechou</th></tr></thead><tbody>
+    ${ss.map(s => { const nq = S.reqs.filter(r => r.cotacoes.some(x => x.supId === s.id)).length; const nw = S.reqs.filter(r => Object.values(r.vencedor).includes(s.id)).length; return `<tr><td><b>${esc(s.nome)}</b></td><td>${esc(s.contato || '')}</td><td class="mono small">${s.email.split(';').map(x => esc(x.trim())).join('<br>')}</td><td class="mono small">${esc(s.fone || '')}</td><td class="r">${nq}</td><td class="r">${nw}</td></tr>`; }).join('')}
+    </tbody></table></div></div>`; }).join('')}
+  <div class="note">Lista de fornecedores enviada pela Letícia. Os nomes das empresas foram tirados do domínio do e-mail; dá pra corrigir depois.</div>
+  </div>`;
+}
+
+/* ---------- Gerente ---------- */
+function reqTotal(r) { return r.aprovadoEm ? Object.keys(winners(r)).reduce((a, s) => a + winTotal(r, s), 0) : 0; }
+function reqEcon(r) { let e = 0; if (!r.aprovadoEm) return 0; r.itens.forEach(i => { const ps = r.cotacoes.map(c => c.precos[i.id]).filter(p => p != null); const w = r.vencedor[i.id]; if (ps.length > 1 && w) e += (Math.max(...ps) - cot_(r, w).precos[i.id]) * (i.qtd || 1); }); return e; }
+function obraSummary(o, reqs) {
+  const rs = reqs.filter(r => r.obra === o.nome);
+  const prox = rs.filter(r => r.status === 'pedido').map(r => Math.max(...Object.keys(winners(r)).map(s => new Date(addDays(r.aprovadoEm, cot_(r, s).prazoDias)).getTime()))).sort()[0];
+  return {o, rs, open: rs.filter(r => stIdx(r.status) < 5), urg: rs.filter(r => r.urgente && r.status !== 'finalizado'), waitQ: rs.filter(r => ['nova', 'cotacao', 'analise'].includes(r.status)), road: rs.filter(r => r.status === 'pedido'), done: rs.filter(r => r.entrega), spent: rs.reduce((t, r) => t + reqTotal(r), 0), econ: rs.reduce((t, r) => t + reqEcon(r), 0), prox};
+}
+function vDash() {
+  const f = S.ui; const q = (f.dq || '').toLowerCase();
+  const reqs = S.reqs.filter(r => (!f.dobra || r.obra === f.dobra) && (!f.dfrom || r.criado.slice(0, 10) >= f.dfrom) && (!f.dto || r.criado.slice(0, 10) <= f.dto) && (!q || [r.obra, r.solicitante, code(r.id), ...r.itens.map(i => i.desc)].join(' ').toLowerCase().includes(q)));
+  const obras = S.obras.filter(o => !f.dobra || o.nome === f.dobra).map(o => obraSummary(o, reqs));
+  const ativas = obras.filter(x => x.open.length);
+  const spent = reqs.reduce((t, r) => t + reqTotal(r), 0);
+  const maxO = Math.max(1, ...obras.map(x => x.spent));
+  const times = reqs.map(r => { const d = r.docs.find(x => x.tipo === 'Pedido de compra'); return d ? {id: r.id, t: (new Date(d.em) - new Date(r.criado)) / DAY} : null; }).filter(Boolean).sort((a, b) => a.id - b.id);
+  const avg = times.length ? times.reduce((a, b) => a + b.t, 0) / times.length : null;
+  const maxT = Math.max(1, ...times.map(x => x.t));
+  const pts = times.map((x, i) => [times.length === 1 ? 110 : 10 + i * (200 / (times.length - 1)), 70 - x.t / maxT * 55]);
+  const recv = S.mail.filter(m => m.folder === 'entrada').length, sent = S.reqs.reduce((t, r) => t + r.envios.length, 0), peds = S.mail.filter(m => m.tipo === 'pedido').length, orcs = S.mail.filter(m => m.tipo === 'orcamento').length;
+  const nt = f.dnotch || 'todas';
+  const shown = obras.filter(x => nt === 'todas' || (nt === 'urg' && x.urg.length) || (nt === 'road' && x.road.length));
+  const selO = shown.find(x => x.o.nome === f.dsel) || shown[0];
+  const tally = {}; reqs.forEach(r => Object.values(r.motivos).forEach(m => m.motivo && (tally[m.motivo] = (tally[m.motivo] || 0) + 1)));
+  const maxTa = Math.max(1, ...Object.values(tally));
+  const money = v => `<small>R$</small>${v.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+  const short = n => n.replace(/^(EE |Residencial )/, '').split(' ').slice(0, 2).join(' ');
+  return `
+  <div class="phead"><div class="t"><h1>Dashboard</h1><p>Compras de todas as obras, com os filtros abaixo.</p></div>
+    <button class="btn primary lg" data-act="nav" data-v="sol">Abrir quadro</button></div>
+  <div class="kpis">
+    <div class="kpi a"><span class="ic">${IC.home}</span><span class="k">Obras com compras em andamento</span><span class="v">${ativas.length}<small style="margin-left:6px">de ${obras.length}</small></span><span class="s">${reqs.filter(r => r.status !== 'finalizado').length} solicitações abertas · <b style="color:var(--urgent)">${reqs.filter(r => r.urgente && r.status !== 'finalizado').length} urgentes</b></span>
+      <div class="urg-list">${ativas.map(x => `<button class="chip sel" data-act="dsel" data-v="${esc(x.o.nome)}">${esc(short(x.o.nome))} · ${x.open.length}</button>`).join('')}</div></div>
+    <div class="kpi"><span class="ic">${IC.cart}</span><span class="k">Comprado por obra</span><span class="v">${money(spent)}</span>
+      <div class="mini-bars">${obras.map(x => `<span style="height:${Math.max(6, x.spent / maxO * 100)}%" title="${esc(x.o.nome)} · ${brl(x.spent)}"></span>`).join('')}</div>
+      <div class="mini-lab">${obras.map(x => `<span>${esc(short(x.o.nome))}</span>`).join('')}</div></div>
+    <div class="kpi g"><span class="ic">${IC.clock}</span><span class="k">Tempo médio até o pedido</span><span class="v">${avg == null ? '—' : numBR(Math.round(avg * 10) / 10)} <small>dias</small></span><span class="s">da solicitação ao pedido de compra</span>
+      ${pts.length ? `<svg class="spark" viewBox="0 0 220 80" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts.map(p => p.join(',')).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>${pts.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>`).join('')}</svg>` : ''}</div>
+    <div class="kpi"><span class="ic">${IC.mail}</span><span class="k">E-mails da cotação</span><span class="s">caixa do Outlook da Letícia</span>
+      <div class="mtiles"><div><b>${recv}</b><span>Recebidos</span></div><div class="on"><b>${peds}</b><span>Pedidos</span></div><div><b>${orcs}</b><span>Orçamentos</span></div><div><b>${sent}</b><span>Enviados</span></div></div>
+      <button class="btn dark sm" data-act="nav" data-v="mail" style="justify-self:end">${S.outlook?.on ? 'Abrir inbox' : 'Conectar Outlook'}</button></div>
+  </div>
+  <div class="fbar"><span class="lab">Filtros ativos <i>${[f.dobra, f.dfrom, f.dto, f.dq].filter(Boolean).length}</i></span>
+    <select class="in pill" data-chg="dobra" id="dobra"><option value="">Todas as obras</option>${S.obras.map(o => `<option ${f.dobra === o.nome ? 'selected' : ''}>${esc(o.nome)}</option>`).join('')}</select>
+    <label class="datef">De <input class="in pill" type="date" data-chg="dfrom" id="dfrom" value="${esc(f.dfrom || '')}"></label>
+    <label class="datef">Até <input class="in pill" type="date" data-chg="dto" id="dto" value="${esc(f.dto || '')}"></label>
+    <input class="in pill" id="dq" data-chg="dq" placeholder="Buscar item, engenheiro ou nº" value="${esc(f.dq || '')}">
+  </div>
+  <section class="dpanel">
+    <div class="dpanel-h"><h2>Obras</h2>
+      <div class="notch">${[['todas', 'Todas', obras.length], ['urg', 'Com urgência', obras.filter(x => x.urg.length).length], ['road', 'Entrega a caminho', obras.filter(x => x.road.length).length]].map(([k, n, c]) => `<button data-act="dnotch" data-v="${k}" aria-pressed="${nt === k}">${n}<b>${c}</b></button>`).join('')}</div></div>
+    <div class="rlist">${shown.map(x => `<button class="ritem" data-act="dsel" data-v="${esc(x.o.nome)}" aria-current="${selO && x.o.nome === selO.o.nome}">
+        <span class="avatar sm ${avCls(obraResp(x.o.nome))}">${initials(obraResp(x.o.nome))}</span>
+        <span style="min-width:0"><span class="id" style="font-size:13px">${esc(x.o.nome)}</span><span class="sub" style="display:block">${x.open.length} em andamento · ${x.road.length} a caminho</span></span>
+        <span class="val">${brl(x.spent).replace(/,\d\d$/, '')}<small>${x.urg.length ? '<span style="color:#FF8A8D">urgente</span>' : 'comprado'}</small></span>
+      </button>`).join('') || '<div class="empty">Nenhuma obra com esse filtro.</div>'}</div>
+    ${selO ? `<div class="hero">
+      <div class="hero-top">
+        <div><div class="lbl">Obra</div><div class="obra" style="font-size:22px">${esc(selO.o.nome)}</div>${selO.urg.length ? '<span class="gpill u" style="justify-self:start;margin-top:6px;display:inline-block">' + selO.urg.length + ' urgente(s)</span>' : ''}</div>
+        <div><div class="lbl">Endereço de entrega</div><div class="small" style="font-weight:600">${esc(selO.o.end)}</div></div>
+        <div><div class="lbl">Engenheiro</div><div class="who"><span class="avatar sm ${avCls(obraResp(selO.o.nome))}">${initials(obraResp(selO.o.nome))}</span><span><b>${esc(obraResp(selO.o.nome))}</b><span>Responsável</span></span></div></div>
+      </div>
+      <div class="tiles">
+        <div class="tile"><span class="tq">${selO.waitQ.length}</span><span class="d">em cotação ou análise</span></div>
+        <div class="tile"><span class="tq">${selO.rs.filter(r => r.status === 'aprovado').length}</span><span class="d">aprovadas, aguardando pedido</span></div>
+        <div class="tile"><span class="tq">${selO.road.length}</span><span class="d">a caminho da obra</span></div>
+        <div class="tile"><span class="tq">${selO.done.length}</span><span class="d">entregues</span></div>
+      </div>
+      <div class="hero-foot">
+        <div class="m"><span class="lbl">Comprado</span><b>${brl(selO.spent)}</b></div>
+        <div class="m"><span class="lbl">Economia</span><b>${brl(selO.econ)}</b></div>
+        <div class="m"><span class="lbl">Próxima entrega</span><b>${selO.prox ? fD(new Date(selO.prox).toISOString()) : '—'}</b></div>
+        <div class="act"><button class="ring" data-act="dlink" data-v="${esc(selO.o.nome)}" title="Copiar link da obra para o engenheiro" aria-label="Copiar link da obra">${IC.link}</button><button class="ring" data-act="dboard" data-v="${esc(selO.o.nome)}" title="Ver no quadro" aria-label="Ver no quadro">${IC.board}</button><button class="btn white lg" data-act="dopen" data-v="${esc(selO.o.nome)}">Abrir resumo da obra</button></div>
+      </div>
+    </div>` : '<div class="hero"><div class="lbl">Nenhuma obra.</div></div>'}
+  </section>
+  <div class="g2">
+    <div class="panel"><div class="panel-h"><h3>Compras fechadas</h3></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Obra</th><th>Fornecedor</th><th class="r">Valor</th><th>Prazo</th><th>Pedido</th><th>Status</th></tr></thead><tbody>
+      ${reqs.filter(r => r.aprovadoEm).flatMap(r => Object.keys(winners(r)).map(s => { const d = r.docs.find(x => x.supId === s && x.tipo === 'Pedido de compra'); const pz = cot_(r, s).prazoDias; return `<tr class="clickrow" data-act="open-req" data-id="${r.id}"><td><span class="small muted">${code(r.id)}</span> ${esc(r.obra)}</td><td>${esc(sup_(s).nome)}</td><td class="r">${brl(winTotal(r, s))}</td><td>${pz === 0 ? 'Imediato' : pz + 'd'}</td><td>${d ? esc(d.numero) : '<span class="muted">pendente</span>'}</td><td>${chipSt(r.status)}</td></tr>`; })).join('') || '<tr><td colspan="6" class="muted">Nenhuma compra fechada no filtro.</td></tr>'}
+      </tbody></table></div></div>
+    <div class="panel"><div class="panel-h"><h3>Por que não fechamos</h3></div>
+      <div class="bars">${Object.entries(tally).sort((a, b) => b[1] - a[1]).map(([k, n]) => `<div class="bar"><span>${esc(k)}</span><span class="tr"><i style="width:${n / maxTa * 100}%"></i></span><b>${n}</b></div>`).join('') || '<span class="muted small">Sem dados no filtro.</span>'}</div></div>
+  </div>`;
+}
+
+/* ===================== ações ===================== */
+let toastT;
+function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 2600); }
+let pendingFile = null;
+function pickFile(cb) { pendingFile = cb; const fp = $('#filepick'); fp.value = ''; fp.click(); }
+$('#filepick').addEventListener('change', e => { const f = e.target.files[0]; if (f && pendingFile) { FILES[f.name] = URL.createObjectURL(f); pendingFile(f.name); } pendingFile = null; });
+function syncStatus(r) {
+  if (r.status === 'nova' && r.envios.length) r.status = 'cotacao';
+  if (r.status === 'cotacao' && r.envios.length && r.envios.every(e => r.cotacoes.find(c => c.supId === e.supId))) { r.status = 'analise'; log(r, 'Todos os orçamentos recebidos'); }
+}
+
+const ACT = {
+  role: el => { S.role = el.dataset.v; window.scrollTo(0, 0); render(); },
+  nav: el => { const v = el.dataset.v; S.role = v === 'eng' ? 'engenheiro' : v === 'ger' ? 'gerente' : 'compras'; S.ui.fromDash = false; if (v === 'for') S.tab = 'fornecedores'; if (v === 'mail') S.tab = 'email'; if (v === 'sol') { S.tab = 'solicitacoes'; S.view = 'board'; } window.scrollTo(0, 0); render(); },
+  goto: el => { const map = {'sec-itens': 'itens', 'sec-enviar': 'cotacao', 'sec-cot': 'orcamentos', 'sec-dec': 'ia', 'sec-ped': 'pedido', 'sec-ent': 'pedido', 'sec-hist': 'historico'}; S.ui.dtab = map[el.dataset.v]; render(); $('#dtabs')?.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start'}); },
+  dtab: el => { S.ui.dtab = el.dataset.v; S.ui.qedit = null; render(); },
+  'copy-link': () => { const r = req_(S.selId); const slug = r.obra.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); const t = obraLink(r.obra); navigator.clipboard?.writeText(t).then(() => toast('Link da obra copiado (exemplo): ' + t), () => toast(t)); },
+  reset: () => { S = seed(); render(); toast('Dados de exemplo restaurados'); },
+  tab: el => { S.tab = el.dataset.v; render(); },
+  filter: el => { S.filter = el.dataset.v; render(); },
+  sel: el => { S.selId = +el.dataset.id; S.ui.qedit = null; S.ui.decErr = null; S.ui.dtab = null; S.role = 'compras'; S.tab = 'solicitacoes'; S.view = 'detail'; render(); window.scrollTo(0, 0); },
+  back: () => { S.view = 'board'; render(); window.scrollTo(0, 0); },
+  dsel: el => { S.ui.dsel = el.dataset.v; render(); },
+  dnotch: el => { S.ui.dnotch = el.dataset.v; S.ui.dsel = null; render(); },
+  dlink: el => { const t = obraLink(el.dataset.v); navigator.clipboard?.writeText(t).then(() => toast('Link da obra copiado (exemplo): ' + t), () => toast(t)); },
+  dboard: el => { S.ui.fobra = el.dataset.v; S.role = 'compras'; S.tab = 'solicitacoes'; S.view = 'board'; render(); window.scrollTo(0, 0); },
+  dopen: el => { S.ui.pobra = el.dataset.v; S.ui.etab = null; S.ui.fromDash = true; S.role = 'engenheiro'; render(); window.scrollTo(0, 0); },
+  'only-urg': () => { S.ui.onlyUrg = !S.ui.onlyUrg; render(); },
+  'open-req': el => { S.ui.dtab = null; S.view = 'detail'; S.role = 'compras'; S.tab = 'solicitacoes'; S.selId = +el.dataset.id; window.scrollTo(0, 0); render(); },
+  urg: el => { const r = req_(S.selId); const v = el.dataset.v === '1'; if (r.urgente !== v) { r.urgente = v; log(r, v ? 'Marcada como urgente' : 'Urgência removida'); } render(); },
+  'it-add': () => { const r = req_(S.selId); r.itens.push({id: uid(), qtd: null, un: 'un', desc: ''}); render(); },
+  'it-del': el => { const r = req_(S.selId); r.itens = r.itens.filter(i => i.id !== el.dataset.id); render(); },
+  cat: el => { const r = req_(S.selId); const cur = S.ui.catsFor === r.id && S.ui.cats ? S.ui.cats : guessCats(r.itens); const c = el.dataset.v; S.ui.cats = cur.includes(c) ? cur.filter(x => x !== c) : [...cur, c]; S.ui.catsFor = r.id; S.ui.pickFor = null; render(); },
+  send: () => {
+    const r = req_(S.selId); const picks = currentPicks(r);
+    picks.forEach(id => { const ex = r.envios.find(e => e.supId === id); if (!ex) r.envios.push({supId: id, em: now()}); });
+    log(r, `Cotação enviada para ${picks.length} fornecedor(es): ${picks.map(p => sup_(p).nome).join(', ')}`);
+    { const {subj, body} = mailText(r); picks.forEach(id => { const sp = sup_(id); S.mail.push({id: 'm' + uid(), folder: 'enviados', to: sp.email, lido: true, em: now(), tipo: null, reqId: r.id, supId: id, from: 'Letícia', fromEmail: 'leticia@temafe.com.br', subj, body, anexos: []}); }); }
+    if (r.status === 'analise') r.status = 'cotacao';
+    syncStatus(r); S.ui.pickFor = null; S.ui.dtab = 'orcamentos'; render(); toast(`Pedido de cotação enviado para ${picks.length} fornecedor(es)`);
+  },
+  'open-mail': el => { const m = S.mail.find(x => x.tipo === 'pedido' && x.reqId === +el.dataset.id); S.tab = 'email'; S.ui.mfold = 'pedido'; S.ui.msel = m?.id; render(); window.scrollTo(0, 0); },
+  mfold: el => { S.ui.mfold = el.dataset.v; S.ui.msel = null; render(); },
+  msel: el => { S.ui.msel = el.dataset.v; render(); },
+  'sel-tab': el => { S.selId = +el.dataset.id; S.ui.dtab = el.dataset.v; S.role = 'compras'; S.tab = 'solicitacoes'; S.view = 'detail'; render(); window.scrollTo(0, 0); },
+  'mail-quote': el => { S.selId = +el.dataset.id; S.ui.dtab = 'cotacao'; S.role = 'compras'; S.tab = 'solicitacoes'; S.view = 'detail'; render(); window.scrollTo(0, 0); },
+  'mail-make': el => { const m = S.mail.find(x => x.id === el.dataset.v); const r = reqFromMail(m); render(); toast(`Solicitação ${code(r.id)} criada no quadro`); },
+  'mail-sync': () => {
+    let novos = 0, ped = 0, orc = 0;
+    if (!S.synced) {
+      const m = PEND_MAIL(); S.mail.push(m); novos++;
+      if (isPedidoMail(m)) { reqFromMail(m); ped++; } 
+    }
+    S.reqs.filter(r => r.status === 'cotacao' || r.status === 'analise').forEach(r => {
+      const pend = r.envios.filter(e => !r.cotacoes.find(c => c.supId === e.supId)).slice(0, 1);
+      pend.forEach(e => { const q = simulateQuote(r, e.supId); r.cotacoes.push(q); log(r, `Orçamento recebido por e-mail: ${sup_(e.supId).nome} (lido por IA)`); syncStatus(r); const sp = sup_(e.supId);
+        S.mail.push({id: 'm' + uid(), folder: 'entrada', to: 'leticia@temafe.com.br', lido: false, em: now(), tipo: 'orcamento', reqId: r.id, supId: e.supId, from: sp.nome, fromEmail: sp.email.split(';')[0].trim(), subj: `RE: ${r.urgente ? '[URGENTE] ' : ''}Cotação ${code(r.id)} – Obra ${r.obra}`, anexos: [q.arquivo], body: `Letícia, boa tarde.\n\nSegue orçamento em anexo. Prazo: ${q.prazoDias === 0 ? 'imediato' : q.prazoDias + ' dia(s)'}. Pagamento: ${q.pagamento}\n\nAtenciosamente,\n${sp.contato || sp.nome}`}); novos++; orc++; });
+    });
+    S.synced++; S.ui.mfold = 'entrada'; S.ui.msel = null; render();
+    toast(novos ? [`${novos} e-mail${novos > 1 ? 's' : ''} novo${novos > 1 ? 's' : ''}`, ped ? `${ped} pedido de material foi para o quadro` : '', orc ? `${orc} orçamento anexado` : ''].filter(Boolean).join(' · ') : 'Nenhum e-mail novo');
+  },
+  'pick-all': () => { const r = req_(S.selId); const cats = S.ui.cats && S.ui.catsFor === r.id ? S.ui.cats : guessCats(r.itens); S.ui.pick = S.sups.filter(s => (!cats.length || cats.includes(s.cat)) && !r.envios.some(e => e.supId === s.id)).map(s => s.id); S.ui.pickFor = r.id; render(); },
+  'pick-none': () => { S.ui.pick = []; S.ui.pickFor = req_(S.selId).id; render(); },
+  'copy-mail': () => { const {subj, body} = mailText(req_(S.selId)); const t = `Assunto: ${subj}\n\n${body}`; navigator.clipboard?.writeText(t).then(() => toast('Texto copiado'), () => toast('Não deu para copiar. Selecione o texto do e-mail.')); },
+  pull: () => {
+    const r = req_(S.selId); const pend = r.envios.filter(e => !r.cotacoes.find(c => c.supId === e.supId));
+    const take = pend.length > 3 ? pend.filter((e, k) => k % 3 !== 2) : pend.length > 1 ? pend.slice(0, pend.length - 1) : pend;
+    take.forEach(e => { r.cotacoes.push(simulateQuote(r, e.supId)); log(r, `Orçamento recebido: ${sup_(e.supId).nome} (lido por IA)`); });
+    syncStatus(r); render(); toast(`${take.length} orçamento(s) encontrado(s) no Outlook e lidos`);
+  },
+  'reply-open': el => { S.ui.reply = el.dataset.sup; S.ui.replyTxt = ''; S.ui.replyFile = null; render(); },
+  'reply-close': () => { S.ui.reply = null; render(); },
+  'reply-file': () => { S.ui.replyTxt = $('#reply-txt')?.value || ''; pickFile(name => { S.ui.replyFile = name; render(); }); },
+  'reply-save': el => {
+    const r = req_(S.selId); const s = el.dataset.sup; const txt = ($('#reply-txt')?.value || '').trim(); const sp = sup_(s);
+    if (!txt && !S.ui.replyFile) { toast('Cole o texto da resposta ou anexe o orçamento'); return; }
+    const q = simulateQuote(r, s, {full: true}); q.arquivo = S.ui.replyFile || null;
+    const pz = txt.match(/(\d+)\s*dias?/i); if (/imediat/i.test(txt)) q.prazoDias = 0; else if (pz) q.prazoDias = +pz[1];
+    const pg = txt.match(/\d+\s*DDL/i) || txt.match(/\d+\/\d+(\/\d+)?/) || txt.match(/à vista/i) || txt.match(/pagamento[^.\n]*?(\d+\s*dias)/i); if (pg) q.pagamento = pg[1] || pg[0];
+    const pzE = txt.match(/(entrega|prazo)[^.\n]*?(\d+)\s*dias?/i); if (pzE) q.prazoDias = +pzE[2];
+    r.cotacoes.push(q);
+    S.mail.push({id: 'm' + uid(), folder: 'entrada', to: 'leticia@temafe.com.br', lido: true, em: now(), tipo: 'orcamento', reqId: r.id, supId: s, from: sp.nome, fromEmail: sp.email.split(';')[0].trim(), subj: `RE: Cotação ${code(r.id)} – Obra ${r.obra}`, anexos: S.ui.replyFile ? [S.ui.replyFile] : [], body: txt || '(orçamento anexado)'});
+    log(r, `Resposta de ${sp.nome} registrada manualmente; valores lidos pela IA`); syncStatus(r);
+    S.ui.reply = null; S.ui.replyFile = null; S.ui.qedit = s; render(); toast('Resposta registrada. Confira os valores lidos.');
+  },
+  'open-mail-id': el => { const m = S.mail.find(x => x.id === el.dataset.v); S.role = 'compras'; S.tab = 'email'; S.ui.mfold = m.folder === 'enviados' ? 'enviados' : (m.tipo || 'entrada'); S.ui.msel = m.id; render(); window.scrollTo(0, 0); },
+  'ol-connect': () => { const e = ($('#ol-email')?.value || '').trim() || 'leticia@temafe.com.br'; S.outlook = {on: true, email: e, em: now()}; render(); toast(`Conta ${e} conectada · ${S.mail.filter(m => m.folder === 'entrada').length} e-mails importados`); },
+  'ol-disconnect': () => { S.outlook = {on: false, email: ''}; render(); toast('Conta do Outlook desconectada'); },
+  'attach-quote': el => { const r = req_(S.selId); const s = el.dataset.sup; pickFile(name => { const q = simulateQuote(r, s); q.arquivo = name; r.cotacoes.push(q); log(r, `Orçamento anexado: ${sup_(s).nome} (${name})`); syncStatus(r); S.ui.qedit = s; render(); toast('Orçamento anexado. Confira os valores lidos.'); }); },
+  qedit: el => { S.ui.qedit = S.ui.qedit === el.dataset.sup ? null : el.dataset.sup; render(); },
+  'apply-sug': () => { const r = req_(S.selId); const a = analyze(r); r.vencedor = {...a.sug}; fillReasons(r); render(); toast('Sugestão aplicada'); },
+  'pick-win': el => { const r = req_(S.selId); const id = el.dataset.id; r.vencedor[id] = r.vencedor[id] === el.dataset.sup ? undefined : el.dataset.sup; if (!r.vencedor[id]) delete r.vencedor[id]; fillReasons(r); render(); },
+  approve: () => {
+    const r = req_(S.selId); const ws = Object.keys(winners(r));
+    const losers = r.envios.map(e => e.supId).filter(s => !ws.includes(s));
+    const missing = r.itens.filter(i => !r.vencedor[i.id]);
+    if (missing.length || losers.some(s => !r.motivos[s]?.motivo)) { S.ui.dtab = missing.length ? 'ia' : 'motivos'; render(); toast(missing.length ? 'Falta escolher fornecedor para algum item' : 'Falta preencher algum motivo'); return; }
+    Object.keys(r.motivos).forEach(s => { if (ws.includes(s)) delete r.motivos[s]; });
+    r.status = 'aprovado'; r.aprovadoEm = now(); r.aprovadoPor = 'Letícia'; S.ui.decErr = null; S.ui.dtab = 'pedido';
+    log(r, `Compra aprovada por Letícia (${ws.length} fornecedor${ws.length > 1 ? 'es' : ''})`); render(); toast('Compra aprovada. Agora é só anexar o pedido.');
+  },
+  'attach-po': el => {
+    const r = req_(S.selId); const s = el.dataset.sup; const num = ($('#pn-' + s)?.value || '').trim() || String(S.seq++).padStart(5, '0');
+    pickFile(name => {
+      r.docs.push({id: uid(), tipo: 'Pedido de compra', supId: s, numero: num, valor: winTotal(r, s), arquivo: name, em: now()});
+      log(r, `Pedido ${num} anexado (${sup_(s).nome})`);
+      const all = Object.keys(winners(r)).every(x => r.docs.some(d => d.supId === x && d.tipo === 'Pedido de compra'));
+      if (all && r.status === 'aprovado') { r.status = 'pedido'; log(r, 'Aguardando entrega na obra'); }
+      render(); toast('Pedido anexado');
+    });
+  },
+  archive: () => { const r = req_(S.selId); r.status = 'finalizado'; S.ui.dtab = 'historico'; log(r, 'Enviado ao financeiro e arquivado'); render(); toast('Arquivado'); },
+  'e-urg': el => { S.ui.draft = {...readDraft(), urg: el.dataset.v === '1'}; render(); },
+  'e-open': el => { S.ui.eopen = +el.dataset.id; render(); },
+  pobra: el => { S.ui.pobra = el.dataset.v; S.ui.etab = null; S.ui.eopen = null; S.ui.draft = {}; render(); },
+  'copy-obra': () => { const t = obraLink(S.ui.pobra); navigator.clipboard?.writeText(t).then(() => toast('Link copiado (exemplo): ' + t), () => toast(t)); },
+  etab: el => { S.ui.etab = el.dataset.v; S.ui.eopen = null; render(); window.scrollTo(0, 0); },
+  'e-comp': el => { S.ui.ecomp = el.dataset.v === '1'; const o = $('#e-cobs')?.value; render(); if (o) $('#e-cobs').value = o; },
+  'e-confirm': el => {
+    const r = req_(el.dataset.id); const ff = $('#e-foto')?.files?.[0];
+    if (ff) FILES[ff.name] = URL.createObjectURL(ff);
+    r.entrega = {em: now(), por: S.eng, completo: el.dataset.full === '1', obs: $('#e-cobs')?.value || '', foto: ff?.name};
+    r.status = 'entregue'; log(r, `Chegada confirmada na obra por ${S.eng}${r.entrega.completo ? '' : ' (parcial)'}`);
+    S.ui.eopen = null; S.ui.etab = 'entregas'; render(); toast('Chegada confirmada. Compras já foi avisada.');
+  },
+};
+function currentPicks(r) {
+  if (S.ui.pickFor === r.id) return S.ui.pick;
+  const cats = S.ui.cats && S.ui.catsFor === r.id ? S.ui.cats : guessCats(r.itens);
+  return S.sups.filter(s => (!cats.length || cats.includes(s.cat)) && !r.envios.some(e => e.supId === s.id)).map(s => s.id);
+}
+function fillReasons(r) {
+  const ws = Object.keys(winners(r)); if (!ws.length) return;
+  r.envios.map(e => e.supId).filter(s => !ws.includes(s)).forEach(s => { if (!r.motivos[s]?.manual) r.motivos[s] = {motivo: autoReason(r, s), obs: r.motivos[s]?.obs || '', auto: true}; });
+}
+function readDraft() { return {obra: $('#e-obra')?.value || '', itens: $('#e-itens')?.value || '', prazo: $('#e-prazo')?.value || '', obs: $('#e-obs')?.value || '', urg: S.ui.draft?.urg}; }
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  if (el.tagName === 'A') return;
+  e.preventDefault(); ACT[el.dataset.act]?.(el, e);
+});
+document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-act][role="button"]')) { e.preventDefault(); ACT[e.target.dataset.act]?.(e.target); } });
+document.addEventListener('input', e => {
+  if (e.target.id === 'e-itens') updPreview();
+  if (e.target.id === 'q') { S.q = e.target.value; const pos = e.target.selectionStart; render(); const q = $('#q'); q.focus(); q.setSelectionRange(pos, pos); }
+});
+document.addEventListener('change', e => {
+  const el = e.target; const k = el.dataset.chg; if (!k) return;
+  const r = req_(S.selId);
+  const it = id => r.itens.find(i => i.id === id);
+  switch (k) {
+    case 'eng': S.eng = el.value; S.ui.eopen = null; render(); break;
+    case 'it-qtd': it(el.dataset.id).qtd = parseNum(el.value); render(); break;
+    case 'it-un': it(el.dataset.id).un = el.value; save(); break;
+    case 'it-desc': it(el.dataset.id).desc = el.value; save(); break;
+    case 'pick': { const cur = currentPicks(r); const id = el.dataset.id; S.ui.pick = el.checked ? [...new Set([...cur, id])] : cur.filter(x => x !== id); S.ui.pickFor = r.id; render(); break; }
+    case 'price': { const c = cot_(r, el.dataset.sup); c.precos[el.dataset.id] = parseNum(el.value); c.ia = false; render(); break; }
+    case 'qf': { const c = cot_(r, el.dataset.sup); const kk = el.dataset.k; c[kk] = kk === 'pagamento' ? el.value : (parseNum(el.value) || 0); render(); break; }
+    case 'motivo': r.motivos[el.dataset.sup] = {...(r.motivos[el.dataset.sup] || {}), motivo: el.value, manual: true}; render(); break;
+    case 'motivo-obs': r.motivos[el.dataset.sup] = {...(r.motivos[el.dataset.sup] || {}), obs: el.value, manual: true}; save(); break;
+    case 'gobra': S.ui.gobra = el.value; render(); break;
+    case 'fobra': S.ui.fobra = el.value; render(); break;
+    case 'dobra': S.ui.dobra = el.value; S.ui.dsel = el.value || null; render(); break;
+    case 'dfrom': S.ui.dfrom = el.value; render(); break;
+    case 'dto': S.ui.dto = el.value; render(); break;
+    case 'dq': S.ui.dq = el.value; render(); break;
+    case 'mtag': { const m = S.mail.find(x => x.id === el.dataset.id); m.tipo = el.value || 'outro'; if (m.tipo === 'outro') m.reqId = m.reqId; render(); toast('Etiqueta atualizada no Outlook'); break; }
+  }
+});
+document.addEventListener('submit', e => {
+  e.preventDefault();
+  if (e.target.id === 'eng-form') {
+    const d = readDraft(); const itens = parseItems(d.itens);
+    if (!d.obra.trim() || !itens.length) { toast('Preencha a obra e pelo menos um item'); return; }
+    if (!obra_(d.obra.trim())) S.obras.push({nome: d.obra.trim(), resp: S.eng, end: 'Endereço a cadastrar'});
+    const id = Math.max(...S.reqs.map(r => r.id)) + 1;
+    S.reqs.unshift({id, obra: d.obra.trim(), solicitante: S.eng, criado: now(), prazoIdeal: d.prazo, urgente: !!d.urg, status: 'nova', obs: d.obs, itens, envios: [], cotacoes: [], vencedor: {}, motivos: {}, docs: [], entrega: null, log: [[now(), `Solicitação criada por ${S.eng}`]]});
+    S.ui.draft = {}; S.selId = id; render(); toast(`Solicitação ${code(id)} enviada para Compras`);
+  }
+  if (e.target.id === 'sup-form') {
+    const nome = $('#ns-nome').value.trim(), email = $('#ns-email').value.trim();
+    if (!nome || !email) return;
+    S.sups.push({id: 's' + uid(), nome, cat: $('#ns-cat').value, contato: $('#ns-contato').value, email, fone: $('#ns-fone').value});
+    render(); toast(`${nome} cadastrado`);
+  }
+});
+let dragId = null;
+document.addEventListener('dragstart', e => { const c = e.target.closest && e.target.closest('.kcard'); if (!c) return; dragId = +c.dataset.id; c.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(dragId)); });
+document.addEventListener('dragend', () => { document.querySelectorAll('.dragging,.over').forEach(x => x.classList.remove('dragging', 'over')); dragId = null; });
+document.addEventListener('dragover', e => { const col = e.target.closest && e.target.closest('.kcol'); if (!col || dragId == null) return; e.preventDefault(); document.querySelectorAll('.kcol.over').forEach(x => x !== col && x.classList.remove('over')); col.classList.add('over'); });
+document.addEventListener('drop', e => { const col = e.target.closest && e.target.closest('.kcol'); if (!col || dragId == null) return; e.preventDefault(); const id = dragId; dragId = null; moveReq(id, col.dataset.col); });
+function moveReq(id, st) {
+  const r = req_(id); if (!r || r.status === st) return;
+  const from = stName(r.status); r.status = st;
+  if (stIdx(st) >= 3 && !r.aprovadoEm) { r.aprovadoEm = now(); r.aprovadoPor = 'Letícia'; }
+  log(r, `Movido no quadro de "${from}" para "${stName(st)}" por Letícia`);
+  render(); toast(`${code(id)} movido para ${stName(st)}`);
+}
+render();
+</script>
+
+</body>
+</html>
