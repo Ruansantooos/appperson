@@ -325,6 +325,16 @@ tfoot td{font-weight:700;background:var(--surface-2)}
 .np-negociar [data-act="apply-sug"],.np-negociar [data-act="approve"],
 .np-acompanhar [data-act="attach-po"],.np-acompanhar [data-act="archive"]{display:none!important}
 .np-editar [data-chg^="it-"],.np-cotar [data-chg="pick"],.np-cotar [data-act="cat"],.np-negociar [data-chg^="motivo"],.np-negociar [data-act="pick-win"]{pointer-events:none;opacity:.6}
+.emlist{display:grid;gap:6px}
+.emrow{border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden}
+.emrow.open{border-color:var(--accent)}
+.emhead{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;text-align:left;border:0;background:transparent;padding:10px 12px;cursor:pointer;font:inherit;color:var(--ink)}
+.emhead svg{width:12px;height:12px;vertical-align:-1px}
+@media (max-width:640px){.emhead{grid-template-columns:minmax(0,1fr)}}
+.embody{display:grid;gap:10px;padding:2px 14px 14px;border-top:1px dashed var(--line);padding-top:12px}
+.kc-mails{display:inline-flex;align-items:center;gap:3px}.kc-mails svg{width:12px;height:12px}
+.hero .mlink{background:none;border:0;color:#fff;text-align:left;padding:0;cursor:pointer;font:inherit}
+.hero .mlink b{text-decoration:underline;text-underline-offset:3px}
 .navb{font-size:10.5px;background:var(--urgent);color:#fff;border-radius:999px;padding:0 6px;margin-left:4px}
 .mailapp{display:grid;grid-template-columns:200px minmax(260px,360px) minmax(0,1fr);gap:14px;align-items:start}
 @media (max-width:1100px){.mailapp{grid-template-columns:minmax(0,1fr)}}
@@ -1175,7 +1185,7 @@ function kcard(r) {
     <div class="kc-top"><span class="kc-id">${code(r.id)}${r.origem === 'email' ? ` <span class="kc-mail" title="Chegou por e-mail">${IC.mail}</span>` : ''}</span>${r.urgente ? '<span class="chip urg"><i>Urgente</i></span>' : ''}</div>
     <div class="kc-obra">${esc(r.obra)}</div>
     <div class="kc-it">${r.itens.length} ${r.itens.length > 1 ? 'itens' : 'item'} · ${esc(r.itens.slice(0, 2).map(i => i.desc).join(', '))}</div>
-    <div class="kc-foot"><span class="avatar xs ${avCls(r.solicitante)}" title="${esc(r.solicitante)}">${initials(r.solicitante)}</span>${r.envios.length ? `<span>${r.cotacoes.length}/${r.envios.length} orç.</span>` : ''}<span class="${late ? 'late' : ''}">até ${fD(r.prazoIdeal)}</span><span class="val">${bv ? brl(bv.v).replace(/,\d\d$/, '') : ''}</span></div>
+    <div class="kc-foot"><span class="avatar xs ${avCls(r.solicitante)}" title="${esc(r.solicitante)}">${initials(r.solicitante)}</span>${mailsOfReq(r).length ? `<span class="kc-mails" title="E-mails desta solicitação">${IC.mail}${mailsOfReq(r).length}</span>` : ''}${r.envios.length ? `<span>${r.cotacoes.length}/${r.envios.length} orç.</span>` : ''}<span class="${late ? 'late' : ''}">até ${fD(r.prazoIdeal)}</span><span class="val">${bv ? brl(bv.v).replace(/,\d\d$/, '') : ''}</span></div>
     ${(() => { const a = access(r); return a.via === 'cob' ? `<div class="kc-cob">Cobertura · ${esc(USERS[r.compradora].nome)}</div>` : a.via === 'shared' ? `<div class="kc-cob ro">Consulta · ${esc(USERS[r.compradora].nome)}</div>` : me().papel === 'admin' ? `<div class="kc-cob gray">Compradora · ${esc(USERS[r.compradora].nome)}</div>` : ''; })()}
     <div class="kc-next ${meTurn ? 'me' : ''}">${meTurn ? '→ ' : ''}${nx}</div>
   </button>`;
@@ -1207,6 +1217,7 @@ function vHero(r) {
       <div class="m"><span class="lbl">Orçamentos</span><b>${r.cotacoes.length}/${r.envios.length || 0}</b></div>
       <div class="m"><span class="lbl">${bv ? ({fechado: 'Total fechado', escolhido: 'Total escolhido'}[bv.lab] || 'Melhor proposta') : 'Melhor proposta'}</span><b>${bv ? brl(bv.v) : '—'}</b></div>
       <div class="m"><span class="lbl">Precisa na obra até</span><b>${fD(r.prazoIdeal)}</b></div>
+      <button class="m mlink" data-act="dtab" data-v="emails"><span class="lbl">E-mails da obra</span><b>${mailsOfObra(r.obra).length}</b></button>
       <div class="act"><button class="ring" data-act="copy-link" title="Copiar link de acompanhamento do engenheiro" aria-label="Copiar link do engenheiro">${IC.link}</button><button class="btn white lg" data-act="goto" data-v="${cta[1]}">${cta[0]}</button></div>
     </div>
   </div>`;
@@ -1250,6 +1261,7 @@ function vDetail(r) {
     ['motivos', 'Motivos', losersOf(r).length && Object.keys(winners(r)).length ? losersOf(r).length : '', r.cotacoes.length > 0],
     ['aprovacao', 'Aprovação', '', r.cotacoes.length > 0],
     ['pedido', 'Pedido e entrega', '', i >= 3],
+    ['emails', 'E-mails da obra', mailsOfObra(r.obra).length, true],
     ['historico', 'Histórico', r.log.length, true],
   ];
   let t = S.ui.dtab || defTab(r);
@@ -1262,6 +1274,7 @@ function vDetail(r) {
     motivos: r.cotacoes.length ? pMotivos(r) : '',
     aprovacao: r.cotacoes.length ? pAprovacao(r) : '',
     pedido: i >= 3 ? pPedido(r) + (i >= 4 ? pEntrega(r) : `<div class="panel"><div class="panel-h"><h3>Entrega na obra</h3></div><div class="small muted">Depois que o pedido for anexado, ${esc(r.solicitante)} confirma a chegada pelo celular.</div></div>`) : '',
+    emails: pEmails(r),
     historico: `<div class="panel"><div class="panel-h"><h3>Histórico</h3></div><ul class="log">${[...r.log].reverse().map(([tt, x, by]) => `<li><time>${fDT(tt)}</time><span>${esc(x)}${by ? `<span class="logby"> · por ${esc(by)}</span>` : ''}</span></li>`).join('')}</ul></div>`,
   }[t];
   return `${head}
@@ -1344,6 +1357,37 @@ function pOrcamentos(r) {
     </div>
     ${threadOf(r)}
     ${r.cotacoes.length ? nextBtn('ia', 'Ver análise da IA') : ''}
+  </div>`;
+}
+const mailsOfReq = r => S.mail.filter(m => m.reqId === r.id).sort((a, b) => b.em.localeCompare(a.em));
+const mailsOfObra = obra => S.mail.filter(m => { const rr = m.reqId && req_(m.reqId); return rr && rr.obra === obra && access(rr).view; }).sort((a, b) => b.em.localeCompare(a.em));
+function mailKind(m) {
+  if (m.folder === 'enviados') return ['Cotação enviada', ''];
+  if (m.tipo === 'pedido') return ['Pedido do engenheiro', 'ped'];
+  if (m.tipo === 'orcamento') return ['Orçamento recebido', 'orc'];
+  return ['E-mail', ''];
+}
+function mailRows(list) {
+  return list.map(m => { const [k, cls] = mailKind(m); const open = S.ui.mopen === m.id; const inBox = myMail().some(x => x.id === m.id); return `<div class="emrow ${open ? 'open' : ''}">
+    <button class="emhead" data-act="mopen" data-v="${m.id}" aria-expanded="${open}">
+      <span class="mtag ${cls}">${k}${m.reqId ? ' · ' + code(m.reqId) : ''}</span>
+      <span style="min-width:0"><b>${esc(m.folder === 'enviados' ? 'Para: ' + (sup_(m.supId).nome || m.to) : m.from)}</b><span class="small muted" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(m.subj)}</span></span>
+      <span class="small muted" style="white-space:nowrap">${m.anexos.length ? IC.clip + ' ' + m.anexos.length + ' · ' : ''}${fDT(m.em)}</span>
+    </button>
+    ${open ? `<div class="embody"><div class="small muted">${esc(m.folder === 'enviados' ? 'De ' + (USERS[m.owner]?.email || m.fromEmail) + ' para ' + m.to : 'De ' + m.fromEmail + ' para ' + m.to)}</div><div class="mbody" style="border:0;padding:0">${esc(m.body)}</div>${m.anexos.length ? `<div class="row">${m.anexos.map(fileChip).join('')}</div>` : ''}${inBox ? `<button class="linkbtn" style="justify-self:start" data-act="open-mail-id" data-v="${m.id}">Abrir na Inbox</button>` : ''}</div>` : ''}
+  </div>`; }).join('');
+}
+function pEmails(r) {
+  const deste = mailsOfReq(r);
+  const outros = mailsOfObra(r.obra).filter(m => m.reqId !== r.id);
+  const n = k => deste.filter(m => mailKind(m)[0] === k).length;
+  return `<div class="panel">
+    <div class="panel-h"><h3>E-mails da obra ${esc(r.obra)}</h3><span class="step">${deste.length + outros.length} e-mails</span></div>
+    <div class="row" style="gap:6px;margin-bottom:12px"><span class="chip ai">${n('Pedido do engenheiro')} pedido(s) do engenheiro</span><span class="chip">${n('Cotação enviada')} cotação(ões) enviada(s)</span><span class="chip st-entregue">${n('Orçamento recebido')} orçamento(s) recebido(s)</span></div>
+    <div style="font-weight:700;margin-bottom:8px">Desta solicitação (${code(r.id)})</div>
+    <div class="emlist">${mailRows(deste) || '<div class="empty" style="padding:16px">Nenhum e-mail ligado a esta solicitação ainda.</div>'}</div>
+    ${outros.length ? `<div style="font-weight:700;margin:16px 0 8px">Outras solicitações da mesma obra</div><div class="emlist">${mailRows(outros)}</div>` : ''}
+    <div class="note" style="margin-top:12px">Os e-mails entram aqui sozinhos pelo código da solicitação no assunto ou pela obra citada no texto. Clique num e-mail para ler sem sair da solicitação.</div>
   </div>`;
 }
 function replyForm(r, supId) {
@@ -1557,6 +1601,7 @@ function vDash() {
       <div class="hero-foot">
         <div class="m"><span class="lbl">Comprado</span><b>${brl(selO.spent)}</b></div>
         <div class="m"><span class="lbl">Economia</span><b>${brl(selO.econ)}</b></div>
+        <div class="m"><span class="lbl">E-mails da obra</span><b>${mailsOfObra(selO.o.nome).length}</b></div>
         <div class="m"><span class="lbl">Próxima entrega</span><b>${selO.prox ? fD(new Date(selO.prox).toISOString()) : '—'}</b></div>
         <div class="act"><button class="ring" data-act="dlink" data-v="${esc(selO.o.nome)}" title="Copiar link da obra para o engenheiro" aria-label="Copiar link da obra">${IC.link}</button><button class="ring" data-act="dboard" data-v="${esc(selO.o.nome)}" title="Ver no quadro" aria-label="Ver no quadro">${IC.board}</button><button class="btn white lg" data-act="dopen" data-v="${esc(selO.o.nome)}">Abrir resumo da obra</button></div>
       </div>
@@ -1664,6 +1709,7 @@ const ACT = {
     log(r, `Resposta de ${sp.nome} registrada manualmente; valores lidos pela IA`); syncStatus(r);
     S.ui.reply = null; S.ui.replyFile = null; S.ui.qedit = s; render(); toast('Resposta registrada. Confira os valores lidos.');
   },
+  mopen: el => { S.ui.mopen = S.ui.mopen === el.dataset.v ? null : el.dataset.v; render(); },
   'open-mail-id': el => { const m = S.mail.find(x => x.id === el.dataset.v); S.role = 'compras'; S.tab = 'email'; S.ui.mfold = m.folder === 'enviados' ? 'enviados' : (m.tipo || 'entrada'); S.ui.msel = m.id; render(); window.scrollTo(0, 0); },
   'ol-connect': () => { const e = ($('#ol-email')?.value || '').trim() || me().email; S.outlook = S.outlook || {}; S.outlook[S.me] = {on: true, email: e, em: now()}; render(); toast(`Conta ${e} conectada · ${myMail().filter(m => m.folder === 'entrada').length} e-mails importados`); },
   'ol-disconnect': () => { S.outlook[S.me] = {on: false, email: ''}; render(); toast('Conta do Outlook desconectada'); },
